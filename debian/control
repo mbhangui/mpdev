@@ -1,0 +1,30 @@
+Source: mpdev
+Section: sound
+Priority: optional
+Maintainer: Manvendra Bhangui <mpdev@indimail.org>
+Build-Depends: cdbs, debhelper (>= 9), gcc, g++, automake, autoconf, m4, gawk, libqmail-dev, libssl-dev, pkg-config, lsb-release
+Standards-Version: 4.5.0
+Homepage: https://github.com/mbhangui/mpdev
+
+Package: mpdev
+Architecture: any
+Pre-Depends: daemontools
+Depends: mpc, mpd, sqlite3, ${shlibs:Depends}, ${misc:Depends}
+Description: MPD Event Watcher
+ mpdev is a daemon, written in C, that watches a Music Player Daemon events,
+ using mpd's idle command and execs user defined script on event changes.
+ .
+  * Uses mpd's idle mode.
+  * Calls user $HOME/bin/player
+  * Sets special environment variables to pass data to the hooks.
+  * Optional support for scrobbling to last.fm, libre.fm through external scripts
+  * Included scripts:
+    - scrobbler
+      + librefm-scrobbler
+      + lastfm-scrobbler
+    - player
+      + saves song data to a sqlite database
+      + tracks play count of songs, artist, albums and genres.
+      + helps chose songs based on listening habits using mpdplaylist
+        playlist generator
+      + synchronizes rompr, stats and mpd's sticker db

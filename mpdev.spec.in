@@ -1,0 +1,124 @@
+%undefine _missing_build_ids_terminate_build
+%global _unpackaged_files_terminate_build 1
+%global debug_package %{nil}
+
+%if %{defined _project}
+# define if building on openSUSE build service
+%global build_on_obs       1
+%global reconfigure_mode   0
+%else
+%define _project           local
+%global build_on_obs       0
+%global reconfigure_mode   0
+%global _hardened_build    1
+%endif
+%global _prefix            /usr
+%global logdir             /var/log/svc/mpdev
+
+Name: mpdev
+Version: @version@
+Release: @release@%{?dist}
+Summary: MPD Event Watcher
+%if %build_on_obs == 1
+License: GPL-3.0+
+%else
+License: GPLv3
+%endif
+URL: https://github.com/mbhangui/mpdev
+Source0: http://downloads.sourceforge.net/%{name}/%{name}-%{version}.tar.gz
+
+%if %build_on_obs == 1
+%if 0%{?suse_version}
+BuildRequires: -post-build-checks
+#!BuildIgnore: post-build-checks  
+%endif
+%endif
+BuildRequires: libqmail-devel libqmail
+Requires: user(qmaill)
+Requires: group(nofiles)
+Requires: /usr/bin/mpd /usr/bin/mpc /usr/bin/sqlite3 daemontools
+
+%description
+mpdev is a daemon, written in C, that watches a Music Player Daemon events,
+using mpd's idle command and execs user defined script on event changes.
+
+ * Uses mpd's idle mode.
+ * Calls user $HOME/bin/player
+ * Sets special environment variables to pass data to the hooks.
+ * Optional support for scrobbling to last.fm, libre.fm through external scripts
+ * Included scripts:
+   - scrobbler
+     + librefm-scrobbler
+     + lastfm-scrobbler
+   - player
+     + saves song data to a sqlite database
+     + tracks play count of songs, artist, albums and genres.
+     + helps chose songs based on listening habits using mpdplaylist
+       playlist generator
+     + synchronizes rompr, stats and mpd's sticker db
+
+%prep
+%autosetup
+
+%build
+%configure --prefix=%{_prefix} --libexecdir=%{_prefix}/libexec/mpdev
+%{__make} -s %{?_smp_mflags}
+
+%install
+%{__make} -s DESTDIR=%{buildroot} install-strip
+
+%files
+%ghost %dir %attr(0755,qmaill,nofiles)  %{logdir}
+%ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
+%attr(755,root,root)                    %{_prefix}/bin/mpdev
+%attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
+%attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
+%attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_maintenance
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
+
+%attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/mpdplaylist.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/lastfm-scrobbler.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/librefm-scrobbler.1.gz
+
+%license LICENSE
+
+%post
+argv1=$1
+ID=$(id -u)
+if [ $ID -ne 0 ] ; then
+  echo "You are not root" 1>&2
+  exit 1
+fi
+if [ -z "$argv1" ] ; then
+  argv1=0
+fi
+# we are doing upgrade
+if [ $argv1 -eq 2 ] ; then # upgrade
+  exit 0
+fi
+/usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
+
+%preun
+argv1=$1
+ID=$(id -u)
+if [ $ID -ne 0 ] ; then
+  echo "You are not root" 1>&2
+  exit 1
+fi
+if [ -z "$argv1" ] ; then
+  argv1=0
+fi
+# we are doing upgrade
+if [ $argv1 -eq 1 ] ; then
+  exit 0
+fi
+echo "removing mpdev logs"
+log_dir=%{logdir}/mpdev
+[ "$log_dir" != "/" ] && %{__rm} -fr $log_dir
+echo "removing mpdev service"
+/usr/libexec/mpdev/create_service --servicedir=/service --del-service
+
+%changelog

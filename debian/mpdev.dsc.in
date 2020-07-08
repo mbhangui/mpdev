@@ -1,0 +1,12 @@
+Format: 3.0 (quilt)
+Source: mpdev
+Binary: mpdev
+Architecture: any
+Version: @version@-@release@
+Maintainer: Manvendra Bhangui <mpdev@indimail.org>
+Homepage: http://www.indimail.org
+Debtransform-Release: 1
+Debtransform-Files-Tar: debian.tar.gz
+Debtransform-Tar: mpdev-@version@.tar.gz
+Standards-Version: 3.9.1
+Build-Depends: cdbs, debhelper (>= 9), gcc, g++, automake, autoconf, m4, gawk, libqmail-dev, libssl-dev, pkg-config, lsb-release

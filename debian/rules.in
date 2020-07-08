@@ -1,0 +1,102 @@
+#!/usr/bin/make -f
+
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+# export DH_COMPAT=4
+CFLAGS=-g -DOBS_BUILD
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0 -fno-strict-aliasing -Wno-unused-result -Wno-unused-result
+else
+	CFLAGS += -O2 -fno-strict-aliasing -Wno-unused-result -Wno-unused-result
+endif
+
+prefix=@prefix@
+libexecdir=@libexecdir@
+sysconfdir=@sysconfdir@
+mandir=@mandir@
+mandir=$(prefix)/share/man
+shareddir=$(prefix)/share/mpdev
+version=@version@
+package_name="mpdev"
+
+cp=/bin/cp
+rm=/bin/rm
+
+DESTDIR=$(CURDIR)/debian/mpdev.tmp
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	#
+	# Extract source archives
+	#
+	#
+	# run configure script
+	#
+	HOME='.';export HOME
+	./configure --prefix=${prefix} --libexecdir=${libexecdir} \
+		--sysconfdir=${sysconfdir} --mandir=${mandir} \
+		--datarootdir=${shareddir}
+	$(MAKE) -s DESTDIR=$(DESTDIR)
+	( \
+	echo NAME=mpdev; \
+	echo Description=\"mpd event watcher\"; \
+	echo MPDWATCH_VERSION=$(version); \
+	echo ID=indimail-spamfilter; \
+	echo HOME_URL="https://github.com/mbhangui/mpdev"; \
+	echo PACKAGE_BUGREPORT=\"Manvendra Bhangui mpdev@indimail.org\"; \
+	) > mpdev-release
+	touch build-stamp
+
+clean:
+	rm -f build-stamp configure-stamp
+	${rm} -rf $(DESTDIR) .deps
+	dh_testdir
+	dh_testroot
+	dh_clean
+	$(MAKE) clean || true; $(MAKE) distclean || true
+	${rm} -f build-stamp
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep || dh_clean -k
+	dh_installdirs
+	$(MAKE) -s install DESTDIR=$(DESTDIR)
+	mkdir -p $(DESTDIR)$(sysconfdir)
+	install -m 0644 mpdev-release "$(DESTDIR)$(sysconfdir)"/mpdev-release
+	${rm} -f indimail-spamfilter-release
+
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	find $(DESTDIR)$(mandir) -name '*'.? -type f -exec gzip -q {} \;
+	dh_install --sourcedir=$(DESTDIR) -p${package_name}
+	dh_installchangelogs
+	dh_installcron
+	dh_installdocs
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_makeshlibs -V
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+# Build architecture-dependent files here. 
+binary-arch: build install
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

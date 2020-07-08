@@ -1,0 +1,62 @@
+.TH lastfm-scrobbler 1 "July 3, 2020" "manual"
+.SH NAME
+.PP
+lastfm-scrobbler - lastfm scrobbler
+
+.SH SYNOPSIS
+.PP
+lastfm-scrobbler [\f[I]option\f[]]
+
+.SH DESCRIPTION
+A lastfm.fm (https://libre.fm/) scrobbler for \fBmpdev\fR(1) / \fBmpdwatch\fR(1).
+
+lastfm-scrobbler has been cloned from https://goto.pachanka.org/moc-scrobbler.
+
+.EX
+USAGE: lastfm-scrobbler.sh [OPTIONS]
+
+OPTIONS:
+
+Help:
+    --help
+    --help-connect
+    --help-scrobble
+
+About:
+    --version 
+    --about
+
+Connecting:
+    --connect --api_key --api_sec
+
+Scrobbling:
+    --artist --track
+
+Update Current Song:
+    --update --artist --track
+
+Stop:
+    --stop
+.EE
+
+.SH Configuration
+
+Run the connect command and follow the instructions:
+
+.EX
+$ lastfm-scrobbler --connect
+.EE
+
+if you have your own [last.fm API keys](https://www.last.fm/api/account/create) (recommended).
+
+.EX
+$ lastfm-scrobbler --connect --api_key="abc123" --api_sec="xyz890"
+.EE
+
+After you have added the connection you should have a `lastfm-scrobbler.conf` file in `~/.config/lastfm-scrobbler/`
+
+.SH SEE ALSO
+mpd(1),
+mpdev(1),
+mpdwatch(1),
+librefm-scrobbler

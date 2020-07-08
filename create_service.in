@@ -1,0 +1,124 @@
+#!/bin/sh
+
+add_service()
+{
+	if [ $# -ne 1 ] ; then
+		echo "USAGE: create_service --servicedir=path --user=username --add-service" 1>&2
+		return 1
+	fi
+	userid=$1
+	user=$(getent passwd $userid 2>/dev/null| cut -d: -f1)
+	if [ $? -ne 0 ] ; then
+		if [ $? -eq 2 ] ; then
+			echo "No such userid $userid" 1>&2
+			return 1
+		fi
+		return 1
+	fi
+	if [ -z "$servicedir" ] ; then
+		echo "--servicedir not specified" 1>&2
+		exit 1
+	fi
+	if [ ! -d $logdir ] ; then
+		mkdir -p $logdir
+		chown qmaill:nofiles $logdir
+	fi
+	mkdir -p $servicedir/$service_name/log
+	mkdir -p $servicedir/$service_name/variables
+	echo "127.0.0.1" > $servicedir/$service_name/variables/MPD_HOST
+	echo "6600"      > $servicedir/$service_name/variables/MPD_PORT
+	home=$(getent passwd $userid|cut -d: -f6)
+	if [ -n "$home" ] ; then
+		echo $home > $servicedir/$service_name/variables/HOME
+		echo "PATH=\$PATH:/bin:/usr/bin:$home/.mpdev" > $servicedir/$service_name/variables/PATH
+	fi
+	mkdir -p $home/.mpdev
+	cp /usr/libexec/$service_name/player $home/.mpdev
+	
+	(
+		echo "#!/bin/sh"
+		echo "exec /usr/bin/setuidgid qmaill \\"
+		echo "/usr/sbin/multilog t $logdir/$service_name"
+	) > /service/$service_name/log/run
+	chmod +x /service/$service_name/log/run
+	(
+		echo "#!/bin/sh"
+		echo "exec 2>&1"
+		echo "exec /usr/bin/setuidgid $user /usr/bin/envdir \\"
+		echo "  /service/$service_name/variables /usr/bin/mpdev -v"
+	) > /service/$service_name/run
+	chmod +x /service/$service_name/run
+}
+
+del_service()
+{
+	if [ ! -d $servicedir/$service_name ] ; then
+		return 0
+	fi
+	mv $servicedir/$service_name $servicedir/."$service_name"
+	svc -dx $servicedir/."$service_name" $servicedir/."$service_name"/log > /dev/null
+	sleep 5
+	/bin/rm -rf $servicedir/."$service_name" $servicedir/."$service_name"/log > /dev/null
+}
+
+usage()
+{
+prog_args=""
+if [ -f /usr/bin/less ] ; then
+	MORE=/usr/bin/less
+else
+	MORE=/usr/bin/more
+fi
+echo "Press ENTER for options, Cntrl C to quit" 1>&2
+read key
+$MORE <<EOF
+Usage: create_service [OPTIONS]
+create_service --servicedir=dir --add-service
+  or
+create_service --servicedir=dir --del-service
+EOF
+exit $1
+}
+
+################################# Main ##################################
+if test $# -eq 0; then
+    usage 1
+fi
+service_name=mpdev
+logdir=/var/log/svc
+servicedir=/service
+prog_args="$0 $*"
+while test $# -gt 0; do
+    case "$1" in
+    -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
+	;;
+    *) optarg=
+	;;
+    esac
+
+    case "$1" in
+    --servicedir=*)
+    servicedir=$optarg
+    ;;
+    --user=*)
+    user=$optarg
+    ;;
+
+    --add-service)
+	if [ -z "$user" ] ; then
+		echo "UNIX user not specified" 1>&2
+	else
+		add_service "$user"
+	fi
+    ;;
+    --del-service)
+	del_service
+    ;;
+    *)
+    echo "invalid option [$1]"
+    read key
+    usage 1
+    ;;
+    esac
+    shift
+done

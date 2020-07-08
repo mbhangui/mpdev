@@ -1,0 +1,392 @@
+#!/bin/sh
+
+#CREATE TABLE song(
+#        id              INTEGER PRIMARY KEY,
+#        play_count      INTEGER,
+#        love            INTEGER,
+#        kill            INTEGER,
+#        rating          INTEGER,
+#        tags            TEXT NOT NULL,
+#        uri             TEXT UNIQUE NOT NULL,
+#        duration        INTEGER,
+#        last_modified   INTEGER,
+#        artist          TEXT,
+#        album           TEXT,
+#        title           TEXT,
+#        track           TEXT,
+#        name            TEXT,
+#        genre           TEXT,
+#        date            TEXT,
+#        composer        TEXT,
+#        performer       TEXT,
+#        disc            TEXT,
+#        mb_artistid     TEXT,
+#        mb_albumid      TEXT,
+#        mb_trackid      TEXT,
+#        last_played     INTEGER,
+#        karma           INTEGER
+#                NOT NULL
+#                CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100)
+#                DEFAULT 50
+#);
+#CREATE INDEX rating on song(rating);
+#CREATE INDEX uri on song(uri);
+#CREATE INDEX last_played on song(last_played);
+
+get_mpd_conf_value()
+{
+  grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+  sed -e 's{"{{g'
+}
+
+music_dir=`get_mpd_conf_value music_directory`
+if [ $? -ne 0 ] ; then
+  echo "could not get music directory from mpd.conf" 1>&2
+  exit 1
+fi
+sticker_file=`get_mpd_conf_value sticker_file`
+if [ $? -ne 0 ] ; then
+  echo "could not get sticker database from mpd.conf" 1>&2
+  exit 1
+fi
+playlist_dir=`get_mpd_conf_value playlist_dir`
+if [ $? -ne 0 ] ; then
+  echo "could not get playlist directory from mpd.conf" 1>&2
+  exit 1
+fi
+
+if [ -f $HOME/.mpdwatch/mpdwatch.conf ] ; then
+	statsdb_file=`grep dbpath  $HOME/.mpdwatch/mpdwatch.conf|awk '{print $3}'| \
+  		sed -e 's{"{{g' 2>/dev/null`
+fi
+if [ -z "$statsdb_file" ] ; then
+  echo "could not get statistic database file from $HOME/.mpdwatch/mpdwatch.conf" 1>&2
+  exit 1
+fi
+if [ ! -f "$statsdb_file" ] ; then
+  echo "$statsdb_file: No such file or directory" 1>&2
+  exit 1
+fi
+
+if [ -f /usr/bin/less ] ; then
+	MORE=/usr/bin/less
+else
+	MORE=/usr/bin/more
+fi
+usage()
+{
+echo "Press ENTER for options, Cntrl C to quit" 1>&2
+read key
+$MORE 1>&2 <<EOF
+Usage: mpdplaylist [OPTION]
+
+Known values for OPTION are:
+
+--fromyear=From Year
+  Year in YYYY format
+
+--toyear=To Year
+  Year in YYYY format
+
+--incgenre=Genre List to be included
+  comma separated list of genre.
+
+--exlgenre=Genre List to be excluded
+  comma separated list of genre
+
+--minrating=Minimum Rating (value from 0 to 10)
+
+--artist=Artist
+  Find songs with Artist exactly matching 'Artist'
+
+--artistany=keyword
+  Find songs with Artist having 'keyword' anywhere in the Artist field
+
+--new=d
+  Find songs added in the last 'd' days
+
+--daysnotheard=d
+  Find songs not heard in the last 'd' days
+  use d=0 for songs never played
+
+--daysheard=d
+  Find songs heard in the last 'd' days
+  
+--oldfirst
+  Order playlist in increaing order of Last Played field
+  (Song played earlier come at top)
+  
+--popular
+  Order playlist in decreasing order of Rating field
+  (Songs with high rating come at top)
+
+--save=playlist
+  save the playlist in the filename $playlist_dir/playlist
+
+--dummy
+  Display the SQL query and exit
+
+--help
+
+  display this help and exit
+
+--version
+
+  output version information
+EOF
+exit $1
+}
+
+fromyear=""
+toyear=""
+incgenre=""
+exlgenre=""
+artist=""
+minrate=""
+oldfirst=0
+sort_popular=0
+dummy=0
+playlist=""
+daysadded=""
+daysheard=""
+daysnotheard=""
+while test $# -gt 0; do
+	case "$1" in
+	-*=*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
+	optval=`echo "$1" | cut -d'=' -f1`
+	;;
+	*)
+	optarg=
+	;;
+	esac
+
+	case "$1" in
+	--fromyear=*)
+	fromyear=$optarg
+	;;
+	--toyear=*)
+	toyear=$optarg
+	;;
+	--incgenre=*)
+	if [ -n "$exlgenre" ] ; then
+		echo "you cannot give both incgenre and exlgenre together" 1>&2
+		usage 1
+	fi
+	incgenre=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--exlgenre=*)
+	if [ -n "$incgenre" ] ; then
+		echo "you cannot give both incgenre and exlgenre together" 1>&2
+		usage 1
+	fi
+	exlgenre=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--minrating=*)
+	minrate=$optarg
+	;;
+	--artist=*)
+	exact=1
+	artist=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--artistany=*)
+	exact=0
+	artist=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--new=*)
+	daysadded=$optarg
+	;;
+	--daysheard=*)
+	daysheard=$optarg
+	;;
+	--daysnotheard=*)
+	daysnotheard=$optarg
+	;;
+	--save=*)
+	playlist=$optarg
+	;;
+	--oldfirst)
+	oldfirst=1
+	;;
+	--popular)
+	sort_popular=1
+	;;
+	--dummy)
+	dummy=1
+	;;
+	--verbose)
+	verbose="-v"
+	;;
+	--help)
+	usage 0
+	;;
+	*)
+	echo "invalid option [$1]" 1>&2
+	usage 1
+	;;
+	esac
+	shift
+done
+
+sql_query="SELECT uri FROM song "
+first_condition=""
+if [ -n "$fromyear" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	sql_query="$sql_query date >= $fromyear"
+fi
+if [ -n "$toyear" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	sql_query="$sql_query date <= $toyear"
+fi
+count=0
+if [ -n "$exlgenre" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	for i in $(echo $exlgenre | sed "s/,/ /g")
+	do
+		f=`echo $i|sed "s/_/ /g"`
+		if [ $count -eq 0 ] ; then
+			sql_query="$sql_query genre NOT IN ('$f'"
+		else
+			sql_query="$sql_query, '$f'"
+		fi
+		count=`expr $count + 1`
+	done
+	sql_query="$sql_query)"
+fi
+count=0
+if [ -n "$incgenre" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	for i in $(echo $incgenre | sed "s/,/ /g")
+	do
+		f=`echo $i|sed "s/_/ /g"`
+		if [ $count -eq 0 ] ; then
+			sql_query="$sql_query genre IN ('$f'"
+		else
+			sql_query="$sql_query, '$f'"
+		fi
+		count=`expr $count + 1`
+	done
+	sql_query="$sql_query)"
+fi
+if [ -n "$minrate" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	sql_query="$sql_query rating >= $minrate"
+fi
+if [ -n "$artist" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	f=`echo $artist|sed "s/_/ /g"`
+	if [ $exact -eq 1 ] ; then
+		sql_query="$sql_query artist = '$f'"
+	else
+		sql_query="$sql_query artist like '%$f%'"
+	fi
+fi
+if [ -n "$daysadded" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	tmval=`date +'%s'`
+	tmval=`expr $tmval - $daysadded \* 86400`
+	sql_query="$sql_query last_modified >= $tmval"
+fi
+if [ -n "$daysheard" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	tmval=`date +'%s'`
+	tmval=`expr $tmval - $daysheard \* 86400`
+	sql_query="$sql_query last_played >= $tmval"
+fi
+if [ -n "$daysnotheard" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	if [ ! "$daysnotheard" = "0" ] ; then
+		tmval=`date +'%s'`
+		tmval=`expr $tmval - $daysnotheard \* 86400`
+		sql_query="$sql_query last_played < $tmval"
+	else
+		sql_query="$sql_query last_played IS NULL"
+	fi
+fi
+order_by=0
+if [ $oldfirst -eq 1 ] ; then
+	if [ $order_by -eq 0 ] ; then
+		sql_query="$sql_query ORDER BY last_played ASC"
+		order_by=1
+	else
+		sql_query="$sql_query, last_played ASC"
+	fi
+fi
+if [ $sort_popular -eq 1 ] ; then
+	if [ $order_by -eq 0 ] ; then
+		sql_query="$sql_query ORDER BY rating DESC"
+		order_by=1
+	else
+		sql_query="$sql_query, rating DESC"
+	fi
+fi
+if [ -n "$daysadded" ] ; then
+	if [ $order_by -eq 0 ] ; then
+		sql_query="$sql_query ORDER BY last_modified ASC"
+		order_by=1
+	else
+		sql_query="$sql_query, last_modified ASC"
+	fi
+fi
+if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \
+	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" ] ; then
+	echo "No options given" 1>&2
+	exit 1
+fi
+if [ $dummy -eq 0 ] ; then
+	if [ -n "$playlist" ] ; then
+		echo "$sql_query;" | /usr/bin/sqlite3 $statsdb_file | tee $playlist_dir/"$playlist".m3u
+		/usr/bin/mpc clear
+		/usr/bin/mpc load "$playlist".m3u
+	else
+		echo "$sql_query;" | /usr/bin/sqlite3 $statsdb_file
+	fi
+else
+	echo "$sql_query;"
+fi
+exit 0

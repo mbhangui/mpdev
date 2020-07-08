@@ -1,0 +1,4 @@
+*
+Release 0.2 Start 02/03/2020
+02/03/2020
+1.  moved common/reusable functions from qmail to libqmail and link

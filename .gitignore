@@ -47,3 +47,30 @@ m4/lt~obsolete.m4
 # can automatically generate from config.status script
 # (which is called by configure script))
 Makefile
+.deps
+conf-release
+config.h.in.BAK
+config.h.in~
+haveip6.h
+libtool
+mpdev.spec
+choose
+create_service
+lastfm-scrobbler
+librefm-scrobbler
+mpdev
+mpdev.o
+mpdev_maintenance
+mpdplaylist
+pathexec_env.o
+pathexec_run.o
+player
+tcpopen.o
+debian/source
+debian/changelog
+debian/debian.tar.gz
+debian/mpdev.dsc
+debian/mpdev.install
+debian/postinst
+debian/prerm
+debian/rules

@@ -1,0 +1,14 @@
+#!/bin/sh
+#if [ ! -f /etc/debian_version ] ; then
+#	echo "Not a debian or ubuntu distribution" 1>&2
+#	exit 1
+#fi
+make -s -C debian
+mpdev_version=$(cat conf-version)
+/bin/rm -rf $HOME/stage/mpdev
+mkdir -p    $HOME/stage/mpdev-$mpdev_version
+cp -rp .    $HOME/stage/mpdev-$mpdev_version
+cd          $HOME/stage/mpdev-$mpdev_version
+dpkg-buildpackage -tc -b -d
+/bin/rm -rf $HOME/stage/mpdev-$mpdev_version
+ls -lt $HOME/stage

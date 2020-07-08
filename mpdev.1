@@ -1,0 +1,74 @@
+.TH mpdev 1 "December 23, 2009" "manual"
+.SH NAME
+.PP
+mpdev - mpd Event Watcher
+.SH SYNOPSIS
+.PP
+mpdev [\f[I]option\f[]]
+
+.SH DESCRIPTION
+.PP
+mpdev is a mpd event watcher. It connects to mpd, waits for idle events.
+By default it will get the host name and port for mpd from
+\f[B]MPD_HOST\f[] and \f[B]MPD_PORT\f[] environment variables.
+\f[B]MPD_PASSWORD\f[] environment variable can be set to make
+mpdev connect to a password-protected mpd.
+If these environment variables aren't set, mpdev connects to
+localhost on port 6600.
+
+.SH OPTIONS
+.TP
+.B -v
+Set verbose output. You can increase verbosity by specifying it multiple times
+.RS
+.RE
+
+.TP
+\fB-i\fR \fIIP\fR
+IP address of mpd host if different from localhost
+.RS
+.RE
+
+.TP
+\fB-p\fR \fIport\fR
+port on which mpd(1) is listening if different from 6600
+.RS
+.RE
+
+.TP
+\fB-s\fR \fIunix_socket\fR
+Unix domain socket in case you don't want to use \fIIP\fR and \fIport\fR
+.RS
+.RE
+
+.TP
+\fB-r\fR \fIretry_interval\fR
+Retry interval in seconds in case \fBmpd\fR(1) is done
+.RS
+.RE
+
+.SH FILES
+.IP \[bu] 2
+\f[B]~/bin/player\f[] User Script that will be run everytime song changes
+
+.SH SEE ALSO
+.IP \[bu] 2
+\f[B]mpd\f[](1)
+.IP \[bu] 2
+https://github.com/mbhangui/mpdev/
+
+.SH REPORTING BUGS
+.PP
+If you find a bug, please report it at https://github.com/mbhangui/mpdev/issues
+
+.SH COPYRIGHT
+.PP
+Copyright (c) 2020 Manvendra Bhangui <manvendra@indimail.org>
+.PD 0
+.P
+.PD
+Free
+use of this software is granted under the terms of the GNU General
+Public License (GPL).
+.SH AUTHOR
+Manvendra Bhangui <manvendra@indimail.org>
