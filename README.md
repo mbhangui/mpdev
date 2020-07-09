@@ -8,7 +8,6 @@ You can create scripts in $HOME/.mpdev directory. The default installation insta
 1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
 2. updates play counts in the sqlite stats.db
 3. Synchronizes the ratings in the sticker, rompr and the stats db. It also initializes the rating to 3 when you play an unrated song
-```
 
 ## Environment Variables available to hooks
 
@@ -40,7 +39,7 @@ sticker_file                    "/var/lib/mpd/sticker.db"
 The stats database can be created running the `update_stats` program
 
 ```
-CREATE TABLE song(
+CREATE TABLE IF NOT EXISTS song(
         id              INTEGER PRIMARY KEY,
         play_count      INTEGER,
         love            INTEGER,
@@ -67,7 +66,7 @@ CREATE TABLE song(
         karma           INTEGER NOT NULL CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100) DEFAULT 50
 );
 
-CREATE TABLE artist(
+CREATE TABLE IF NOT EXISTS artist(
         id              INTEGER PRIMARY KEY,
         play_count      INTEGER,
         tags            TEXT NOT NULL,
@@ -76,7 +75,7 @@ CREATE TABLE artist(
         kill            INTEGER,
         rating          INTEGER);
 
-CREATE TABLE album(
+CREATE TABLE IF NOT EXISTS album(
         id              INTEGER PRIMARY KEY,
         play_count      INTEGER,
         tags            TEXT NOT NULL,
@@ -86,7 +85,7 @@ CREATE TABLE album(
         kill            INTEGER,
         rating          INTEGER);
 
-CREATE TABLE genre(
+CREATE TABLE IF NOT EXISTS genre(
         id              INTEGER PRIMARY KEY,
         play_count      INTEGER,
         tags            TEXT NOT NULL,
