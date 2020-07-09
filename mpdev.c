@@ -1,5 +1,8 @@
 /*
- * $Log: $
+ * $Log: mpdev.c,v $
+ * Revision 1.1  2020-07-08 14:30:59+05:30  Cprogrammer
+ * Initial revision
+ *
  *
  * mpdev - watch mpd events
  *
@@ -101,9 +104,9 @@ void
 die_read(char *arg)
 {
 	if (arg) {
-		substdio_puts(&sserr, "Requested action aborted: ");
-		out(arg);
-		out(": read error\n");
+		substdio_put(&sserr, "Requested action aborted: ", 26);
+		substdio_puts(&sserr, arg);
+		substdio_put(&sserr, ": read error\n", 13);
 	} else
 		substdio_puts(&sserr, "Requested action aborted: read error\n");
 	substdio_flush(&sserr);
@@ -253,7 +256,7 @@ get_song_details(char **filename, char **last_modified, char **album, char **art
 	mpd_out("currentsong");
 	for (flag = 1;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
-			die_read("currentsog");
+			die_read("currentsong");
 		if (!match && line.len == 0) {
 			if (verbose) {
 				out("EOF current song\n");
@@ -850,7 +853,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: $";
+	static char    *x = "$Id: mpdev.c,v 1.1 2020-07-08 14:30:59+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

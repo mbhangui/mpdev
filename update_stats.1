@@ -1,20 +1,15 @@
-.TH mpdev 1 "December 23, 2009" "manual"
+.TH update_stats 1 "December 23, 2009" "manual"
 .SH NAME
 .PP
-mpdev - mpd Event Watcher
+update_stats - Update stats sqlite db from mpd database
 .SH SYNOPSIS
 .PP
-mpdev [\f[I]option\f[]]
+update_stats [\f[I]option\f[]]
 
 .SH DESCRIPTION
 .PP
-mpdev is a mpd event watcher. It connects to mpd, waits for idle events.
-By default it will get the host name and port for mpd from
-\f[B]MPD_HOST\f[] and \f[B]MPD_PORT\f[] environment variables.
-\f[B]MPD_PASSWORD\f[] environment variable can be set to make
-mpdev connect to a password-protected mpd.
-If these environment variables aren't set, mpdev connects to
-localhost on port 6600.
+\fBupdate_stats\fR creates/updates stats.db from the \fBmpd\fR(1) database.
+It sends the \fIlistinfo\fR command to mpd to get list of all music files.
 
 .SH OPTIONS
 .TP
@@ -42,21 +37,10 @@ Unix domain socket in case you don't want to use \fIIP\fR and \fIport\fR
 .RE
 
 .TP
-\fB-r\fR \fIretry_interval\fR
-Retry interval in seconds in case \fBmpd\fR(1) is done
+\fB-d\fR \fIdb_file_path\fR
+full path to the sqlite3(1) stats database
 .RS
 .RE
-
-.SH FILES
-.IP \[bu] 2
-\f[B]~/bin/player\f[] User Script that will be run everytime song changes
-
-.SH SEE ALSO
-.IP \[bu] 2
-\f[B]mpd\f[](1),
-\f[B]sqlite3\f[](1)
-.IP \[bu] 2
-https://github.com/mbhangui/mpdev/
 
 .SH REPORTING BUGS
 .PP
@@ -73,3 +57,8 @@ use of this software is granted under the terms of the GNU General
 Public License (GPLv2).
 .SH AUTHOR
 Manvendra Bhangui <manvendra@indimail.org>
+
+.SH SEE ALSO
+mpd(1),
+sqlite3(1),
+mpdev(1)

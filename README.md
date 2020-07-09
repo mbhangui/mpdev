@@ -1,58 +1,13 @@
 # mpdev
 music player daemon events daemon
 
-**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks.
+**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/). `mpdev` is work in progress. It doesn't yet have a script to update the `stats` sqlite3 status database.
 
-You can create scripts in $HOME/.mpdev directory. You can have the below shell script as $HOME/.mpdev/player. It will get on a song change.
+You can create scripts in $HOME/.mpdev directory. The default installation installs $HOME/.mpdev/player for the uid 1000. The script does the following
 
-```
-#!/bin/sh
-
-get_mpd_conf_value()
-{
-	grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
-		sed -e 's{"{{g'
-}
-
-get_mpd_rating()
-{
-	uri=`echo $1|sed -e "s{'{''{g"`
-	echo "select value from sticker where type='song' and uri='$uri';" | sqlite3 $sticker_file
-	if [ $? -ne 0 ] ; then
-		echo "error: select value from sticker where type='song' and uri=\"$uri\";" 1>&2
-		exit 1
-	fi
-}
-
-update_stats()
-{
-	uri=`echo $2|sed -e "s{'{''{g"`
-	echo "update song set last_played=$1,rating=$3 where uri='$uri';" | sqlite3 $music_dir/.mpd/stats_dietpi.db
-	if [ $? -ne 0 ] ; then
-		echo "error: update song set last_played=$1,rating=$3 where uri='$uri';" 1>&2
-		exit 1
-	fi
-}
-music_dir=`get_mpd_conf_value music_directory`
-if [ $? -ne 0 ] ; then
-	echo "could not get music directory from mpd.conf" 1>&2
-	exit 1
-fi
-sticker_file=`get_mpd_conf_value sticker_file`
-if [ $? -ne 0 ] ; then
-	echo "could not get sticker database from mpd.conf" 1>&2
-	exit 1
-fi
-
-if [ -n "$MPD_SONG_URI" ] ; then
-	tmval=`date +'%s'`
-	rating=`get_mpd_rating "$MPD_SONG_URI"`
-	if [ -z "$rating" ] ; then
-		rating=0
-	fi
-	update_stats $tmval "$MPD_SONG_URI" "$rating"
-fi
-exit 0
+1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
+2. updates play counts in the sqlite stats.db
+3. Synchronizes the ratings in the sticker, rompr and the stats db. It also initializes the rating to 3 when you play an unrated song
 ```
 
 ## Environment Variables available to hooks
@@ -71,7 +26,7 @@ SONG_POSITION
 SONG_ID
 ```
 
-If you enable the `stats` database, mpdev will update the last\_played field in the stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX.
+If you create the `stats` database, mpdev will update the last\_played field in the stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX.
 
 ```
 #
@@ -80,6 +35,69 @@ If you enable the `stats` database, mpdev will update the last\_played field in 
 #
 sticker_file                    "/var/lib/mpd/sticker.db"
 #
+```
+
+The stats database can be created running the `update_stats` program
+
+```
+CREATE TABLE song(
+        id              INTEGER PRIMARY KEY,
+        play_count      INTEGER,
+        love            INTEGER,
+        kill            INTEGER,
+        rating          INTEGER,
+        tags            TEXT NOT NULL,
+        uri             TEXT UNIQUE NOT NULL,
+        duration        INTEGER,
+        last_modified   INTEGER,
+        artist          TEXT,
+        album           TEXT,
+        title           TEXT,
+        track           TEXT,
+        name            TEXT,
+        genre           TEXT,
+        date            TEXT,
+        composer        TEXT,
+        performer       TEXT,
+        disc            TEXT,
+        mb_artistid     TEXT,
+        mb_albumid      TEXT,
+        mb_trackid      TEXT,
+        last_played     INTEGER,
+        karma           INTEGER NOT NULL CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100) DEFAULT 50
+);
+
+CREATE TABLE artist(
+        id              INTEGER PRIMARY KEY,
+        play_count      INTEGER,
+        tags            TEXT NOT NULL,
+        name            TEXT UNIQUE NOT NULL,
+        love            INTEGER,
+        kill            INTEGER,
+        rating          INTEGER);
+
+CREATE TABLE album(
+        id              INTEGER PRIMARY KEY,
+        play_count      INTEGER,
+        tags            TEXT NOT NULL,
+        artist          TEXT,
+        name            TEXT UNIQUE NOT NULL,
+        love            INTEGER,
+        kill            INTEGER,
+        rating          INTEGER);
+
+CREATE TABLE genre(
+        id              INTEGER PRIMARY KEY,
+        play_count      INTEGER,
+        tags            TEXT NOT NULL,
+        name            TEXT UNIQUE NOT NULL,
+        love            INTEGER,
+        kill            INTEGER,
+        rating          INTEGER);
+CREATE INDEX rating on song(rating);
+CREATE INDEX uri on song(uri);
+CREATE INDEX last_played on song(last_played);
+PRAGMA user_version=11
 ```
 
 The scrobbler modules lastfm-scrobbler, librefm-scrobbler enables scrobbling to last.fm and libre.fm.
@@ -103,7 +121,7 @@ This is done by running the create\_rpm / create\_debian scripts. (Here `version
 
 ```
 $ pwd
-/usr/local/src/mpdev-0.1
+/usr/local/src/mpdev
 $ ./create_rpm
 $ ls -l $HOME/rpmbuild/RPMS/x86_64/mpdev\*
 -rw-rw-r--. 1 mbhangui mbhangui  290567 Feb  8 09:05 mpdev-0.1-1.1.fc31.x86_64.rpm
@@ -112,7 +130,7 @@ $ ls -l $HOME/rpmbuild/RPMS/x86_64/mpdev\*
 ## Create debian package
 ```
 $ pwd
-/usr/local/src/mpdev-0.1
+/usr/local/src/mpdev
 $ ./create_debian
 $ ls -l $HOME/stage/mpdev*
 -rw-r--r--  1 mbhangui mbhangui  558 Jul  2 19:30 mpdev.1-1.1_amd64.buildinfo
@@ -124,10 +142,9 @@ $ ls -l $HOME/stage/mpdev*
 
 Prebuilt binaries using openSUSE Build Service are available for mpdev for
 
-* Debian (including arm images for Debian 10 which work for RaspberryPI and Allo Sparky)
+* Debian (including arm images for Debian 10 which work (and tested) for RaspberryPI (model 2,3 & 4) and Allo Sparky)
 * Fedora
-* Ubuntu
 
 Use the below url for installation
 
-https://software.opensuse.org//download.html?project=home%3Ambhangui&package=mpdev
+https://software.opensuse.org//download.html?project=home%3Ambhangui%3Adietpi&package=mpdev

@@ -15,17 +15,22 @@ mpdevsysconfdir=@sysconfdir@/mpdev
 mpdevbindir=@prefix@/bin
 mpdevsbindir=@prefix@/sbin
 
-mpdevbin_PROGRAMS = mpdev
-mpdevbin_SCRIPTS=librefm-scrobbler lastfm-scrobbler mpdplaylist
-libexec_SCRIPTS=mpdev_maintenance player create_service
-noinst_DATA=mpdev.spec
-man_MANS=mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1
+mpdevbin_PROGRAMS = mpdev update_stats
+mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist
+libexec_SCRIPTS = mpdev_maintenance player create_service
+noinst_DATA = mpdev.spec
+man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
+		 update_stats.1
 
 MOSTLYCLEANFILES = mpdev player mpdev_maintenance librefm-scrobbler \
-				   lastfm-scrobbler mpdplaylist choose haveip6.h
+				   lastfm-scrobbler mpdplaylist choose haveip6.h \
+				   create_service
 
 mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
 mpdev_LDADD = $(LIB_QMAIL)
+
+update_stats_SOURCES = update_stats.c tcpopen.c replacestr.c
+update_stats_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
 
 edit = sed \
 	-e 's}@PACKAGE\@}$(PACKAGE)}g' \
@@ -79,6 +84,10 @@ mpdplaylist: mpdplaylist.in
 	chmod +x $@
 
 create_service: create_service.in
+	$(edit) $@.in > $@
+	chmod +x $@
+
+create_stats: create_stats.in
 	$(edit) $@.in > $@
 	chmod +x $@
 

@@ -15,7 +15,6 @@ autom4te.cache
 /aclocal.m4
 /compile
 /config.guess
-/config.h.in
 /config.log
 /config.status
 /config.sub
@@ -74,3 +73,9 @@ debian/mpdev.install
 debian/postinst
 debian/prerm
 debian/rules
+RCS
+config.h
+create_stats
+update_stats
+update_stats.o
+replacestr.o

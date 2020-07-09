@@ -25,6 +25,11 @@ if test " $noqmail" = " t"
 then
   AC_MSG_ERROR(Could not find qmail library.)
 fi
+AC_CHECK_LIB(sqlite3, sqlite3_libversion, [AC_SUBST([LIB_SQLITE3], ["-lsqlite3"]) AC_DEFINE([HAVE_SQLITE3], [1],[sqlite3 Library])],nosqlite3=t,)
+if test " $nosqlite3" = " t"
+then
+  AC_MSG_ERROR(Could not find sqlite3 library.)
+fi
 
 # Checks for header files.
 AC_CHECK_HEADERS([string.h unistd.h errno.h fcntl.h time.h sys/time.h stdlib.h sys/types.h sys/stat.h])

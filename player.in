@@ -1,8 +1,11 @@
 #!/bin/sh
 #
-# $Log: $
+# $Log: player.in,v $
+# Revision 1.1  2020-07-08 10:59:46+05:30  Cprogrammer
+# Initial revision
 #
-# $Id: $
+#
+# $Id: player.in,v 1.1 2020-07-08 10:59:46+05:30 Cprogrammer Exp mbhangui $
 #
 get_TTindex()
 {
@@ -52,7 +55,7 @@ update_sticker()
 update_stats()
 {
     uri=`echo "$2" | sed -e "s{'{''{g"`
-	sqlite3 -batch $music_dir/.mpd/stats.db "UPDATE song set last_played=$1,rating=$3 where uri='$uri';"
+	sqlite3 -batch $music_dir/.mpd/stats.db "UPDATE song set last_played=$1,play_count=play_count+1,rating=$3 where uri='$uri';"
     if [ $? -ne 0 ] ; then
         echo "ERROR: UPDATE song set last_played=$1,rating=$3 where uri='$uri';" 1>&2
         return 1
@@ -95,14 +98,14 @@ update_song()
 	rating=`get_mpd_rating "$1"`
 	if [ -z "$rating" ] ; then
 		rating=6 # assign average rating of 3 for unrated music
-		echo "INSERT Sticker $1 rating=$rating"
+		echo "INSERT sticker tmval=$tmval rating=$rating song=[$1]"
 		insert_sticker "$1" "$rating"
 	fi
 	if [ $# -eq 2 ] ; then
-		echo "EndSong tmval=$tmval rating=$rating song=[$1]"
+		echo "EndSong stat   tmval=$tmval rating=$rating song=[$1]"
 		update_stats $tmval "$1" "$rating"
 	else
-		echo "NewSong tmval=$tmval rating=$rating song=[$1]"
+		echo "NewSong stat   tmval=$tmval rating=$rating song=[$1]"
 		update_rompr "$1" "$rating"
 	fi
 }

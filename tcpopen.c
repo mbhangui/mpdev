@@ -1,5 +1,8 @@
 /*
  * $Log: tcpopen.c,v $
+ * Revision 1.6  2020-07-03 22:21:10+05:30  Cprogrammer
+ * fixed SIGSEGV if a readonly string was used for host
+ *
  * Revision 1.4  2018-05-29 21:47:11+05:30  Cprogrammer
  * removed call to gethostbyname() in ipv6 code
  *
@@ -165,7 +168,7 @@ tcpopen(host, service, port) /*- Thanks to Richard's Steven */
 	} else
 		serv[fmt_ulong(serv, port)] = 0;
 	if ((retval = getaddrinfo(hostptr, serv, &hints, &res0)))
-		strerr_die7x(111, "tcpopen", "getadrinfo: ", hostptr, ": ", serv, ":", (char *) gai_strerror(retval));
+		strerr_die7x(111, "tcpopen: ", "getaddrinfo: ", hostptr, ": ", serv, ":", (char *) gai_strerror(retval));
 	for (fd = -1, res = res0; res && fd == -1; res = res->ai_next) {
 		for (;;) {
 			if (port >= 0) {
@@ -334,6 +337,6 @@ tcpopen(host, service, port) /*- Thanks to Richard's Steven */
 void
 getversion_tcpopen_c()
 {
-	static char    *x = "$Id: tcpopen.c,v 1.4 2018-05-29 21:47:11+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: tcpopen.c,v 1.6 2020-07-03 22:21:10+05:30 Cprogrammer Exp mbhangui $";
 	x++;
 }
