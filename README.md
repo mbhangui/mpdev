@@ -1,7 +1,7 @@
 # mpdev
 music player daemon events daemon
 
-**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/). `mpdev` is work in progress. It doesn't yet have a script to update the `stats` sqlite3 status database.
+**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/). `mpdev` is work in progress.
 
 You can create scripts in $HOME/.mpdev directory. The default installation installs $HOME/.mpdev/player for the uid 1000. The script does the following
 
