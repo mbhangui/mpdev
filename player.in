@@ -1,11 +1,14 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.2  2020-07-13 01:04:53+05:30  Cprogrammer
+# add stat entry without need for update_stats
+#
 # Revision 1.1  2020-07-08 10:59:46+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: player.in,v 1.1 2020-07-08 10:59:46+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.2 2020-07-13 01:04:53+05:30 Cprogrammer Exp mbhangui $
 #
 get_TTindex()
 {
@@ -35,9 +38,10 @@ get_mpd_rating()
 insert_sticker()
 {
     uri=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $sticker_file "insert into sticker values('song', '$uri', 'rating', $2);"
+	rating=$2
+	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker values('song', '$uri', 'rating', $rating);"
     if [ $? -ne 0 ] ; then
-		echo "error: INSERT into sticker values('song', '$uri', 'rating',$2);" 1>&2
+		echo "error: INSERT into sticker values('song', '$uri', 'rating',$rating);" 1>&2
         return 1
     fi
 }
@@ -52,10 +56,38 @@ update_sticker()
     fi
 }
 
+insert_stats()
+{
+	# SONG_LAST_MODIFIED: last_modified
+	# SONG_ALBUM: album
+	# SONG_ARTIST: artist
+	# SONG_DATE: date
+	# SONG_GENRE: genre
+	# SONG_TITLE: title
+	# SONG_TRACK: track
+	# SONG_DURATION: duration
+
+	last_played=$1
+    uri=`echo "$2" | sed -e "s{'{''{g"`
+	ARTIST=`echo "$SONG_ARTIST" | sed -e "s{'{''{g"`
+	ALBUM=`echo "$SONG_ALBUM" | sed -e "s{'{''{g"`
+	TITLE=`echo "$SONG_TITLE" | sed -e "s{'{''{g"`
+	rating=$3
+	sqlite3 -batch $music_dir/.mpd/stats.db "INSERT or IGNORE into \
+		song (uri, play_count, last_played, rating, duration,last_modified,artist,album,title,track,genre,date) \
+		values ('$uri',0,$last_played,$rating,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
+    if [ $? -ne 0 ] ; then
+		echo "error: \"INSERT or IGNORE into song (uri, play_count, last_played, rating, duration,last_modified,artist,album,title,track,genre,date) values ('$uri',0,$last_played,$rating,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');\"" 1>&2
+        return 1
+	fi
+}
+
 update_stats()
 {
+	last_played=$1
     uri=`echo "$2" | sed -e "s{'{''{g"`
-	sqlite3 -batch $music_dir/.mpd/stats.db "UPDATE song set last_played=$1,play_count=play_count+1,rating=$3 where uri='$uri';"
+	rating=$3
+	sqlite3 -batch $music_dir/.mpd/stats.db "UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$rating where uri='$uri';"
     if [ $? -ne 0 ] ; then
         echo "ERROR: UPDATE song set last_played=$1,rating=$3 where uri='$uri';" 1>&2
         return 1
@@ -94,19 +126,21 @@ update_rompr()
 
 update_song()
 {
+	uri="$1"
     tmval=`date +'%s'`
-	rating=`get_mpd_rating "$1"`
+	rating=`get_mpd_rating "$uri"`
 	if [ -z "$rating" ] ; then
 		rating=6 # assign average rating of 3 for unrated music
 		echo "INSERT sticker tmval=$tmval rating=$rating song=[$1]"
-		insert_sticker "$1" "$rating"
+		insert_sticker "$uri" "$rating"
 	fi
 	if [ $# -eq 2 ] ; then
 		echo "EndSong stat   tmval=$tmval rating=$rating song=[$1]"
-		update_stats $tmval "$1" "$rating"
+		update_stats $tmval "$uri" "$rating"
 	else
 		echo "NewSong stat   tmval=$tmval rating=$rating song=[$1]"
-		update_rompr "$1" "$rating"
+		insert_stats 0 "$uri" "$rating"
+		update_rompr "$uri" "$rating"
 	fi
 }
 
@@ -189,7 +223,7 @@ if [ -n "$SONG_TITLE" ] ; then
     		tmval=`date +'%s'`
 			echo "$SONG_URI"
 			echo "$tmval"
-			echo "$MPD_STATUS_TOTAL_TIME"
+			echo "$SONG_DURATION"
 		) > /tmp/MPD_SONG_URI
 	fi
 fi
@@ -200,4 +234,3 @@ if [ $VERBOSE -gt 0 ] ; then
 	) >> /tmp/player.env
 fi
 exit 0
-

@@ -42,6 +42,34 @@ full path to the sqlite3(1) stats database
 .RS
 .RE
 
+.TP
+\fB-j\fR 
+Puts the journal in volatile memory. This saves disk I/O but at the expense
+of database safety and integrity. If the application using SQLite crashes
+in the middle of a transaction when the MEMORY journaling mode is set, then
+the database file will very likely go corrupt.
+.RS
+.RE
+
+.TP
+\fB-t\fR 
+Turns on transaction mode at the beginning. This improves performance. But if
+the application crashes in the middle, all new changes will be lost
+.RS
+.RE
+
+.TP
+\fB-S\fR 
+Turns Off synchronous mode.
+With synchronous OFF, \fBupdate_stats\fR continues without syncing as soon
+as it has handed data off to the operating system. In case \fBupdate_stats\fR 
+crashes, the data will be safe, but the database might become corrupted if
+the operating system crashes or the computer loses power before that data
+has been written to the disk. On the other hand, commits can be orders of
+magnitude faster with synchronous OFF.
+.RS
+.RE
+
 .SH REPORTING BUGS
 .PP
 If you find a bug, please report it at https://github.com/mbhangui/mpdev/issues

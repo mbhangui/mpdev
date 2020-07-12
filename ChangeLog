@@ -1,4 +1,7 @@
 *
 Release 0.2 Start 02/03/2020
 02/03/2020
-1.  moved common/reusable functions from qmail to libqmail and link
+01. Initial Release
+02. added update_stats utility to maintain stats database
+03. mpdev.c: set SONG_DURATION as seconds since epoch
+04. player can now on its own add entries to stat database

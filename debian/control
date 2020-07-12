@@ -2,7 +2,7 @@ Source: mpdev
 Section: sound
 Priority: optional
 Maintainer: Manvendra Bhangui <mpdev@indimail.org>
-Build-Depends: cdbs, debhelper (>= 9), gcc, g++, automake, autoconf, m4, gawk, libqmail-dev, libssl-dev, pkg-config, lsb-release
+Build-Depends: cdbs, debhelper (>= 9), gcc, g++, automake, autoconf, m4, gawk, libqmail-dev, libssl-dev, libsqlite3-dev, pkg-config, lsb-release
 Standards-Version: 4.5.0
 Homepage: https://github.com/mbhangui/mpdev
 

@@ -29,7 +29,7 @@ MOSTLYCLEANFILES = mpdev player mpdev_maintenance librefm-scrobbler \
 mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
 mpdev_LDADD = $(LIB_QMAIL)
 
-update_stats_SOURCES = update_stats.c tcpopen.c replacestr.c
+update_stats_SOURCES = update_stats.c tcpopen.c
 update_stats_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
 
 edit = sed \

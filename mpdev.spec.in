@@ -34,6 +34,11 @@ BuildRequires: -post-build-checks
 %endif
 %endif
 BuildRequires: libqmail-devel libqmail
+%if %{defined suse_version} || %{defined sles_version}
+BuildRequires: libsqlite3-0 sqlite3-devel
+%else
+BuildRequires: sqlite-libs sqlite-devel
+%endif
 Requires: user(qmaill)
 Requires: group(nofiles)
 Requires: /usr/bin/mpd /usr/bin/mpc /usr/bin/sqlite3 daemontools
