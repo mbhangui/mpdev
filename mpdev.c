@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.2  2020-07-13 01:04:17+05:30  Cprogrammer
+ * set SONG_DURATION as seconds since epoch
+ *
  * Revision 1.1  2020-07-08 14:30:59+05:30  Cprogrammer
  * Initial revision
  *
@@ -13,6 +16,9 @@
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -39,6 +45,7 @@
 #include "pathexec.h"
 #include "tcpopen.h"
 
+extern char    *strptime(const char *, const char *, struct tm *);
 ssize_t         safewrite(int, char *, int);
 ssize_t         saferead(int, char *, int);
 
@@ -216,19 +223,19 @@ safewrite(int fd, char *buf, int len)
  * Id: 1
  * OK
  */
-static stralloc filename_s = {0}, last_modified_s = {0}, album_s = {0},
+static stralloc uri_s = {0}, last_modified_s = {0}, album_s = {0},
 	artist_s = {0}, date_s = {0}, genre_s = {0}, title_s = {0}, id_s = {0},
 	track_s = {0}, duration_s = {0}, position_s = {0}, response_s = {0};
 
 int
-get_song_details(char **filename, char **last_modified, char **album, char **artist,
+get_song_details(char **uri, char **last_modified, char **album, char **artist,
 	char **date, char **genre, char **title, char **track, char **duration,
 	time_t *duration_i, int *pos, unsigned long *id, char **response)
 {
 	int             match, flag;
 
-	if (filename)
-		*filename = 0;
+	if (uri)
+		*uri = 0;
 	if (last_modified)
 		*last_modified = 0;
 	if (album)
@@ -274,10 +281,10 @@ get_song_details(char **filename, char **last_modified, char **album, char **art
 		}
 		line.len--;
 		line.s[line.len] = 0;
-		if (filename && !str_diffn(line.s, "file: ", 6)) {
-			if (!stralloc_copyb(&filename_s, line.s + 6, line.len - 6) || !stralloc_0(&filename_s))
+		if (uri && !str_diffn(line.s, "file: ", 6)) {
+			if (!stralloc_copyb(&uri_s, line.s + 6, line.len - 6) || !stralloc_0(&uri_s))
 				die_nomem();
-			*filename = filename_s.s;
+			*uri = uri_s.s;
 		} else
 		if (last_modified && !str_diffn(line.s, "Last-Modified: ", 15)) {
 			if (!stralloc_copyb(&last_modified_s, line.s + 15, line.len - 15) || !stralloc_0(&last_modified_s))
@@ -576,7 +583,7 @@ do_idle()
 }
 
 void
-print_song_details(char *filename, char *last_modified, char *album, char *artist,
+print_song_details(char *uri, char *last_modified, char *album, char *artist,
 	char *date, char *genre, char *title, char *track, char *duration,
 	time_t duration_i, int pos, unsigned long id, char *response)
 {
@@ -591,11 +598,11 @@ print_song_details(char *filename, char *last_modified, char *album, char *artis
 		out(strnum);
 		out("\n");
 	}
-	if (filename) {
+	if (uri) {
 		if (!flag++)
 			print_time(&ssout);
 		out("file: ");
-		out(filename);
+		out(uri);
 		out("\n");
 	}
 	if (last_modified) {
@@ -687,9 +694,21 @@ submit_song(int verbose, char *cmmd)
 void
 set_environ()
 {
-	if (filename_s.len && !env_put2("SONG_URI", filename_s.s))
+	struct tm       tm = {0};
+	time_t          mod_time;
+
+	if (uri_s.len && !env_put2("SONG_URI", uri_s.s))
 		die_nomem();
-	if (last_modified_s.len && !env_put2("SONG_LAST_MODIFIED", last_modified_s.s))
+	if (!strptime(last_modified_s.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
+		strerr_warn4("uri: ", uri_s.s, ": invalid timestamp: ", last_modified_s.s, 0);
+		mod_time = time(0);
+	} else
+	if (!(mod_time = mktime(&tm))) {
+		strerr_warn4("uri: ", uri_s.s, ": invalid timestamp: ", last_modified_s.s, 0);
+		mod_time = time(0);
+	}
+	strnum[fmt_ulong(strnum, mod_time)] = 0;
+	if (last_modified_s.len && !env_put2("SONG_LAST_MODIFIED", strnum))
 		die_nomem();
 	if (album_s.len && !env_put2("SONG_ALBUM", album_s.s))
 		die_nomem();
@@ -715,7 +734,7 @@ int
 main(int argc, char **argv)
 {
 	int             i, opt, pos, sock, port_num = 6600, retry_interval = 60, connection_num;
-	char           *mpd_socket, *filename, *last_modified, *album, *artist,
+	char           *mpd_socket, *uri, *last_modified, *album, *artist,
 				   *date, *genre, *title, *track, *duration, *response, *mpd_host, *ptr;
 	char            port[FMT_ULONG], mpdinbuf[1024], mpdoutbuf[512], ssoutbuf[512], sserrbuf[512];
 	unsigned long   id, prev_id1 = 0, prev_id2 = 0;
@@ -812,7 +831,7 @@ main(int argc, char **argv)
 		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 		prev_id1 = prev_id2 = 0;
 		for (;;) {
-			if ((i = get_song_details(&filename, &last_modified, &album, &artist, &date, &genre,
+			if ((i = get_song_details(&uri, &last_modified, &album, &artist, &date, &genre,
 				&title, &track, &duration, &duration_i, &pos, &id, &response)) == 1) {
 				print_time(&sserr);
 				err_out("failed to get song details\n");
@@ -832,7 +851,7 @@ main(int argc, char **argv)
 			prev_id1 = id;
 			if (!prev_id2 || (id && prev_id2 != id)) {
 				if (verbose == 3) {
-					print_song_details(filename, last_modified, album, artist,
+					print_song_details(uri, last_modified, album, artist,
 						date, genre, title, track, duration, duration_i,
 						pos, id, response);
 					flush();
@@ -853,7 +872,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.1 2020-07-08 14:30:59+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.2 2020-07-13 01:04:17+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
