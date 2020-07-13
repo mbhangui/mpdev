@@ -1,13 +1,16 @@
 # mpdev
+
 music player daemon events daemon
 
-**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/). `mpdev` is work in progress.
+**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/).
 
 You can create scripts in $HOME/.mpdev directory. The default installation installs $HOME/.mpdev/player for the uid 1000. The script does the following
 
 1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
 2. updates play counts in the sqlite stats.db
 3. Synchronizes the ratings in the sticker, rompr and the stats db. It also initializes the rating to 3 when you play an unrated song
+
+The **mpdev** package also comes with `update_stats` and `cleanup` programs that help in maintaining the sqlite databases `stats.db` and `sticker.db`
 
 ## Environment Variables available to hooks
 
@@ -42,10 +45,7 @@ The stats database can be created running the `update_stats` program
 CREATE TABLE IF NOT EXISTS song(
         id              INTEGER PRIMARY KEY,
         play_count      INTEGER,
-        love            INTEGER,
-        kill            INTEGER,
         rating          INTEGER,
-        tags            TEXT NOT NULL,
         uri             TEXT UNIQUE NOT NULL,
         duration        INTEGER,
         last_modified   INTEGER,
@@ -59,44 +59,14 @@ CREATE TABLE IF NOT EXISTS song(
         composer        TEXT,
         performer       TEXT,
         disc            TEXT,
-        mb_artistid     TEXT,
-        mb_albumid      TEXT,
-        mb_trackid      TEXT,
         last_played     INTEGER,
         karma           INTEGER NOT NULL CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100) DEFAULT 50
 );
 
-CREATE TABLE IF NOT EXISTS artist(
-        id              INTEGER PRIMARY KEY,
-        play_count      INTEGER,
-        tags            TEXT NOT NULL,
-        name            TEXT UNIQUE NOT NULL,
-        love            INTEGER,
-        kill            INTEGER,
-        rating          INTEGER);
-
-CREATE TABLE IF NOT EXISTS album(
-        id              INTEGER PRIMARY KEY,
-        play_count      INTEGER,
-        tags            TEXT NOT NULL,
-        artist          TEXT,
-        name            TEXT UNIQUE NOT NULL,
-        love            INTEGER,
-        kill            INTEGER,
-        rating          INTEGER);
-
-CREATE TABLE IF NOT EXISTS genre(
-        id              INTEGER PRIMARY KEY,
-        play_count      INTEGER,
-        tags            TEXT NOT NULL,
-        name            TEXT UNIQUE NOT NULL,
-        love            INTEGER,
-        kill            INTEGER,
-        rating          INTEGER);
 CREATE INDEX rating on song(rating);
 CREATE INDEX uri on song(uri);
 CREATE INDEX last_played on song(last_played);
-PRAGMA user_version=11
+CREATE INDEX last_modified on song(last_modified);
 ```
 
 The scrobbler modules lastfm-scrobbler, librefm-scrobbler enables scrobbling to last.fm and libre.fm.
@@ -141,7 +111,7 @@ $ ls -l $HOME/stage/mpdev*
 
 Prebuilt binaries using openSUSE Build Service are available for mpdev for
 
-* Debian (including arm images for Debian 10 which work (and tested) for RaspberryPI (model 2,3 & 4) and Allo Sparky)
+* Debian (including ARM images for Debian 10 which work (and tested) for RaspberryPI (model 2,3 & 4) and Allo Sparky)
 * Fedora
 
 Use the below url for installation
