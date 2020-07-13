@@ -1,5 +1,8 @@
 /*
  * $Log: update_stats.c,v $
+ * Revision 1.3  2020-07-13 22:36:28+05:30  Cprogrammer
+ * fixed usage string
+ *
  * Revision 1.2  2020-07-13 01:05:17+05:30  Cprogrammer
  * massive performance improvement
  *
@@ -18,7 +21,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -43,6 +45,10 @@
 #include <env.h>
 #include "tcpopen.h"
 
+#ifndef	lint
+static char     sccsid[] = "$Id: update_stats.c,v 1.3 2020-07-13 22:36:28+05:30 Cprogrammer Exp mbhangui $";
+#endif
+
 extern char    *strptime(const char *, const char *, struct tm *);
 ssize_t         safewrite(int, char *, int);
 ssize_t         saferead(int, char *, int);
@@ -53,15 +59,15 @@ char            strnum[FMT_ULONG];
 int             timeout = 1200, verbose;
 static sqlite3 *db;
 char           *usage =
-				"usage: mpdev [-i IP/Host | -s unix_socket] [-p port] [-r retry_interval]\n"
-				"        -i   IP   (IP address of MPD host. default 127.0.0.1)\n"
-				"        -p   port (MPD listening port. default 6600)\n"
-				"        -s   unix domain socket path\n"
-				"        -d   sqlite3 dbfile path\n"
-				"        -j   Enable Journal in Memory\n"
-				"        -S   Enable Synch Mode\n"
-				"        -t   Enabel Transaction Mode\n"
-				"        -v   verbose output";
+				"usage: update_stats [-i IP/Host | -s unix_socket] [-p port]\n"
+				" -i IP     - IP address of MPD host. default 127.0.0.1\n"
+				" -p port   - MPD listening port. default 6600\n"
+				" -s socket - unix domain socket path\n"
+				" -d        - sqlite3 dbfile path\n"
+				" -j        - Enable Journal in Memory\n"
+				" -S        - Enable Synch Mode\n"
+				" -t        - Enable Transaction Mode\n"
+				" -v        - verbose output";
 
 void
 die_write(char *arg)
@@ -326,7 +332,6 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 	char           *sql, *err_msg;
 	sqlite3_stmt   *res;
 
-	/*----------------------- sqlite ----------------------*/
 	if (sqlite3_open(database, &db) != SQLITE_OK)
 		strerr_die3x(111, database, ": ", (char *) sqlite3_errmsg(db));
 	if (!synch_mode) {
@@ -338,7 +343,8 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 			sqlite3_close(db);
 			strerr_die3x(111, database, ": PRAGMA synchronous = OFF: ", err_msg);
 		}
-		sqlite3_free(err_msg);
+		if (err_msg)
+			sqlite3_free(err_msg);
 	} else
 	if (verbose) {
 		out("PRAGMA synchronous  = NORMAL\n");
@@ -353,7 +359,8 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 			sqlite3_close(db);
 			strerr_die3x(111, database, ": PRAGMA journal_mode = MEMORY: ", err_msg);
 		}
-		sqlite3_free(err_msg);
+		if (err_msg)
+			sqlite3_free(err_msg);
 	} else
 	if (verbose) {
 		out("PRAGMA journal_mode = DELETE\n");
@@ -368,7 +375,8 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 			sqlite3_close(db);
 			strerr_die3x(111, database, ": BEGIN TRANSACTION: ", err_msg);
 		}
-		sqlite3_free(err_msg);
+		if (err_msg)
+			sqlite3_free(err_msg);
 	}
 	sql = "DROP INDEX IF EXISTS rating;\n"
 		  "DROP INDEX IF EXISTS uri;\n"
@@ -385,18 +393,12 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 			flush();
 		}
 	}
-	sqlite3_free(err_msg);
+	if (err_msg)
+		sqlite3_free(err_msg);
 	sql = "CREATE TABLE IF NOT EXISTS song(\n"
         "id              INTEGER PRIMARY KEY,\n"
         "play_count      INTEGER,\n"
-#if 0
-        "love            INTEGER,\n"
-        "kill            INTEGER,\n"
-#endif
         "rating          INTEGER,\n"
-#if 0
-        "tags            TEXT NOT NULL,\n"
-#endif
         "uri             TEXT UNIQUE NOT NULL,\n"
         "duration        INTEGER,\n"
         "last_modified   INTEGER,\n"
@@ -411,11 +413,6 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
         "performer       TEXT,\n"
         "disc            TEXT,\n"
         "last_played     INTEGER,\n"
-#if 0
-        "mb_artistid     TEXT,\n"
-        "mb_albumid      TEXT,\n"
-        "mb_trackid      TEXT,\n"
-#endif
         "karma           INTEGER NOT NULL CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100) DEFAULT 50\n"
 	");";
 	if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
@@ -429,22 +426,23 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 			flush();
 		}
 	}
-	sqlite3_free(err_msg);
-	prepare_stmt();
-	if (sqlite3_prepare_v2(db, sql_str.s, -1, &res, 0) != SQLITE_OK) {
+	if (err_msg)
+		sqlite3_free(err_msg);
+	sql = "INSERT or IGNORE into song (uri, artist, album, title, track, genre, date, last_modified, duration)"
+		  " values (@uri, @artist, @album, @title, @track, @genre, @date, @last_modified, @duration)";
+	if (sqlite3_prepare_v2(db, sql, -1, &res, 0) != SQLITE_OK) {
 		sqlite3_close(db);
-		strerr_die3x(111, database, ": sqlite3_prepare_v2: ", (char *) sqlite3_errmsg(db));
+		strerr_die5x(111, database, ": sqlite3_prepare_v2: ", sql, ": ", (char *) sqlite3_errmsg(db));
 	}
-	/*----------------------- sqlite ----------------------*/
 	return (res);
 }
 
 int
-stats_database_end(char *database, int transaction_mode)
+stats_database_end(char *database, sqlite3_stmt *res, int transaction_mode)
 {
 	char           *sql, *err_msg;
+	int             i;
 
-	/*----------------------- sqlite ----------------------*/
 	sql = "CREATE INDEX IF NOT EXISTS rating        on song(rating);\n"
 		  "CREATE INDEX IF NOT EXISTS uri           on song(uri);\n"
 		  "CREATE INDEX IF NOT EXISTS last_played   on song(last_played);\n"
@@ -460,7 +458,8 @@ stats_database_end(char *database, int transaction_mode)
 			flush();
 		}
 	}
-	sqlite3_free(err_msg);
+	if (err_msg)
+		sqlite3_free(err_msg);
 	if (transaction_mode) {
 		if (verbose) {
 			out("END TRANSACTION\n");
@@ -470,11 +469,14 @@ stats_database_end(char *database, int transaction_mode)
 			sqlite3_close(db);
 			strerr_die3x(111, database, ": end transaction: ", err_msg);
 		}
-		sqlite3_free(err_msg);
+		if (err_msg)
+			sqlite3_free(err_msg);
 	}
-	return(sqlite3_total_changes(db));
+	i = sqlite3_total_changes(db);
+	if (sqlite3_finalize(res) != SQLITE_OK)
+		strerr_warn2("uri: ", "sqlite3_finalize: ", (char *) sqlite3_errmsg(db));
 	sqlite3_close(db);
-	/*----------------------- sqlite ----------------------*/
+	return (i);
 }
 
 int
@@ -501,11 +503,11 @@ main(int argc, char **argv)
 	database = (char *) 0;
 	while ((opt = getopt(argc, argv, "vjSPth:p:s:d:")) != opteof) {
 		switch (opt) {
-		case 'h':
-			mpd_host = optarg;
-			break;
 		case 'd':
 			database = optarg;
+			break;
+		case 'h':
+			mpd_host = optarg;
 			break;
 		case 's':
 			mpd_socket = optarg;
@@ -536,12 +538,10 @@ main(int argc, char **argv)
 	localtime_r(&t, &tm);
 	if (!env_put2("TZ", (char *) tm.tm_zone))
 		die_nomem();
-	if (mpd_socket && port_num != 6600) {
+	if (mpd_socket && port_num != 6600)
 		strerr_die1x(100, "you can't specify both socket & port");
-	}
-	if (mpd_socket && str_diff(mpd_host, "127.0.0.1")) {
+	if (mpd_socket && str_diff(mpd_host, "127.0.0.1"))
 		strerr_die1x(100, "you can't specify both socket & IP");
-	}
 	port[fmt_ulong(port, port_num)] = 0;
 	if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
 		if (mpd_socket)
@@ -622,7 +622,7 @@ main(int argc, char **argv)
 			date.len--;
 		}
 	}
-	row_count = stats_database_end(database, transaction_mode);
+	row_count = stats_database_end(database, res, transaction_mode);
 	out("Processed ");
 	strnum[fmt_ulong(strnum, processed)] = 0;
 	out(strnum);

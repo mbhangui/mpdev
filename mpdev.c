@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.3  2020-07-13 22:33:38+05:30  Cprogrammer
+ * fixed usage string
+ *
  * Revision 1.2  2020-07-13 01:04:17+05:30  Cprogrammer
  * set SONG_DURATION as seconds since epoch
  *
@@ -45,6 +48,10 @@
 #include "pathexec.h"
 #include "tcpopen.h"
 
+#ifndef	lint
+static char     sccsid[] = "$Id: mpdev.c,v 1.3 2020-07-13 22:33:38+05:30 Cprogrammer Exp mbhangui $";
+#endif
+
 extern char    *strptime(const char *, const char *, struct tm *);
 ssize_t         safewrite(int, char *, int);
 ssize_t         saferead(int, char *, int);
@@ -63,13 +70,13 @@ char           *player_cmd[3] = {0, 0, 0};
 
 char           *usage =
 				"usage: mpdev [-i IP/Host | -s unix_socket] [-p port] [-r retry_interval]\n"
-				"        -i   IP   (IP address of MPD host. default 127.0.0.1)\n"
-				"        -p   port (MPD listening port. default 6600)\n"
-				"        -s   unix domain socket path\n"
-				"        -v   output from executed scripts\n"
-				"        -vv  output from mpd events\n"
-				"        -vvv high verbose output\n"
-				"        -r   retry_interval (retry interval if mpd host is down)";
+				" -i IP    - IP address of MPD host. default 127.0.0.1\n"
+				" -p port  - MPD listening port. default 6600\n"
+				" -s unix  - domain socket path\n"
+				" -r retry - retry interval if mpd host is down\n"
+				" -v       - output from executed scripts\n"
+				" -vv      - output from mpd events\n"
+				" -vvv     - high verbose output\n";
 
 void
 die_write()
@@ -872,7 +879,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.2 2020-07-13 01:04:17+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.3 2020-07-13 22:33:38+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

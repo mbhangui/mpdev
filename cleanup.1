@@ -1,0 +1,104 @@
+.TH cleanup 1 "Jul 13, 2020" "manual"
+.SH NAME
+.PP
+cleanup - cleanup stats / sticker mpd database entries
+.SH SYNOPSIS
+.PP
+cleanup [\f[I]option\f[]]
+
+.SH DESCRIPTION
+.PP
+\fBcleanup\fR(1) cleans the stats.db or sticker.db sqlite database by
+removing entries that do not correspond to a valid path to a music file.
+
+It can operate using either of the two modes below
+
+.EX
+1. Check the presence of a file by using the access(2) system call
+2. Check if an entry exists in the mpd(1) database.
+.EE
+
+Checking against the mpd(1) database is faster than using the access(2) call.
+However, if the mpd(1) database has not been updated, there could be entries
+in the mpd(1) database which do not correspond to any music file on the disk.
+You can use the mpc(1) update command to update the mpd(1) database before
+using the cleanup(1) command.
+
+Examples
+
+.EX
+$ cleanup -c -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/stats.db
+$ cleanup -C -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/sticker.db
+.EE
+
+.SH OPTIONS
+.TP 3
+.B -v
+Set verbose output. You can increase verbosity by specifying it multiple times
+.RS
+.RE
+
+.TP 3
+\fB-i\fR \fIIP\fR
+IP address of mpd host if different from localhost
+.RS
+.RE
+
+.TP 3
+\fB-p\fR \fIport\fR
+port on which mpd(1) is listening if different from 6600
+.RS
+.RE
+
+.TP 3
+\fB-s\fR \fIunix_socket\fR
+Unix domain socket in case you don't want to use \fIIP\fR and \fIport\fR
+.RS
+.RE
+
+.TP 3
+\fB-d\fR \fIdb_file_path\fR
+full path to the sqlite3(1) stats database
+.RS
+.RE
+
+.TP 3
+\fB-m\fR \fImusic_directory\fR
+Full path to the \fImusic_directory\fR in the mpd.conf(5) configuration file.
+.RS
+.RE
+
+.TP 3
+.B -c
+Clean entries from the stats.db sqlite database
+.RS
+.RE
+
+.TP 3
+.B -C
+Clean entries from the sticker.db sqlite database
+.RS
+.RE
+
+.SH REPORTING BUGS
+.PP
+If you find a bug, please report it at https://github.com/mbhangui/mpdev/issues
+
+.SH COPYRIGHT
+.PP
+Copyright (c) 2020 Manvendra Bhangui <mpdev@indimail.org>
+.PD 0
+.P
+.PD
+Free
+use of this software is granted under the terms of the GNU General
+Public License (GPLv2).
+.SH AUTHOR
+Manvendra Bhangui <manvendra@indimail.org>
+
+.SH SEE ALSO
+mpd(1),
+mpc(1),
+sqlite3(1),
+mpdev(1)
+update_stats(1)

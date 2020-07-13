@@ -76,16 +76,18 @@ using mpd's idle command and execs user defined script on event changes.
 %ghost %dir %attr(0755,qmaill,nofiles)  %{logdir}
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
-%attr(755,root,root)                    %{_prefix}/bin/update_stats
 %attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
 %attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
+%attr(755,root,root)                    %{_prefix}/sbin/update_stats
+%attr(755,root,root)                    %{_prefix}/sbin/cleanup
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_maintenance
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
 
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/update_stats.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/cleanup.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdplaylist.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/lastfm-scrobbler.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/librefm-scrobbler.1.gz

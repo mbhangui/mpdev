@@ -79,3 +79,5 @@ create_stats
 update_stats
 update_stats.o
 replacestr.o
+cleanup
+cleanup.o
