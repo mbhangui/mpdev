@@ -1,5 +1,5 @@
 /*
- * $Log: cleanup.c,v $
+ * $Log: mpdev_cleanup.c,v $
  * Revision 1.1  2020-07-13 22:34:40+05:30  Cprogrammer
  * Initial revision
  *
@@ -41,7 +41,7 @@ int             timeout = 1200, disk_mode = 0, verbose;
 char            method = 0;
 static sqlite3 *db, *memdb;
 char           *usage =
-				"usage: cleanup [-i IP/Host | -s unix_socket] [-p port]\n"
+				"usage: mpdev_cleanup [-i IP/Host | -s unix_socket] [-p port]\n"
 				"  -i IP   - IP address of MPD host. default 127.0.0.1\n"
 				"  -p port - MPD listening port. default 6600\n"
 				"  -s unix - domain socket path\n"
@@ -375,9 +375,9 @@ main(int argc, char **argv)
 		port[fmt_ulong(port, port_num)] = 0;
 		if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
 			if (mpd_socket)
-				strerr_die4sys(111, "update_stats: tcpopen: ", "socket [", mpd_socket, "]");
+				strerr_die4sys(111, "mpdev_cleanup: tcpopen: ", "socket [", mpd_socket, "]");
 			else
-				strerr_die6sys(111, "update_stats: tcpopen: ", "host [", mpd_host, "] port [", port, "]");
+				strerr_die6sys(111, "mpdev_cleanup: tcpopen: ", "host [", mpd_host, "] port [", port, "]");
 		}
 		r_res = dump_mpd_into_mem(sock);
 	} else

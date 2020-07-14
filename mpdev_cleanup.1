@@ -1,14 +1,14 @@
-.TH cleanup 1 "Jul 13, 2020" "manual"
+.TH mpdev_cleanup 1 "Jul 13, 2020" "manual"
 .SH NAME
 .PP
-cleanup - cleanup stats / sticker mpd database entries
+mpdev_cleanup - mpdev_cleanup stats / sticker mpd database entries
 .SH SYNOPSIS
 .PP
-cleanup [\f[I]option\f[]]
+mpdev_cleanup [\f[I]option\f[]]
 
 .SH DESCRIPTION
 .PP
-\fBcleanup\fR(1) cleans the stats.db or sticker.db sqlite database by
+\fBmpdev_cleanup\fR(1) cleans the stats.db or sticker.db sqlite database by
 removing entries that do not correspond to a valid path to a music file.
 
 It can operate using either of the two modes below
@@ -22,13 +22,13 @@ Checking against the mpd(1) database is faster than using the access(2) call.
 However, if the mpd(1) database has not been updated, there could be entries
 in the mpd(1) database which do not correspond to any music file on the disk.
 You can use the mpc(1) update command to update the mpd(1) database before
-using the cleanup(1) command.
+using the mpdev_cleanup(1) command.
 
 Examples
 
 .EX
-$ cleanup -c -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/stats.db
-$ cleanup -C -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/sticker.db
+$ mpdev_cleanup -c -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/stats.db
+$ mpdev_cleanup -C -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/sticker.db
 .EE
 
 .SH OPTIONS
@@ -101,4 +101,4 @@ mpd(1),
 mpc(1),
 sqlite3(1),
 mpdev(1)
-update_stats(1)
+mpdev_update(1)

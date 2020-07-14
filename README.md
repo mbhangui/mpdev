@@ -1,6 +1,6 @@
 # mpdev
 
-music player daemon events daemon
+music player daemon events daemon. mpdev helps in bulding a database of your listening habits. Along with a script `mpdplaylist`, it can generate a playlist for mpd as per your taste and mood.
 
 **mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/).
 
@@ -10,7 +10,7 @@ You can create scripts in $HOME/.mpdev directory. The default installation insta
 2. updates play counts in the sqlite stats.db
 3. Synchronizes the ratings in the sticker, rompr and the stats db. It also initializes the rating to 3 when you play an unrated song
 
-The **mpdev** package also comes with `update_stats` and `cleanup` programs that help in maintaining the sqlite databases `stats.db` and `sticker.db`
+The **mpdev** package also comes with `mpdev_update` and `mpdev_cleanup` programs that help in maintaining the sqlite databases `stats.db` and `sticker.db`.
 
 ## Environment Variables available to hooks
 
@@ -39,7 +39,7 @@ sticker_file                    "/var/lib/mpd/sticker.db"
 #
 ```
 
-The stats database can be created running the `update_stats` program
+The stats database can be created running the `mpdev_update` program
 
 ```
 CREATE TABLE IF NOT EXISTS song(

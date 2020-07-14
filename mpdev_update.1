@@ -1,15 +1,16 @@
-.TH update_stats 1 "December 23, 2009" "manual"
+.TH mpdev_update 1 "December 23, 2009" "manual"
 .SH NAME
 .PP
-update_stats - Update stats sqlite db from mpd database
+mpdev_update - Update stats, sticker sqlite db from mpd database
 .SH SYNOPSIS
 .PP
-update_stats [\f[I]option\f[]]
+mpdev_update [\f[I]option\f[]]
 
 .SH DESCRIPTION
 .PP
-\fBupdate_stats\fR creates/updates stats.db from the \fBmpd\fR(1) database.
-It sends the \fIlistinfo\fR command to mpd to get list of all music files.
+\fBmpdev_update\fR creates/updates stats.db or sticker.db from the
+\fBmpd\fR(1) database. It sends the \fIlistinfo\fR command to mpd to
+get list of all music files.
 
 .SH OPTIONS
 .TP
@@ -43,6 +44,12 @@ full path to the sqlite3(1) stats database
 .RE
 
 .TP
+\fB-D\fR \fI0\fR | \fI1\fR
+0 to update stats.db, 1 to update sticker.db
+.RS
+.RE
+
+.TP
 \fB-j\fR 
 Puts the journal in volatile memory. This saves disk I/O but at the expense
 of database safety and integrity. If the application using SQLite crashes
@@ -61,12 +68,18 @@ the application crashes in the middle, all new changes will be lost
 .TP
 \fB-S\fR 
 Turns Off synchronous mode.
-With synchronous OFF, \fBupdate_stats\fR continues without syncing as soon
-as it has handed data off to the operating system. In case \fBupdate_stats\fR 
+With synchronous OFF, \fBmpdev_update\fR continues without syncing as soon
+as it has handed data off to the operating system. In case \fBmpdev_update\fR 
 crashes, the data will be safe, but the database might become corrupted if
 the operating system crashes or the computer loses power before that data
 has been written to the disk. On the other hand, commits can be orders of
 magnitude faster with synchronous OFF.
+.RS
+.RE
+
+.TP
+\fB-P\fR 
+Print SQL statements used during db creation
 .RS
 .RE
 
@@ -89,4 +102,5 @@ Manvendra Bhangui <manvendra@indimail.org>
 .SH SEE ALSO
 mpd(1),
 sqlite3(1),
+mpdev_cleanup(1),
 mpdev(1)

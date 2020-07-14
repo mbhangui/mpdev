@@ -16,12 +16,12 @@ mpdevbindir=@prefix@/bin
 mpdevsbindir=@prefix@/sbin
 
 mpdevbin_PROGRAMS = mpdev
-mpdevsbin_PROGRAMS = cleanup update_stats
+mpdevsbin_PROGRAMS = mpdev_cleanup mpdev_update
 mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist
 libexec_SCRIPTS = mpdev_maintenance player create_service
 noinst_DATA = mpdev.spec
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
-		 update_stats.1 cleanup.1
+		 mpdev_update.1 mpdev_cleanup.1
 
 MOSTLYCLEANFILES = mpdev player mpdev_maintenance librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \
@@ -30,11 +30,11 @@ MOSTLYCLEANFILES = mpdev player mpdev_maintenance librefm-scrobbler \
 mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
 mpdev_LDADD = $(LIB_QMAIL)
 
-update_stats_SOURCES = update_stats.c tcpopen.c
-update_stats_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
+mpdev_update_SOURCES = mpdev_update.c tcpopen.c
+mpdev_update_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
 
-cleanup_SOURCES = cleanup.c replacestr.c tcpopen.c
-cleanup_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
+mpdev_cleanup_SOURCES = mpdev_cleanup.c replacestr.c tcpopen.c
+mpdev_cleanup_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
 
 edit = sed \
 	-e 's}@PACKAGE\@}$(PACKAGE)}g' \

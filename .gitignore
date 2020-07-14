@@ -76,8 +76,8 @@ debian/rules
 RCS
 config.h
 create_stats
-update_stats
-update_stats.o
+mpdev_update
+mpdev_update.o
 replacestr.o
-cleanup
-cleanup.o
+mpdev_cleanup
+mpdev_cleanup.o

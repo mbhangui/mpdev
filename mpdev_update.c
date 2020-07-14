@@ -1,5 +1,8 @@
 /*
- * $Log: update_stats.c,v $
+ * $Log: mpdev_update.c,v $
+ * Revision 1.4  2020-07-14 10:28:32+05:30  Cprogrammer
+ * added option to create / modify sticker database
+ *
  * Revision 1.3  2020-07-13 22:36:28+05:30  Cprogrammer
  * fixed usage string
  *
@@ -46,7 +49,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: update_stats.c,v 1.3 2020-07-13 22:36:28+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.4 2020-07-14 10:28:32+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -56,17 +59,19 @@ ssize_t         saferead(int, char *, int);
 substdio        mpdin, mpdout, ssout, sserr;
 stralloc        line = {0};
 char            strnum[FMT_ULONG];
-int             timeout = 1200, verbose;
+int             timeout = 1200, verbose, db_type = 0;
 static sqlite3 *db;
 char           *usage =
-				"usage: update_stats [-i IP/Host | -s unix_socket] [-p port]\n"
+				"usage: mpdev_update [-i IP/Host | -s unix_socket] [-p port]\n"
 				" -i IP     - IP address of MPD host. default 127.0.0.1\n"
 				" -p port   - MPD listening port. default 6600\n"
 				" -s socket - unix domain socket path\n"
 				" -d        - sqlite3 dbfile path\n"
 				" -j        - Enable Journal in Memory\n"
 				" -S        - Enable Synch Mode\n"
+				" -P        - Print sql statment\n"
 				" -t        - Enable Transaction Mode\n"
+				" -D 0|1    - update stats | update sticker\n"
 				" -v        - verbose output";
 
 void
@@ -170,19 +175,6 @@ safewrite(int fd, char *buf, int len)
 		die_write(0);
 	return r;
 }
-/*
- * file: 50 Cent - 2017 - Best of (ALAC)/01 In Da Club.m4a
- * Last-Modified: 2019-07-24T13:10:35Z
- * Format: 44100:16:2
- * Time: 193
- * duration: 193.467
- * Artist: 50 Cent
- * Album: Best of
- * Title: In Da Club
- * Track: 1
- * Genre: Hip-Hop
- * Date: 2017
- */
 
 void
 print_missing(char *uri, char *what)
@@ -197,7 +189,7 @@ print_missing(char *uri, char *what)
 
 static stralloc uri = {0}, last_modified = {0}, album = {0},
 	artist = {0}, date = {0}, genre = {0}, title = {0},
-	track = {0}, duration = {0}, sql_str = {0};
+	track = {0}, duration = {0};
 
 void
 print_song()
@@ -278,44 +270,34 @@ print_song()
 }
 
 void
-prepare_stmt()
-{
-	if (!stralloc_copyb(&sql_str, "INSERT or IGNORE into song (uri, artist, album, title, track, genre, date, last_modified, duration)", 99))
-		die_nomem();
-	else
-	if (!stralloc_catb(&sql_str, " values (@uri, @artist, @album, @title, @track, @genre, @date, @last_modified, @duration)", 89))
-		die_nomem();
-	else
-	if (!stralloc_0(&sql_str))
-		die_nomem();
-	return;
-}
-
-void
 insert_data(sqlite3_stmt *res, unsigned long *processed, unsigned long *failure, char **ptr)
 {
 	struct tm       tm = {0};
 	time_t          mod_time;
 	int             i;
 
-	if (!strptime(last_modified.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
-		strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
-		return;
-	} else
-	if (!(mod_time = mktime(&tm))) {
-		strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
-		return;
+	if (db_type == 0) {
+		if (!strptime(last_modified.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
+			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
+			return;
+		} else
+		if (!(mod_time = mktime(&tm))) {
+			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
+			return;
+		}
+		strnum[i = fmt_ulong(strnum, mod_time)] = 0;
+		sqlite3_bind_text(res, 1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_text(res, 2, artist.len ? artist.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_text(res, 3, album.len ? album.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_text(res, 4, title.len ? title.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_text(res, 5, track.len ? track.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_text(res, 6, genre.len ? genre.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_text(res, 7, date.len ? date.s : "", -1, SQLITE_STATIC);
+		sqlite3_bind_int(res, 8, mod_time ? mod_time : 0);
+		sqlite3_bind_text(res, 9, duration.s, -1, SQLITE_STATIC);
+	} else {
+		sqlite3_bind_text(res, 1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
 	}
-	strnum[i = fmt_ulong(strnum, mod_time)] = 0;
-	sqlite3_bind_text(res, 1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_text(res, 2, artist.len ? artist.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_text(res, 3, album.len ? album.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_text(res, 4, title.len ? title.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_text(res, 5, track.len ? track.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_text(res, 6, genre.len ? genre.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_text(res, 7, date.len ? date.s : "", -1, SQLITE_STATIC);
-	sqlite3_bind_int(res, 8, mod_time ? mod_time : 0);
-	sqlite3_bind_text(res, 9, duration.s, -1, SQLITE_STATIC);
 	if (ptr)
 		*ptr = sqlite3_expanded_sql(res);
 	if (sqlite3_step(res) != SQLITE_DONE) {
@@ -378,10 +360,15 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 		if (err_msg)
 			sqlite3_free(err_msg);
 	}
-	sql = "DROP INDEX IF EXISTS rating;\n"
-		  "DROP INDEX IF EXISTS uri;\n"
-		  "DROP INDEX IF EXISTS last_played;\n"
-		  "DROP INDEX IF EXISTS last_modified;";
+	if (db_type == 0) {
+		sql = "DROP INDEX IF EXISTS rating;\n"
+			  "DROP INDEX IF EXISTS uri;\n"
+			  "DROP INDEX IF EXISTS last_played;\n"
+			  "DROP INDEX IF EXISTS last_modified;";
+	} else {
+		sql = "DROP INDEX IF EXISTS rating;\n"
+			  "DROP INDEX IF EXISTS uri;\n";
+	}
 	if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
 		sqlite3_close(db);
 		strerr_die5x(111, database, ": ", sql, ": ", err_msg);
@@ -395,26 +382,35 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 	}
 	if (err_msg)
 		sqlite3_free(err_msg);
-	sql = "CREATE TABLE IF NOT EXISTS song(\n"
-        "id              INTEGER PRIMARY KEY,\n"
-        "play_count      INTEGER,\n"
-        "rating          INTEGER,\n"
-        "uri             TEXT UNIQUE NOT NULL,\n"
-        "duration        INTEGER,\n"
-        "last_modified   INTEGER,\n"
-        "artist          TEXT,\n"
-        "album           TEXT,\n"
-        "title           TEXT,\n"
-        "track           TEXT,\n"
-        "name            TEXT,\n"
-        "genre           TEXT,\n"
-        "date            TEXT,\n"
-        "composer        TEXT,\n"
-        "performer       TEXT,\n"
-        "disc            TEXT,\n"
-        "last_played     INTEGER,\n"
-        "karma           INTEGER NOT NULL CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100) DEFAULT 50\n"
-	");";
+	if (db_type == 0) {
+		sql = "CREATE TABLE IF NOT EXISTS song(\n"
+        	"id              INTEGER PRIMARY KEY,\n"
+        	"play_count      INTEGER,\n"
+        	"rating          INTEGER,\n"
+        	"uri             TEXT UNIQUE NOT NULL,\n"
+        	"duration        INTEGER,\n"
+        	"last_modified   INTEGER,\n"
+        	"artist          TEXT,\n"
+        	"album           TEXT,\n"
+        	"title           TEXT,\n"
+        	"track           TEXT,\n"
+        	"name            TEXT,\n"
+        	"genre           TEXT,\n"
+        	"date            TEXT,\n"
+        	"composer        TEXT,\n"
+        	"performer       TEXT,\n"
+        	"disc            TEXT,\n"
+        	"last_played     INTEGER,\n"
+        	"karma           INTEGER NOT NULL CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100) DEFAULT 50\n"
+		");";
+	} else {
+		sql = "CREATE TABLE IF NOT EXISTS sticker(\n"
+        	"type  VARCHAR NOT NULL,\n"
+        	"uri   VARCHAR NOT NULL,\n"
+        	"name  VARCHAR NOT NULL,\n"
+        	"value VARCHAR NOT NULL\n"
+		");";
+	}
 	if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
 		sqlite3_close(db);
 		strerr_die5x(111, database, ": ", sql, ": ", err_msg);
@@ -428,8 +424,13 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 	}
 	if (err_msg)
 		sqlite3_free(err_msg);
-	sql = "INSERT or IGNORE into song (uri, artist, album, title, track, genre, date, last_modified, duration)"
-		  " values (@uri, @artist, @album, @title, @track, @genre, @date, @last_modified, @duration)";
+	if (db_type == 0) {
+		sql = "INSERT or IGNORE into song (uri, artist, album, title, track, genre, date, last_modified, duration)"
+			  " values (@uri, @artist, @album, @title, @track, @genre, @date, @last_modified, @duration)";
+	} else {
+		sql = "INSERT or IGNORE into sticker (type, uri, name, value)"
+			  " values ('song', @uri, 'rating', 0)";
+	}
 	if (sqlite3_prepare_v2(db, sql, -1, &res, 0) != SQLITE_OK) {
 		sqlite3_close(db);
 		strerr_die5x(111, database, ": sqlite3_prepare_v2: ", sql, ": ", (char *) sqlite3_errmsg(db));
@@ -443,10 +444,15 @@ stats_database_end(char *database, sqlite3_stmt *res, int transaction_mode)
 	char           *sql, *err_msg;
 	int             i;
 
-	sql = "CREATE INDEX IF NOT EXISTS rating        on song(rating);\n"
-		  "CREATE INDEX IF NOT EXISTS uri           on song(uri);\n"
-		  "CREATE INDEX IF NOT EXISTS last_played   on song(last_played);\n"
-		  "CREATE INDEX IF NOT EXISTS last_modified on song(last_modified);";
+	if (db_type == 0) {
+		sql = "CREATE INDEX IF NOT EXISTS rating        on song(rating);\n"
+			  "CREATE INDEX IF NOT EXISTS uri           on song(uri);\n"
+			  "CREATE INDEX IF NOT EXISTS last_played   on song(last_played);\n"
+			  "CREATE INDEX IF NOT EXISTS last_modified on song(last_modified);";
+	} else {
+		sql = "CREATE INDEX IF NOT EXISTS rating        on sticker(value);\n"
+			  "CREATE INDEX IF NOT EXISTS uri           on sticker(uri);\n";
+	}
 	if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
 		sqlite3_close(db);
 		strerr_die5x(111, database, ": ", sql, ": ", err_msg);
@@ -501,7 +507,7 @@ main(int argc, char **argv)
 	else
 		scan_uint(ptr, (unsigned int *) &port_num);
 	database = (char *) 0;
-	while ((opt = getopt(argc, argv, "vjSPth:p:s:d:")) != opteof) {
+	while ((opt = getopt(argc, argv, "vjSPth:p:s:d:D:")) != opteof) {
 		switch (opt) {
 		case 'd':
 			database = optarg;
@@ -527,6 +533,9 @@ main(int argc, char **argv)
 		case 'P':
 			print_sql = 1;
 			break;
+		case 'D':
+			scan_uint(optarg, (unsigned int *) &db_type);
+			break;
 		case 'v':
 			verbose++;
 			break;
@@ -545,9 +554,9 @@ main(int argc, char **argv)
 	port[fmt_ulong(port, port_num)] = 0;
 	if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
 		if (mpd_socket)
-			strerr_die4sys(111, "update_stats: tcpopen: ", "socket [", mpd_socket, "]");
+			strerr_die4sys(111, "mpdev_update: tcpopen: ", "socket [", mpd_socket, "]");
 		else
-			strerr_die6sys(111, "update_stats: tcpopen: ", "host [", mpd_host, "] port [", port, "]");
+			strerr_die6sys(111, "mpdev_update: tcpopen: ", "host [", mpd_host, "] port [", port, "]");
 	}
 	substdio_fdbuf(&mpdin, saferead, sock, mpdinbuf, sizeof mpdinbuf);
 	substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);

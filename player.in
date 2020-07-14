@@ -2,7 +2,7 @@
 #
 # $Log: player.in,v $
 # Revision 1.2  2020-07-13 01:04:53+05:30  Cprogrammer
-# add stat entry without need for update_stats
+# add stat entry without need for mpdev_update
 #
 # Revision 1.1  2020-07-08 10:59:46+05:30  Cprogrammer
 # Initial revision
@@ -49,9 +49,10 @@ insert_sticker()
 update_sticker()
 {
     uri=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $sticker_file "UPDATE sticker set value=$2 where type='song' and uri='$uri';"
+	rating=$2
+	sqlite3 -batch $sticker_file "UPDATE sticker set value=$rating where type='song' and uri='$uri';"
     if [ $? -ne 0 ] ; then
-        echo "error: UPDATE sticker set value=$2 where type='song' and uri='$uri';" 1>&2
+        echo "error: UPDATE sticker set value=$rating where type='song' and uri='$uri';" 1>&2
         return 1
     fi
 }
@@ -82,7 +83,7 @@ insert_stats()
 	fi
 }
 
-update_stats()
+mpdev_update()
 {
 	last_played=$1
     uri=`echo "$2" | sed -e "s{'{''{g"`
@@ -134,9 +135,14 @@ update_song()
 		echo "INSERT sticker tmval=$tmval rating=$rating song=[$1]"
 		insert_sticker "$uri" "$rating"
 	fi
+	if [ $rating -eq 0 ] ; then
+		rating=6;
+		echo "UPDATE sticker tmval=$tmval rating=$rating song=[$1]"
+		update_sticker "$uri" "$rating"
+	fi
 	if [ $# -eq 2 ] ; then
 		echo "EndSong stat   tmval=$tmval rating=$rating song=[$1]"
-		update_stats $tmval "$uri" "$rating"
+		mpdev_update $tmval "$uri" "$rating"
 	else
 		echo "NewSong stat   tmval=$tmval rating=$rating song=[$1]"
 		insert_stats 0 "$uri" "$rating"
