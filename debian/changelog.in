@@ -4,3 +4,5 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * added update_stats utility to maintain stats database
   * mpdev.c: set SONG_DURATION as seconds since epoch
   * player can now on its own add entries to stat database
+  * mpdev - handle empty playlist with no currentsong playing
+  * added mpdev_update, mpdev_cleanup

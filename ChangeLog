@@ -5,3 +5,6 @@ Release 0.2 Start 02/03/2020
 02. added update_stats utility to maintain stats database
 03. mpdev.c: set SONG_DURATION as seconds since epoch
 04. player can now on its own add entries to stat database
+14/07/2020
+05. mpdev - handle empty playlist with no currentsong playing
+06. added mpdev_update, mpdev_cleanup
