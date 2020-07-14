@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.4  2020-07-14 14:19:00+05:30  Cprogrammer
+ * handle empty playlist with no currentsong playing
+ *
  * Revision 1.3  2020-07-13 22:33:38+05:30  Cprogrammer
  * fixed usage string
  *
@@ -49,7 +52,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.3 2020-07-13 22:33:38+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.4 2020-07-14 14:19:00+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -282,6 +285,8 @@ get_song_details(char **uri, char **last_modified, char **album, char **artist,
 			if (substdio_put(&ssout, line.s, line.len) == -1)
 				die_write();
 		}
+		if (!str_diffn(line.s, "OK MPD ", 7))
+			continue;
 		if (!str_diffn(line.s, "OK\n", 3)) {
 			flag = 2;
 			break;
@@ -369,6 +374,7 @@ get_song_details(char **uri, char **last_modified, char **album, char **artist,
 #define MESSAGE_EVENT         12
 #define NEIGHBOUR_EVENT       13
 #define MOUNT_EVENT           14
+#define CUSTOM_EVENT          15
 
 int
 run_command(int status, char *arg)
@@ -416,6 +422,9 @@ run_command(int status, char *arg)
 			break;
 		case NEIGHBOUR_EVENT:
 			player_cmd[0] = ".mpdev/neighbour";
+			break;
+		case CUSTOM_EVENT:
+			player_cmd[0] = ".mpdev/custom";
 			break;
 	}
 	if (access(player_cmd[0], F_OK))
@@ -703,19 +712,23 @@ set_environ()
 {
 	struct tm       tm = {0};
 	time_t          mod_time;
+	int             i;
 
 	if (uri_s.len && !env_put2("SONG_URI", uri_s.s))
 		die_nomem();
-	if (!strptime(last_modified_s.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
-		strerr_warn4("uri: ", uri_s.s, ": invalid timestamp: ", last_modified_s.s, 0);
-		mod_time = time(0);
+	if (last_modified_s.len) {
+		if (!strptime(last_modified_s.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
+			strerr_warn4("uri: ", uri_s.s, ": invalid timestamp: ", last_modified_s.s, 0);
+			mod_time = time(0);
+		} else
+		if (!(mod_time = mktime(&tm))) {
+			strerr_warn4("uri: ", uri_s.s, ": invalid timestamp: ", last_modified_s.s, 0);
+			mod_time = time(0);
+		}
+		strnum[i = fmt_ulong(strnum, mod_time)] = 0;
 	} else
-	if (!(mod_time = mktime(&tm))) {
-		strerr_warn4("uri: ", uri_s.s, ": invalid timestamp: ", last_modified_s.s, 0);
-		mod_time = time(0);
-	}
-	strnum[fmt_ulong(strnum, mod_time)] = 0;
-	if (last_modified_s.len && !env_put2("SONG_LAST_MODIFIED", strnum))
+		i = 0;
+	if (i && !env_put2("SONG_LAST_MODIFIED", strnum))
 		die_nomem();
 	if (album_s.len && !env_put2("SONG_ALBUM", album_s.s))
 		die_nomem();
@@ -854,18 +867,21 @@ main(int argc, char **argv)
 				submit_song(verbose, "end-song");
 				prev_id1 = id;
 			}
-			set_environ();
-			prev_id1 = id;
-			if (!prev_id2 || (id && prev_id2 != id)) {
-				if (verbose == 3) {
-					print_song_details(uri, last_modified, album, artist,
-						date, genre, title, track, duration, duration_i,
-						pos, id, response);
-					flush();
+			if (id) {
+				set_environ();
+				prev_id1 = id;
+				if (!prev_id2 || (id && prev_id2 != id)) {
+					if (verbose == 3) {
+						print_song_details(uri, last_modified, album, artist,
+							date, genre, title, track, duration, duration_i,
+							pos, id, response);
+						flush();
+					}
+					submit_song(verbose, "now-playing");
+					prev_id2 = id;
 				}
-				submit_song(verbose, "now-playing");
-				prev_id2 = id;
-			} 
+			} else
+				run_command(CUSTOM_EVENT, "mpd-event");
 			if (!do_idle()) {
 				close(sock);
 				submit_song(verbose, "end-song");
@@ -879,7 +895,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.3 2020-07-13 22:33:38+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.4 2020-07-14 14:19:00+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
