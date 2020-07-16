@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_cleanup.c,v $
+ * Revision 1.2  2020-07-16 18:57:59+05:30  Cprogrammer
+ * fixed specifying options
+ *
  * Revision 1.1  2020-07-13 22:34:40+05:30  Cprogrammer
  * Initial revision
  *
@@ -367,6 +370,17 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (!database || !music_directory || !method) {
+		err_out("You have to specify -d, -m and either -c or -C options\n");
+		err_flush();
+		strerr_die1x(100, usage);
+	}
+	if (method == 3) {
+		err_out("You cannot specify both -c and -C options\n");
+		err_flush();
+		strerr_die1x(100, usage);
+	}
+
 	if (!disk_mode) {
 		if (mpd_socket && port_num != 6600)
 			strerr_die1x(100, "you can't specify both socket & port");
@@ -382,16 +396,6 @@ main(int argc, char **argv)
 		r_res = dump_mpd_into_mem(sock);
 	} else
 		r_res = (sqlite3_stmt *) 0;
-	if (!database || !music_directory || !method) {
-		err_out("You have to specify -d, -m and either -c or -C options\n");
-		err_flush();
-		strerr_die1x(100, usage);
-	}
-	if (method == 3) {
-		err_out("You cannot specify both -c and -C options\n");
-		err_flush();
-		strerr_die1x(100, usage);
-	}
 	if (sqlite3_open(database, &db) != SQLITE_OK)
 		strerr_die3x(111, database, ": ", (char *) sqlite3_errmsg(db));
 	if (chdir(music_directory))

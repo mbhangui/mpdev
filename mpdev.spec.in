@@ -79,8 +79,9 @@ using mpd's idle command and execs user defined script on event changes.
 %attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
 %attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
-%attr(755,root,root)                    %{_prefix}/sbin/mpdev_update
-%attr(755,root,root)                    %{_prefix}/sbin/mpdev_cleanup
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_update
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_cleanup
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_rename
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_maintenance
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player

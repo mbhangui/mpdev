@@ -43,9 +43,7 @@ build-stamp:
 	# run configure script
 	#
 	HOME='.';export HOME
-	./configure --prefix=${prefix} --libexecdir=${libexecdir} \
-		--sysconfdir=${sysconfdir} --mandir=${mandir} \
-		--datarootdir=${shareddir}
+	./configure --prefix=${prefix} --libexecdir=${libexecdir}
 	$(MAKE) -s DESTDIR=$(DESTDIR)
 	( \
 	echo NAME=mpdev; \

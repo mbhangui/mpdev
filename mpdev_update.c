@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.5  2020-07-16 18:58:19+05:30  Cprogrammer
+ * check for -d, -D options
+ *
  * Revision 1.4  2020-07-14 10:28:32+05:30  Cprogrammer
  * added option to create / modify sticker database
  *
@@ -49,7 +52,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.4 2020-07-14 10:28:32+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.5 2020-07-16 18:58:19+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -59,7 +62,7 @@ ssize_t         saferead(int, char *, int);
 substdio        mpdin, mpdout, ssout, sserr;
 stralloc        line = {0};
 char            strnum[FMT_ULONG];
-int             timeout = 1200, verbose, db_type = 0;
+int             timeout = 1200, verbose, db_type = -1;
 static sqlite3 *db;
 char           *usage =
 				"usage: mpdev_update [-i IP/Host | -s unix_socket] [-p port]\n"
@@ -551,6 +554,14 @@ main(int argc, char **argv)
 		strerr_die1x(100, "you can't specify both socket & port");
 	if (mpd_socket && str_diff(mpd_host, "127.0.0.1"))
 		strerr_die1x(100, "you can't specify both socket & IP");
+	if (!database) {
+		strerr_warn1("mpdev: database (-d option) not specified", 0);
+		strerr_die1x(100, usage);
+	}
+	if (db_type == -1) {
+		strerr_warn1("mpdev: db type (-D option) not specified", 0);
+		strerr_die1x(100, usage);
+	}
 	port[fmt_ulong(port, port_num)] = 0;
 	if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
 		if (mpd_socket)

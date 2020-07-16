@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.5  2020-07-16 12:39:35+05:30  Cprogrammer
+ * have higher timeout for idle
+ *
  * Revision 1.4  2020-07-14 14:19:00+05:30  Cprogrammer
  * handle empty playlist with no currentsong playing
  *
@@ -52,7 +55,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.4 2020-07-14 14:19:00+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.5 2020-07-16 12:39:35+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -271,7 +274,7 @@ get_song_details(char **uri, char **last_modified, char **album, char **artist,
 	if (response)
 		*response = 0;
 	mpd_out("currentsong");
-	for (flag = 1;;) {
+	for (flag = 1, timeout=300;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("currentsong");
 		if (!match && line.len == 0) {
@@ -502,7 +505,7 @@ do_idle()
 
 	mpd_out("idle");
 	status = 0;
-	for (;;) {
+	for (timeout = 1800;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("idle");
 		if (!match && line.len == 0) {
@@ -895,7 +898,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.4 2020-07-14 14:19:00+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.5 2020-07-16 12:39:35+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
