@@ -8,3 +8,8 @@ Release 0.2 Start 02/03/2020
 14/07/2020
 05. mpdev - handle empty playlist with no currentsong playing
 06. added mpdev_update, mpdev_cleanup
+15/07/2020
+07. moved mpdev_update, mpdev_cleanup to libexec/mpdev
+08. added mpdev_rename script
+16/07/2020
+09. mpdev_rename: added --query option

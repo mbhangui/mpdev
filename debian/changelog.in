@@ -6,3 +6,6 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * player can now on its own add entries to stat database
   * mpdev - handle empty playlist with no currentsong playing
   * added mpdev_update, mpdev_cleanup
+  * moved mpdev_update, mpdev_cleanup to libexec/mpdev
+  * added mpdev_rename script
+  * mpdev_rename: added --query option
