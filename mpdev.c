@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.6  2020-07-16 22:10:06+05:30  Cprogrammer
+ * remove alarm on read
+ *
  * Revision 1.5  2020-07-16 12:39:35+05:30  Cprogrammer
  * have higher timeout for idle
  *
@@ -38,7 +41,6 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#include <timeoutread.h>
 #include <timeoutwrite.h>
 #include <substdio.h>
 #include <getln.h>
@@ -55,12 +57,11 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.5 2020-07-16 12:39:35+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.6 2020-07-16 22:10:06+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
 ssize_t         safewrite(int, char *, int);
-ssize_t         saferead(int, char *, int);
 
 substdio        mpdin, mpdout, ssout, sserr;
 stralloc        line = {0};
@@ -71,7 +72,7 @@ char            strnum[FMT_ULONG];
  *         = 2 - output mpd events      -vv
  *         = 3 - high verbose output    -vvv
  */
-int             timeout = 1200, verbose;
+int             timeout = 60, verbose;
 char           *player_cmd[3] = {0, 0, 0};
 
 char           *usage =
@@ -182,33 +183,11 @@ mpd_out(char *s)
 }
 
 void
-die_alarm()
-{
-	substdio_puts(&sserr, "Requested action aborted: timeout\n");
-	substdio_flush(&sserr);
-	_exit(111);
-}
-
-void
 die_nomem()
 {
 	substdio_puts(&sserr, "mpdev: out of memory\n");
 	substdio_flush(&sserr);
 	_exit(111);
-}
-
-ssize_t
-saferead(int fd, char *buf, int len)
-{
-	int             r;
-
-	if ((r = timeoutread(timeout, fd, buf, len)) == -1) {
-		if (errno == error_timeout)
-			die_alarm();
-	}
-	if (r < 0)
-		die_read(0);
-	return r;
 }
 
 ssize_t
@@ -274,7 +253,7 @@ get_song_details(char **uri, char **last_modified, char **album, char **artist,
 	if (response)
 		*response = 0;
 	mpd_out("currentsong");
-	for (flag = 1, timeout=300;;) {
+	for (flag = 1;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("currentsong");
 		if (!match && line.len == 0) {
@@ -505,7 +484,7 @@ do_idle()
 
 	mpd_out("idle");
 	status = 0;
-	for (timeout = 1800;;) {
+	for (;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("idle");
 		if (!match && line.len == 0) {
@@ -850,7 +829,7 @@ main(int argc, char **argv)
 			}
 			flush();
 		}
-		substdio_fdbuf(&mpdin, saferead, sock, mpdinbuf, sizeof mpdinbuf);
+		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
 		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 		prev_id1 = prev_id2 = 0;
 		for (;;) {
@@ -890,15 +869,15 @@ main(int argc, char **argv)
 				submit_song(verbose, "end-song");
 				break;
 			}
-		}
-	}
+		} /*- for (;;) - get)song_details */
+	} /*- for (connection_num = 1;;connection_num++) { */
 	_exit(0);
 }
 
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.5 2020-07-16 12:39:35+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.6 2020-07-16 22:10:06+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
