@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.7  2020-07-18 16:50:10+05:30  Cprogrammer
+# fixed variables getting clobbered by functions
+#
 # Revision 1.6  2020-07-18 13:23:46+05:30  Cprogrammer
 # refactored script
 #
@@ -20,7 +23,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.6 2020-07-18 13:23:46+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.7 2020-07-18 16:50:10+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -30,65 +33,65 @@ get_mpd_conf_value()
 
 get_TTindex()
 {
-    uri=`echo $1|sed -e "s{'{''{g"`
-    echo "SELECT TTindex FROM Tracktable WHERE Uri='$uri';" \
+	uri="$1"
+	echo "SELECT TTindex FROM Tracktable WHERE Uri='$uri';" \
 		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-    if [ $? -ne 0 ] ; then
-        echo "error: SELECT TTindex FROM Tracktable WHERE Uri='$uri';" 1>&2
-        return 1
-    fi
+	if [ $? -ne 0 ] ; then
+		echo "error: SELECT TTindex FROM Tracktable WHERE Uri='$uri';" 1>&2
+		return 1
+	fi
 }
 
 get_rompr_rating()
 {
 	echo "SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
 		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-    if [ $? -ne 0 ] ; then
+	if [ $? -ne 0 ] ; then
 		echo "error: SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
-        return 1
-    fi
+		return 1
+	fi
 }
 
 get_mpd_rating()
 {
-    uri=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $sticker_file "SELECT value from sticker where type='song' and uri='$uri';"
-    if [ $? -ne 0 ] ; then
-        echo "error: SELECT value from sticker where type='song' and uri=\"$uri\";" 1>&2
-        return 1
-    fi
+	turi=`echo $1|sed -e "s{'{''{g"`
+	sqlite3 -batch $sticker_file "SELECT value from sticker where type='song' and uri='$turi';"
+	if [ $? -ne 0 ] ; then
+		echo "error: SELECT value from sticker where type='song' and uri=\"$turi\";" 1>&2
+		return 1
+	fi
 }
 
 get_stat_rating()
 {
-    uri=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT rating from song where uri='$uri';"
-    if [ $? -ne 0 ] ; then
-        echo "error: SELECT rating from song where uri='$uri';" 1>&2
-        return 1
-    fi
+	turi=`echo $1|sed -e "s{'{''{g"`
+	sqlite3 -batch $stats_file "SELECT rating from song where uri='$turi';"
+	if [ $? -ne 0 ] ; then
+		echo "error: SELECT rating from song where uri='$turi';" 1>&2
+		return 1
+	fi
 }
 
 sticker_db_insert()
 {
-    uri=`echo $1|sed -e "s{'{''{g"`
-	rating=$2
-	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker values('song', '$uri', 'rating', $rating);"
-    if [ $? -ne 0 ] ; then
-		echo "error: INSERT into sticker values('song', '$uri', 'rating',$rating);" 1>&2
-        return 1
-    fi
+    turi=`echo $1|sed -e "s{'{''{g"`
+	tmprate=$2
+	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker values('song', '$turi', 'rating', $tmprate);"
+	if [ $? -ne 0 ] ; then
+		echo "error: INSERT into sticker values('song', '$turi', 'rating',$tmprate);" 1>&2
+		return 1
+	fi
 }
 
 sticker_db_update()
 {
-    uri=`echo $1|sed -e "s{'{''{g"`
-	rating=$2
-	sqlite3 -batch $sticker_file "UPDATE sticker set value=$rating where type='song' and uri='$uri';"
-    if [ $? -ne 0 ] ; then
-        echo "error: UPDATE sticker set value=$rating where type='song' and uri='$uri';" 1>&2
-        return 1
-    fi
+	turi=`echo $1|sed -e "s{'{''{g"`
+	tmprate=$2
+	sqlite3 -batch $sticker_file "UPDATE sticker set value=$tmprate where type='song' and uri='$turi';"
+	if [ $? -ne 0 ] ; then
+		echo "error: UPDATE sticker set value=$tmprate where type='song' and uri='$turi';" 1>&2
+		return 1
+	fi
 }
 
 stats_db_insert()
@@ -102,74 +105,74 @@ stats_db_insert()
 	# SONG_TRACK: track
 	# SONG_DURATION: duration
 
-    uri=`echo "$1" | sed -e "s{'{''{g"`
+	turi=`echo "$1" | sed -e "s{'{''{g"`
 	ARTIST=`echo "$SONG_ARTIST" | sed -e "s{'{''{g"`
 	ALBUM=`echo "$SONG_ALBUM" | sed -e "s{'{''{g"`
 	TITLE=`echo "$SONG_TITLE" | sed -e "s{'{''{g"`
-	rating=$2
+	tmprate=$2
 	sqlite3 -batch $stats_file "INSERT or IGNORE into \
 		song (uri, play_count, last_played, rating, duration,last_modified,artist,album,title,track,genre,date) \
-		values ('$uri',0,0,$rating,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
-    if [ $? -ne 0 ] ; then
+		values ('$turi',0,0,$tmprate,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
+	if [ $? -ne 0 ] ; then
 		(
 		echo -n "INSERT or IGNORE into song "
 		echo -n "(uri, play_count, last_played, rating, duration,"
 		echo -n "last_modified,artist,album,title,track,genre,date)"
-		echo -n "values ('$uri',0,0,$rating,$SONG_DURATION,"
+		echo -n "values ('$turi',0,0,$tmprate,$SONG_DURATION,"
 		echo -n "$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE',"
 		echo -n "'$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
 		echo
 		) 1>&2
-        return 1
+		return 1
 	fi
 }
 
 stats_db_update()
 {
 	last_played=$1
-    uri=`echo "$2" | sed -e "s{'{''{g"`
-	rating=$3
+    turi=`echo "$2" | sed -e "s{'{''{g"`
+	tmprate=$3
 	sqlite3 -batch $stats_file \
-		"UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$rating where uri='$uri';"
-    if [ $? -ne 0 ] ; then
-		echo  "ERROR: UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$rating where uri='$uri';" 1>&2
-        return 1
-    fi
+		"UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$tmprate where uri='$turi';"
+	if [ $? -ne 0 ] ; then
+		echo  "ERROR: UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$tmprate where uri='$turi';" 1>&2
+		return 1
+	fi
 }
 
 rompr_db_update()
 {
-	uri="$1"
+	turi=$(echo "$1" | sed s/"'"/"\\\'"/g)
 	tstamp="$2"
-    rompr_rating=`expr "$3" / 2`
-    TTindex=`get_TTindex "$uri"`
-    if [ -n "$TTindex" ] ; then
-        (
-        echo -n "INSERT into Playcounttable (TTindex, Playcount, LastPlayed) "
-        echo -n "VALUES ($TTindex,1, NOW()) ON DUPLICATE "
-        echo -n "KEY UPDATE Playcount=Playcount+1, LastPlayed=NOW();"
-        echo
+	rompr_rating=`expr "$3" / 2`
+	TTindex=`get_TTindex "$turi"`
+	if [ -n "$TTindex" ] ; then
+		(
+		echo -n "INSERT into Playcounttable (TTindex, Playcount, LastPlayed) "
+		echo -n "VALUES ($TTindex,1, NOW()) ON DUPLICATE "
+		echo -n "KEY UPDATE Playcount=Playcount+1, LastPlayed=NOW();"
+		echo
 		echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
 		echo -n "VALUES ($TTindex, $rompr_rating, FROM_UNIXTIME($tstamp)) "
 		echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
 		echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
-        echo
-        ) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-        if [ $? -ne 0 ] ; then
-            (
-            echo -n "INSERT into Playcounttable (TTindex, Playcount, LastPlayed) "
-            echo -n "VALUES ($TTindex,1, NOW()) ON DUPLICATE "
-            echo -n "KEY UPDATE Playcount=Playcount+1, LastPlayed=NOW();"
-            echo
-            echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+		echo
+		) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		if [ $? -ne 0 ] ; then
+			(
+			echo -n "INSERT into Playcounttable (TTindex, Playcount, LastPlayed) "
+			echo -n "VALUES ($TTindex,1, NOW()) ON DUPLICATE "
+			echo -n "KEY UPDATE Playcount=Playcount+1, LastPlayed=NOW();"
+			echo
+			echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
 			echo -n "VALUES ($TTindex, $rompr_rating, FROM_UNXTIME($tstamp)) "
 			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
 			echo -n "zztimestamp=FROM_UNXTIME($tstamp);"
-            echo
-            ) 1>&2
-            return 1
-        fi
-    fi
+			echo
+			) 1>&2
+			return 1
+		fi
+	fi
 }
 
 scrobble()
@@ -206,7 +209,7 @@ scrobble()
 
 update_song()
 {
-	uri=$1
+	uri="$1"
 	rating=`get_mpd_rating "$uri"`
 	if [ -z "$rating" ] ; then
 		rating=6 # assign average rating of 3 for unrated music
@@ -236,7 +239,13 @@ update_song()
 		"now-playing")
 		stats_db_insert "$uri" "$rating"
 		if [ -n "$ROMPR" ] ; then
+			if [ $VERBOSE -gt 0 ] ; then
+				echo "UPDATE rompr rating=$rating Start=$START_TIME song=[$uri]"
+			fi
 			rompr_db_update "$uri" "$START_TIME" "$rating"
+		fi
+		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
+			scrobble
 		fi
 		;;
 		"end-song")
@@ -245,7 +254,8 @@ update_song()
 			if [ -z "$old_rating" ] ; then
 				old_rating=0
 			fi
-    		TTindex=`get_TTindex "$uri"`
+			rompr_uri=$(echo "$uri" | sed s/"'"/"\\\'"/g)
+			TTindex=`get_TTindex "$rompr_uri"`
 			if [ -n "$TTindex" ] ; then
 				line=`get_rompr_rating $TTindex`
 				set $line
@@ -266,6 +276,9 @@ update_song()
 						echo "UPDATE ROMPR from sticker new=$rating old=$old_rating, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
 					fi
 					# update rompr with rating from sticker
+					if [ $VERBOSE -gt 0 ] ; then
+						echo "UPDATE rompr rating=$rating Start=$START_TIME song=[$uri]"
+					fi
 					rompr_db_update "$uri" "$START_TIME" "$rating"
 				fi
 			fi
@@ -280,17 +293,14 @@ if [ -z "$VERBOSE" ] ; then
 fi
 music_dir=`get_mpd_conf_value music_directory`
 if [ $? -ne 0 ] ; then
-   	echo "could not get music directory from mpd.conf" 1>&2
-   	exit 1
+	echo "could not get music directory from mpd.conf" 1>&2
+	exit 1
 fi
 sticker_file=`get_mpd_conf_value sticker_file`
 if [ $? -ne 0 ] ; then
-   	echo "could not get sticker database from mpd.conf" 1>&2
-  	exit 1
+	echo "could not get sticker database from mpd.conf" 1>&2
+	exit 1
 fi
 stats_file=$music_dir/.mpd/stats.db
 update_song "$SONG_URI" "$1"
-if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
-	scrobble
-fi
 exit 0
