@@ -30,6 +30,7 @@ add_service()
 	home=$(getent passwd $userid|cut -d: -f6)
 	if [ -n "$home" ] ; then
 		echo $home > $servicedir/$service_name/variables/HOME
+		echo $home > $servicedir/$service_name/variables/XDG_RUNTIME_DIR
 		echo "PATH=\$PATH:/bin:/usr/bin:$home/.mpdev" > $servicedir/$service_name/variables/PATH
 	fi
 	mkdir -p $home/.mpdev
