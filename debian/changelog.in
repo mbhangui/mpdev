@@ -9,3 +9,7 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * moved mpdev_update, mpdev_cleanup to libexec/mpdev
   * added mpdev_rename script
   * mpdev_rename: added --query option
+  * mpdev: use read instead of timeoutread
+  * mdpev: added START_TIME, END_TIME variables
+  * player: refactored script to update ratings from rompr/sticker/stats
+  * player: removed hardcored MySQL connection parameters

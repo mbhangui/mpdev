@@ -13,3 +13,8 @@ Release 0.2 Start 02/03/2020
 08. added mpdev_rename script
 16/07/2020
 09. mpdev_rename: added --query option
+10. mpdev: use read instead of timeoutread
+17/07/2020
+11. mdpev: added START_TIME, END_TIME variables
+12. player: refactored script to update ratings from rompr/sticker/stats
+13. player: removed hardcored MySQL connection parameters
