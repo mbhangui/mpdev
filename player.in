@@ -1,6 +1,15 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.6  2020-07-18 13:23:46+05:30  Cprogrammer
+# refactored script
+#
+# Revision 1.5  2020-07-17 22:30:48+05:30  Cprogrammer
+# refactored code
+#
+# Revision 1.4  2020-07-17 18:40:15+05:30  Cprogrammer
+# update rating in sticker, stats if rating is set in rompr web player
+#
 # Revision 1.3  2020-07-16 12:41:08+05:30  Cprogrammer
 # update rating to 6 if rating is zero
 #
@@ -11,21 +20,33 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.3 2020-07-16 12:41:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.6 2020-07-18 13:23:46+05:30 Cprogrammer Exp mbhangui $
 #
-get_TTindex()
-{
-    echo "SELECT TTindex FROM Tracktable WHERE Uri='$1';" | mysql -s -u rompr -promprdbpass -h pi4 romprdb 2>/dev/null
-    if [ $? -ne 0 ] ; then
-        echo "SELECT TTindex FROM Tracktable WHERE Uri='$1';" 1>&2
-        return 1
-    fi
-}
-
 get_mpd_conf_value()
 {
     grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
     sed -e 's{"{{g'
+}
+
+get_TTindex()
+{
+    uri=`echo $1|sed -e "s{'{''{g"`
+    echo "SELECT TTindex FROM Tracktable WHERE Uri='$uri';" \
+		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+    if [ $? -ne 0 ] ; then
+        echo "error: SELECT TTindex FROM Tracktable WHERE Uri='$uri';" 1>&2
+        return 1
+    fi
+}
+
+get_rompr_rating()
+{
+	echo "SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+    if [ $? -ne 0 ] ; then
+		echo "error: SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
+        return 1
+    fi
 }
 
 get_mpd_rating()
@@ -38,7 +59,17 @@ get_mpd_rating()
     fi
 }
 
-insert_sticker()
+get_stat_rating()
+{
+    uri=`echo $1|sed -e "s{'{''{g"`
+	sqlite3 -batch $stats_file "SELECT rating from song where uri='$uri';"
+    if [ $? -ne 0 ] ; then
+        echo "error: SELECT rating from song where uri='$uri';" 1>&2
+        return 1
+    fi
+}
+
+sticker_db_insert()
 {
     uri=`echo $1|sed -e "s{'{''{g"`
 	rating=$2
@@ -49,7 +80,7 @@ insert_sticker()
     fi
 }
 
-update_sticker()
+sticker_db_update()
 {
     uri=`echo $1|sed -e "s{'{''{g"`
 	rating=$2
@@ -60,7 +91,7 @@ update_sticker()
     fi
 }
 
-insert_stats()
+stats_db_insert()
 {
 	# SONG_LAST_MODIFIED: last_modified
 	# SONG_ALBUM: album
@@ -71,37 +102,46 @@ insert_stats()
 	# SONG_TRACK: track
 	# SONG_DURATION: duration
 
-	last_played=$1
-    uri=`echo "$2" | sed -e "s{'{''{g"`
+    uri=`echo "$1" | sed -e "s{'{''{g"`
 	ARTIST=`echo "$SONG_ARTIST" | sed -e "s{'{''{g"`
 	ALBUM=`echo "$SONG_ALBUM" | sed -e "s{'{''{g"`
 	TITLE=`echo "$SONG_TITLE" | sed -e "s{'{''{g"`
-	rating=$3
-	sqlite3 -batch $music_dir/.mpd/stats.db "INSERT or IGNORE into \
+	rating=$2
+	sqlite3 -batch $stats_file "INSERT or IGNORE into \
 		song (uri, play_count, last_played, rating, duration,last_modified,artist,album,title,track,genre,date) \
-		values ('$uri',0,$last_played,$rating,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
+		values ('$uri',0,0,$rating,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
     if [ $? -ne 0 ] ; then
-		echo "error: \"INSERT or IGNORE into song (uri, play_count, last_played, rating, duration,last_modified,artist,album,title,track,genre,date) values ('$uri',0,$last_played,$rating,$SONG_DURATION,$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE','$SONG_TRACK','$SONG_GENRE','$SONG_DATE');\"" 1>&2
+		(
+		echo -n "INSERT or IGNORE into song "
+		echo -n "(uri, play_count, last_played, rating, duration,"
+		echo -n "last_modified,artist,album,title,track,genre,date)"
+		echo -n "values ('$uri',0,0,$rating,$SONG_DURATION,"
+		echo -n "$SONG_LAST_MODIFIED,'$ARTIST','$ALBUM','$TITLE',"
+		echo -n "'$SONG_TRACK','$SONG_GENRE','$SONG_DATE');"
+		echo
+		) 1>&2
         return 1
 	fi
 }
 
-mpdev_update()
+stats_db_update()
 {
 	last_played=$1
     uri=`echo "$2" | sed -e "s{'{''{g"`
 	rating=$3
-	sqlite3 -batch $music_dir/.mpd/stats.db "UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$rating where uri='$uri';"
+	sqlite3 -batch $stats_file \
+		"UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$rating where uri='$uri';"
     if [ $? -ne 0 ] ; then
-        echo "ERROR: UPDATE song set last_played=$1,rating=$3 where uri='$uri';" 1>&2
+		echo  "ERROR: UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$rating where uri='$uri';" 1>&2
         return 1
     fi
 }
 
-update_rompr()
+rompr_db_update()
 {
-    uri=$(echo "$1" | sed s/"'"/"\\\'"/g)
-    rating=`expr "$2" / 2`
+	uri="$1"
+	tstamp="$2"
+    rompr_rating=`expr "$3" / 2`
     TTindex=`get_TTindex "$uri"`
     if [ -n "$TTindex" ] ; then
         (
@@ -109,18 +149,22 @@ update_rompr()
         echo -n "VALUES ($TTindex,1, NOW()) ON DUPLICATE "
         echo -n "KEY UPDATE Playcount=Playcount+1, LastPlayed=NOW();"
         echo
-        echo -n "INSERT INTO Ratingtable (TTindex, Rating) VALUES ($TTindex, $rating) "
-        echo -n "ON DUPLICATE KEY UPDATE Rating = $rating, zztimestamp=NOW();"
+		echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+		echo -n "VALUES ($TTindex, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+		echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+		echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
         echo
-        ) | mysql -s -u rompr -promprdbpass -h pi4 romprdb 2>/dev/null
+        ) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
         if [ $? -ne 0 ] ; then
             (
             echo -n "INSERT into Playcounttable (TTindex, Playcount, LastPlayed) "
             echo -n "VALUES ($TTindex,1, NOW()) ON DUPLICATE "
             echo -n "KEY UPDATE Playcount=Playcount+1, LastPlayed=NOW();"
             echo
-            echo -n "INSERT INTO Ratingtable (TTindex, Rating) VALUES ($TTindex, $rating) "
-            echo -n "ON DUPLICATE KEY UPDATE Rating = $rating, , zztimestamp=NOW();"
+            echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+			echo -n "VALUES ($TTindex, $rompr_rating, FROM_UNXTIME($tstamp)) "
+			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+			echo -n "zztimestamp=FROM_UNXTIME($tstamp);"
             echo
             ) 1>&2
             return 1
@@ -128,118 +172,125 @@ update_rompr()
     fi
 }
 
+scrobble()
+{
+	if [ -n "$SCROBBLE_LASTFM" ] ; then
+		if [ $VERBOSE -eq 2 ] ; then
+			echo lastfm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
+		fi
+		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
+			lastfm-scrobbler --update --artist="$SONG_ARTIST" \
+				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+				--duration="$SONG_DURATION" > /dev/null
+		else
+			lastfm-scrobbler --update --artist="$SONG_ARTIST" \
+				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+				--duration="$SONG_DURATION"
+		fi
+	fi
+	if [ -n "$SCROBBLE_LIBREFM" ] ; then
+		if [ $VERBOSE -eq 2 ] ; then
+			echo librefm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION" > /dev/null
+		fi
+		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
+			librefm-scrobbler --update --artist="$SONG_ARTIST" \
+				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+				--duration="$SONG_DURATION" > /dev/null
+		else
+			librefm-scrobbler --update --artist="$SONG_ARTIST" \
+				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+				--duration="$SONG_DURATION"
+		fi
+	fi
+}
+
 update_song()
 {
-	uri="$1"
-    tmval=`date +'%s'`
+	uri=$1
 	rating=`get_mpd_rating "$uri"`
 	if [ -z "$rating" ] ; then
 		rating=6 # assign average rating of 3 for unrated music
-		echo "INSERT sticker tmval=$tmval rating=$rating song=[$1]"
-		insert_sticker "$uri" "$rating"
-	fi
-	if [ $rating -eq 0 ] ; then
+		if [ $VERBOSE -gt 0 ] ; then
+			echo "INSERT sticker rating=$rating song=[$uri]"
+		fi
+		sticker_db_insert "$uri" "$rating"
+	elif [ $rating -eq 0 ] ; then
 		rating=6;
-		echo "UPDATE sticker tmval=$tmval rating=$rating song=[$1]"
-		update_sticker "$uri" "$rating"
+		if [ $VERBOSE -gt 0 ] ; then
+			echo "UPDATE sticker rating=$rating song=[$uri]"
+		fi
+		sticker_db_update "$uri" "$rating"
 	fi
-	if [ $# -eq 2 ] ; then
-		echo "EndSong stat   tmval=$tmval rating=$rating song=[$1]"
-		mpdev_update $tmval "$uri" "$rating"
-	else
-		echo "NewSong stat   tmval=$tmval rating=$rating song=[$1]"
-		insert_stats 0 "$uri" "$rating"
-		update_rompr "$uri" "$rating"
+	if [ $VERBOSE -gt 0 ] ; then
+		case "$2" in
+			"now-playing")
+			end_time=`expr $START_TIME + $SONG_DURATION 2>/dev/null`
+			echo "NewSong stat   Start=$START_TIME END_TIME=$end_time rating=$rating song=[$uri]"
+			;;
+			"end-song")
+			echo "EndSong stat   Start=$START_TIME END_TIME=$END_TIME rating=$rating song=[$uri]"
+			;;
+		esac
 	fi
+	case "$2" in
+		"now-playing")
+		stats_db_insert "$uri" "$rating"
+		if [ -n "$ROMPR" ] ; then
+			rompr_db_update "$uri" "$START_TIME" "$rating"
+		fi
+		;;
+		"end-song")
+		if [ -n "$ROMPR" ] ; then
+			old_rating=`get_stat_rating $uri`
+			if [ -z "$old_rating" ] ; then
+				old_rating=0
+			fi
+    		TTindex=`get_TTindex "$uri"`
+			if [ -n "$TTindex" ] ; then
+				line=`get_rompr_rating $TTindex`
+				set $line
+				rompr_rating=$1
+				tstamp=$2
+				if [ -n "$tstamp" -a -n "$rompr_rating" -a $tstamp -gt $START_TIME -a $rompr_rating -gt 0 ] ; then # rompr Rating table has a newer entry
+					tmp=`expr $rompr_rating \* 2`
+					if [ $tmp -ne $rating ] ; then
+						if [ $VERBOSE -gt 0 ] ; then
+							echo "UPDATE sticker from ROMPR new=$tmp old=$rating, TTindex=$TTindex, Times=old[$START_TIME], new[$tstamp]"
+						fi
+						rating=$tmp
+						# update sticker with rating from rompr
+						sticker_db_update "$uri" $rating
+					fi
+				elif [ $old_rating -gt 0 -a $old_rating -ne $rating ] ; then # sticker table has a newer entry
+					if [ $VERBOSE -gt 0 ] ; then
+						echo "UPDATE ROMPR from sticker new=$rating old=$old_rating, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
+					fi
+					# update rompr with rating from sticker
+					rompr_db_update "$uri" "$START_TIME" "$rating"
+				fi
+			fi
+		fi
+		stats_db_update $START_TIME "$uri" "$rating"
+		;;
+	esac
 }
 
 if [ -z "$VERBOSE" ] ; then
 	VERBOSE=0
 fi
-if [ -n "$SONG_TITLE" ] ; then
-	music_dir=`get_mpd_conf_value music_directory`
-	if [ $? -ne 0 ] ; then
-    	echo "could not get music directory from mpd.conf" 1>&2
-    	exit 1
-	fi
-	sticker_file=`get_mpd_conf_value sticker_file`
-	if [ $? -ne 0 ] ; then
-    	echo "could not get sticker database from mpd.conf" 1>&2
-    	exit 1
-	fi
-	if [ " $1" = " end-song" ] ; then
-		update_song "$SONG_URI" "stats"
-	else
-		update_song "$SONG_URI"
-		if [ -f /tmp/MPD_SONG_URI ] ; then
-			MYSONG_URI=`sed -n 1p /tmp/MPD_SONG_URI`
-			TIME_VAL=`sed -n 2p /tmp/MPD_SONG_URI`
-			TIME_DUR=`sed -n 3p /tmp/MPD_SONG_URI`
-			if [ -n "$MYSONG_URI" -a ! "$MYSONG_URI" = "$SONG_URI" ] ; then
-				if [ $VERBOSE -eq 2 ] ; then
-					echo lastfm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
-				fi
-				if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-					lastfm-scrobbler --update --artist="$SONG_ARTIST" \
-						--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-						--duration="$SONG_DURATION" > /dev/null
-				else
-					lastfm-scrobbler --update --artist="$SONG_ARTIST" \
-						--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-						--duration="$SONG_DURATION"
-				fi
-				if [ $VERBOSE -eq 2 ] ; then
-					echo librefm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION" 
-				fi
-				if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-					librefm-scrobbler --update --artist="$SONG_ARTIST" \
-						--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-						--duration="$SONG_DURATION" > /dev/null
-				else
-					librefm-scrobbler --update --artist="$SONG_ARTIST" \
-						--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-						--duration="$SONG_DURATION"
-				fi
-			fi
-			/bin/rm -f /tmp/MPD_SONG_URI
-		else
-			if [ $VERBOSE -eq 2 ] ; then
-				echo lastfm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
-			fi
-			if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-				lastfm-scrobbler --update --artist="$SONG_ARTIST" \
-					--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-					--duration="$SONG_DURATION" > /dev/null
-			else
-				lastfm-scrobbler --update --artist="$SONG_ARTIST" \
-					--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-					--duration="$SONG_DURATION"
-			fi
-			if [ $VERBOSE -eq 2 ] ; then
-				echo librefm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION" > /dev/null
-			fi
-			if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-				librefm-scrobbler --update --artist="$SONG_ARTIST" \
-					--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-					--duration="$SONG_DURATION" > /dev/null
-			else
-				librefm-scrobbler --update --artist="$SONG_ARTIST" \
-					--album="$SONG_ALBUM" --track="$SONG_TITLE" \
-					--duration="$SONG_DURATION"
-			fi
-		fi
-		(
-    		tmval=`date +'%s'`
-			echo "$SONG_URI"
-			echo "$tmval"
-			echo "$SONG_DURATION"
-		) > /tmp/MPD_SONG_URI
-	fi
+music_dir=`get_mpd_conf_value music_directory`
+if [ $? -ne 0 ] ; then
+   	echo "could not get music directory from mpd.conf" 1>&2
+   	exit 1
 fi
-if [ $VERBOSE -gt 0 ] ; then
-	(
-	env | egrep "^SONG_|^MPD_|^VERBOSE"
-	echo -------------------------
-	) >> /tmp/player.env
+sticker_file=`get_mpd_conf_value sticker_file`
+if [ $? -ne 0 ] ; then
+   	echo "could not get sticker database from mpd.conf" 1>&2
+  	exit 1
+fi
+stats_file=$music_dir/.mpd/stats.db
+update_song "$SONG_URI" "$1"
+if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
+	scrobble
 fi
 exit 0
