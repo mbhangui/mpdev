@@ -11,10 +11,9 @@ mpdev [\f[I]option\f[]]
 mpdev is a mpd event watcher. It connects to mpd, waits for idle events.
 By default it will get the host name and port for mpd from
 \f[B]MPD_HOST\f[] and \f[B]MPD_PORT\f[] environment variables.
-\f[B]MPD_PASSWORD\f[] environment variable can be set to make
-mpdev connect to a password-protected mpd.
-If these environment variables aren't set, mpdev connects to
-localhost on port 6600.
+\f[B]MPD_PASSWORD\f[] environment variable can be set to make mpdev connect
+to a password-protected mpd. If these environment variables aren't set,
+mpdev connects to localhost on port 6600.
 
 .SH OPTIONS
 .TP
@@ -47,14 +46,41 @@ Retry interval in seconds in case \fBmpd\fR(1) is done
 .RS
 .RE
 
+.SH Environment Variables
+mpdev sets the following environment variables
+
+.EX
+SONG_ID            - Set to the ID from mpd database
+SONG_URI           - Set to the full path of the music file
+SONG_TITLE         - Set to the title of the song
+SONG_ARTIST        - Set to the song artist
+SONG_ALBUM         - Set to the song album
+SONG_DATE          - Set to the Date tag of the song
+SONG_GENRE         - Set to the Genre tag of the song
+SONG_TRACK         - Set to the track number of the song
+SONG_DURATION      - Set to the song duration
+SONG_LAST_MODIFIED - Set to the last modified time of the song
+START_TIME         - Time at which the song play started
+END_TIME           - Time at which the song ended
+VERBOSE            - Set to the verbose field
+.EE
+
+if \fI$HOME/.config/lastfm-scrobbler\fR & \fI$HOME/.config/librefm-scrobbler\fR
+are present, mpdev sets SCROBBLER_LASTFM and SCROBBLER_LIBREFM environment
+variables respectively.
+
 .SH FILES
 .IP \[bu] 2
-\f[B]~/bin/player\f[] User Script that will be run everytime song changes
+\f[B]~/.mpdev/player\f[] User Script that will be run everytime song plays.
+This script is passed the argument now-playing when a new song starts and
+end-song when the song ends.
 
 .SH SEE ALSO
 .IP \[bu] 2
 \f[B]mpd\f[](1),
-\f[B]sqlite3\f[](1)
+\f[B]sqlite3\f[](1),
+\f[B]lastfm-scrobbler\f[](1),
+\f[B]librefm-scrobbler\f[](1),
 .IP \[bu] 2
 https://github.com/mbhangui/mpdev/
 
