@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.7  2020-07-18 13:20:52+05:30  Cprogrammer
+ * added START_TIME, END_TIME env variables
+ *
  * Revision 1.6  2020-07-16 22:10:06+05:30  Cprogrammer
  * remove alarm on read
  *
@@ -57,7 +60,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.6 2020-07-16 22:10:06+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.7 2020-07-18 13:20:52+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -200,21 +203,6 @@ safewrite(int fd, char *buf, int len)
 	return r;
 }
 
-/*-
- * file: 96kHz/Minnesota Orchestra - Eiji Oue - Nikolai Rimsky-Korsakov- The Snow Maiden - Dance of the Tumblers.flac
- * Last-Modified: 2020-02-04T14:40:15Z
- * Album: HDtracks Ultimate Download Experience
- * Artist: Minnesota Orchestra / Eiji Oue
- * Date: 2009
- * Genre: Classical
- * Title: Nikolai Rimsky-Korsakov: The Snow Maiden - Dance of the Tumblers
- * Track: 1
- * Time: 235
- * duration: 234.645
- * Pos: 0
- * Id: 1
- * OK
- */
 static stralloc uri_s = {0}, last_modified_s = {0}, album_s = {0},
 	artist_s = {0}, date_s = {0}, genre_s = {0}, title_s = {0}, id_s = {0},
 	track_s = {0}, duration_s = {0}, position_s = {0}, response_s = {0};
@@ -693,10 +681,13 @@ void
 set_environ()
 {
 	struct tm       tm = {0};
-	time_t          mod_time;
+	time_t          mod_time, t;
 	int             i;
 
+	t = time(0);
 	if (uri_s.len && !env_put2("SONG_URI", uri_s.s))
+		die_nomem();
+	if (!env_unset("END_TIME"))
 		die_nomem();
 	if (last_modified_s.len) {
 		if (!strptime(last_modified_s.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
@@ -711,6 +702,9 @@ set_environ()
 	} else
 		i = 0;
 	if (i && !env_put2("SONG_LAST_MODIFIED", strnum))
+		die_nomem();
+	strnum[i = fmt_ulong(strnum, t)] = 0;
+	if (i && !env_put2("START_TIME", strnum))
 		die_nomem();
 	if (album_s.len && !env_put2("SONG_ALBUM", album_s.s))
 		die_nomem();
@@ -740,7 +734,7 @@ main(int argc, char **argv)
 				   *date, *genre, *title, *track, *duration, *response, *mpd_host, *ptr;
 	char            port[FMT_ULONG], mpdinbuf[1024], mpdoutbuf[512], ssoutbuf[512], sserrbuf[512];
 	unsigned long   id, prev_id1 = 0, prev_id2 = 0;
-	time_t          duration_i;
+	time_t          duration_i, t;
 
 	substdio_fdbuf(&ssout, write, 1, ssoutbuf, sizeof(sserrbuf));
 	substdio_fdbuf(&sserr, write, 2, sserrbuf, sizeof(sserrbuf));
@@ -781,6 +775,10 @@ main(int argc, char **argv)
 		strerr_die1x(100, "HOME not set");
 	if (chdir(ptr))
 		strerr_die3sys(111, "unable to chdir to ", ptr, ": ");
+	if (!access(".config/lastfm-scrobbler", F_OK) && !env_put2("SCROBBLE_LASTFM", "1"))
+		die_nomem();
+	if (!access(".config/librefm-scrobbler", F_OK) && !env_put2("SCROBBLE_LIBREFM", "1"))
+		die_nomem();
 	for (connection_num = 1;;connection_num++) {
 		if (verbose == 3) {
 			print_time(&ssout);
@@ -842,10 +840,18 @@ main(int argc, char **argv)
 			} else
 			if (!i) {
 				close(sock);
+				t = time(0);
+				strnum[i = fmt_ulong(strnum, t)] = 0;
+				if (i && !env_put2("END_TIME", strnum))
+					die_nomem();
 				submit_song(verbose, "end-song");
 				break;
 			}
 			if (prev_id1 && prev_id1 != id) {
+				t = time(0);
+				strnum[i = fmt_ulong(strnum, t)] = 0;
+				if (i && !env_put2("END_TIME", strnum))
+					die_nomem();
 				submit_song(verbose, "end-song");
 				prev_id1 = id;
 			}
@@ -877,7 +883,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.6 2020-07-16 22:10:06+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.7 2020-07-18 13:20:52+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
