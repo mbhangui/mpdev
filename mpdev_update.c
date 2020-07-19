@@ -1,28 +1,11 @@
 /*
  * $Log: mpdev_update.c,v $
- * Revision 1.7  2020-07-19 17:46:39+05:30  Cprogrammer
- * use mtime instead of ctime
- *
- * Revision 1.6  2020-07-19 12:55:03+05:30  Cprogrammer
- * add date_added field
- *
- * Revision 1.5  2020-07-16 18:58:19+05:30  Cprogrammer
- * check for -d, -D options
- *
- * Revision 1.4  2020-07-14 10:28:32+05:30  Cprogrammer
- * added option to create / modify sticker database
- *
- * Revision 1.3  2020-07-13 22:36:28+05:30  Cprogrammer
- * fixed usage string
- *
- * Revision 1.2  2020-07-13 01:05:17+05:30  Cprogrammer
- * massive performance improvement
- *
- * Revision 1.1  2020-07-09 13:46:22+05:30  Cprogrammer
+ * Revision 1.1  2020-07-19 18:15:46+05:30  Cprogrammer
  * Initial revision
  *
  *
- * mpdev - watch mpd events
+ *
+ * mpdev_update - utility for maintaining stats/sticker sqlite db
  *
  * Full documentation of mpd commands at https://www.musicpd.org/doc/html/protocol.html
  *
@@ -61,7 +44,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.7 2020-07-19 17:46:39+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.1 2020-07-19 18:15:46+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);

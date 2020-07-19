@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+# $Log: create_service.in,v $
+# Revision 1.1  2020-07-19 18:17:00+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: create_service.in,v 1.1 2020-07-19 18:17:00+05:30 Cprogrammer Exp mbhangui $
+#
 
 add_service()
 {

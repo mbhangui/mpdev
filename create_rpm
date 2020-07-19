@@ -1,13 +1,11 @@
 #!/bin/sh
-# $Log: create_rpm,v $
-# Revision 1.2  2020-07-16 12:39:08+05:30  Cprogrammer
-# fixed release numbering
 #
-# Revision 1.1  2020-07-08 11:38:06+05:30  Cprogrammer
+# $Log: create_rpm,v $
+# Revision 1.1  2020-07-19 18:17:22+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: create_rpm,v 1.2 2020-07-16 12:39:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_rpm,v 1.1 2020-07-19 18:17:22+05:30 Cprogrammer Exp mbhangui $
 #
 version=$(cat conf-version)
 

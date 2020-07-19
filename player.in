@@ -1,32 +1,11 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
-# Revision 1.8  2020-07-19 12:55:22+05:30  Cprogrammer
-# display sticker insert/updates after NewSong line
-#
-# Revision 1.7  2020-07-18 16:50:10+05:30  Cprogrammer
-# fixed variables getting clobbered by functions
-#
-# Revision 1.6  2020-07-18 13:23:46+05:30  Cprogrammer
-# refactored script
-#
-# Revision 1.5  2020-07-17 22:30:48+05:30  Cprogrammer
-# refactored code
-#
-# Revision 1.4  2020-07-17 18:40:15+05:30  Cprogrammer
-# update rating in sticker, stats if rating is set in rompr web player
-#
-# Revision 1.3  2020-07-16 12:41:08+05:30  Cprogrammer
-# update rating to 6 if rating is zero
-#
-# Revision 1.2  2020-07-13 01:04:53+05:30  Cprogrammer
-# add stat entry without need for mpdev_update
-#
-# Revision 1.1  2020-07-08 10:59:46+05:30  Cprogrammer
+# Revision 1.1  2020-07-19 18:14:10+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: player.in,v 1.8 2020-07-19 12:55:22+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.1 2020-07-19 18:14:10+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {

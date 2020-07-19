@@ -1,10 +1,12 @@
 #!/bin/sh
+#
 # $Log: mpdev_rename.in,v $
-# Revision 1.1  2020-07-16 12:38:23+05:30  Cprogrammer
+# Revision 1.1  2020-07-19 18:20:04+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: mpdev_rename.in,v 1.1 2020-07-16 12:38:23+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdev_rename.in,v 1.1 2020-07-19 18:20:04+05:30 Cprogrammer Exp mbhangui $
+#
 
 usage()
 {

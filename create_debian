@@ -1,10 +1,11 @@
 #!/bin/sh
+#
 # $Log: create_debian,v $
-# Revision 1.1  2020-07-08 11:38:13+05:30  Cprogrammer
+# Revision 1.1  2020-07-19 18:18:21+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: create_debian,v 1.1 2020-07-08 11:38:13+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_debian,v 1.1 2020-07-19 18:18:21+05:30 Cprogrammer Exp mbhangui $
 #
 if [ ! -f /etc/debian_version ] ; then
 	echo "Not a debian or ubuntu distribution" 1>&2

@@ -1,10 +1,10 @@
 /*
  * $Log: mpdev_cleanup.c,v $
- * Revision 1.2  2020-07-16 18:57:59+05:30  Cprogrammer
- * fixed specifying options
- *
- * Revision 1.1  2020-07-13 22:34:40+05:30  Cprogrammer
+ * Revision 1.1  2020-07-19 18:16:35+05:30  Cprogrammer
  * Initial revision
+ *
+ *
+ * mpdev_cleanup - utility to clean entries from stats/sticker sqlite db
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -32,7 +32,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = " ";
+static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.1 2020-07-19 18:16:35+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 ssize_t         safewrite(int, char *, int);

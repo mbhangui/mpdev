@@ -1,9 +1,6 @@
 /*
  * $Log: replacestr.c,v $
- * Revision 1.2  2020-07-13 21:31:14+05:30  Cprogrammer
- * bugfix - copy remaining data after replacement
- *
- * Revision 1.1  2019-04-14 18:30:01+05:30  Cprogrammer
+ * Revision 1.1  2020-07-19 18:26:54+05:30  Cprogrammer
  * Initial revision
  *
  */
@@ -17,7 +14,7 @@
 #endif
 
 #ifndef	lint
-static char     sccsid[] = "$Id: replacestr.c,v 1.2 2020-07-13 21:31:14+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: replacestr.c,v 1.1 2020-07-19 18:26:54+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 /*

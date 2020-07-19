@@ -1,24 +1,6 @@
 /*
  * $Log: mpdev.c,v $
- * Revision 1.7  2020-07-18 13:20:52+05:30  Cprogrammer
- * added START_TIME, END_TIME env variables
- *
- * Revision 1.6  2020-07-16 22:10:06+05:30  Cprogrammer
- * remove alarm on read
- *
- * Revision 1.5  2020-07-16 12:39:35+05:30  Cprogrammer
- * have higher timeout for idle
- *
- * Revision 1.4  2020-07-14 14:19:00+05:30  Cprogrammer
- * handle empty playlist with no currentsong playing
- *
- * Revision 1.3  2020-07-13 22:33:38+05:30  Cprogrammer
- * fixed usage string
- *
- * Revision 1.2  2020-07-13 01:04:17+05:30  Cprogrammer
- * set SONG_DURATION as seconds since epoch
- *
- * Revision 1.1  2020-07-08 14:30:59+05:30  Cprogrammer
+ * Revision 1.1  2020-07-19 18:14:46+05:30  Cprogrammer
  * Initial revision
  *
  *
@@ -60,7 +42,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.7 2020-07-18 13:20:52+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.1 2020-07-19 18:14:46+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -883,7 +865,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.7 2020-07-18 13:20:52+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.1 2020-07-19 18:14:46+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
