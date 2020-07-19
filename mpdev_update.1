@@ -13,43 +13,60 @@ mpdev_update [\f[I]option\f[]]
 get list of all music files.
 
 .SH OPTIONS
-.TP
+.TP 3
 .B -v
 Set verbose output. You can increase verbosity by specifying it multiple times
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-i\fR \fIIP\fR
 IP address of mpd host if different from localhost
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-p\fR \fIport\fR
 port on which mpd(1) is listening if different from 6600
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-s\fR \fIunix_socket\fR
 Unix domain socket in case you don't want to use \fIIP\fR and \fIport\fR
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-d\fR \fIdb_file_path\fR
 full path to the sqlite3(1) stats database
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-D\fR \fI0\fR | \fI1\fR
-0 to update stats.db, 1 to update sticker.db
+0 to insert new records in stats.db, 1 to insert new records in sticker.db
 .RS
 .RE
 
-.TP
+.TP 3
+\fB-U\fR \fI0\fR | \fI1\fR
+0 to use insert mode, 1 to use update mode for stats.db. This requires the
+the -m option. This option uses stat(2) on every music file to get the
+\fIst_ctime\fR field. This option will make the update run slower due to stat(2)
+call on each file. the \fIst_ctime\fR is used to compute the \fIdate_added\fR
+field. For insert (-U 0), you can use stat(2) to compute the \fIdate_added\fR
+field by passing the -m \fImusic_directory\fR option.
+.RS
+.RE
+
+.TP 3
+\fB-m\fR \fImusic_directory\fR
+Full path to the \fImusic_directory\fR in the mpd.conf(5) configuration file.
+.RS
+.RE
+
+.TP 3
 \fB-j\fR 
 Puts the journal in volatile memory. This saves disk I/O but at the expense
 of database safety and integrity. If the application using SQLite crashes
@@ -58,14 +75,14 @@ the database file will very likely go corrupt.
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-t\fR 
 Turns on transaction mode at the beginning. This improves performance. But if
 the application crashes in the middle, all new changes will be lost
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-S\fR 
 Turns Off synchronous mode.
 With synchronous OFF, \fBmpdev_update\fR continues without syncing as soon
@@ -77,7 +94,7 @@ magnitude faster with synchronous OFF.
 .RS
 .RE
 
-.TP
+.TP 3
 \fB-P\fR 
 Print SQL statements used during db creation
 .RS
@@ -103,4 +120,5 @@ Manvendra Bhangui <manvendra@indimail.org>
 mpd(1),
 sqlite3(1),
 mpdev_cleanup(1),
-mpdev(1)
+mpdev(1),
+stat(2)
