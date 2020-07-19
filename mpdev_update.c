@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.7  2020-07-19 17:46:39+05:30  Cprogrammer
+ * use mtime instead of ctime
+ *
  * Revision 1.6  2020-07-19 12:55:03+05:30  Cprogrammer
  * add date_added field
  *
@@ -58,7 +61,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.6 2020-07-19 12:55:03+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.7 2020-07-19 17:46:39+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -281,7 +284,7 @@ print_song()
 }
 
 void
-insert_update_data(sqlite3_stmt *res, int use_ctime, unsigned long *processed, unsigned long *failure, char **ptr)
+insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, unsigned long *failure, char **ptr)
 {
 	struct tm       tm = {0};
 	time_t          mod_time, add_time;
@@ -296,8 +299,8 @@ insert_update_data(sqlite3_stmt *res, int use_ctime, unsigned long *processed, u
 			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
 			return;
 		}
-		if (use_ctime && !stat(uri.s, &statbuf))
-			add_time = statbuf.st_ctime;
+		if (use_mtime && !stat(uri.s, &statbuf))
+			add_time = statbuf.st_mtime;
 		else
 			add_time = time(0);
 		if (do_update == 0) {
