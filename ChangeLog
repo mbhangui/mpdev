@@ -18,3 +18,9 @@ Release 0.2 Start 02/03/2020
 11. mdpev: added START_TIME, END_TIME variables
 12. player: refactored script to update ratings from rompr/sticker/stats
 13. player: removed hardcored MySQL connection parameters
+14. player: fixed variables getting clobbered by functions
+19/07/2020
+15. player: display sticker insert/updates after NewSong line
+16. mpdev_update: added date_added field
+17. mpdev_update: use st_mtime, instead of st_ctime for date_added field
+18. mpdplaylist: use date_added field instead of last_modified

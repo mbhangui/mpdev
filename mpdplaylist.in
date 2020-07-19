@@ -1,37 +1,12 @@
 #!/bin/sh
-
-#CREATE TABLE song(
-#        id              INTEGER PRIMARY KEY,
-#        play_count      INTEGER,
-#        love            INTEGER,
-#        kill            INTEGER,
-#        rating          INTEGER,
-#        tags            TEXT NOT NULL,
-#        uri             TEXT UNIQUE NOT NULL,
-#        duration        INTEGER,
-#        last_modified   INTEGER,
-#        artist          TEXT,
-#        album           TEXT,
-#        title           TEXT,
-#        track           TEXT,
-#        name            TEXT,
-#        genre           TEXT,
-#        date            TEXT,
-#        composer        TEXT,
-#        performer       TEXT,
-#        disc            TEXT,
-#        mb_artistid     TEXT,
-#        mb_albumid      TEXT,
-#        mb_trackid      TEXT,
-#        last_played     INTEGER,
-#        karma           INTEGER
-#                NOT NULL
-#                CONSTRAINT karma_percent CHECK (karma >= 0 AND karma <= 100)
-#                DEFAULT 50
-#);
-#CREATE INDEX rating on song(rating);
-#CREATE INDEX uri on song(uri);
-#CREATE INDEX last_played on song(last_played);
+#
+# $Log: mpdplaylist.in,v $
+# Revision 1.1  2020-07-19 17:48:45+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: mpdplaylist.in,v 1.1 2020-07-19 17:48:45+05:30 Cprogrammer Exp mbhangui $
+#
 
 get_mpd_conf_value()
 {
@@ -54,13 +29,9 @@ if [ $? -ne 0 ] ; then
   echo "could not get playlist directory from mpd.conf" 1>&2
   exit 1
 fi
-
-if [ -f $HOME/.mpdwatch/mpdwatch.conf ] ; then
-	statsdb_file=`grep dbpath  $HOME/.mpdwatch/mpdwatch.conf|awk '{print $3}'| \
-  		sed -e 's{"{{g' 2>/dev/null`
-fi
+statsdb_file=$music_dir/.mpd/stats.db
 if [ -z "$statsdb_file" ] ; then
-  echo "could not get statistic database file from $HOME/.mpdwatch/mpdwatch.conf" 1>&2
+  echo "$statsdb_file: No such file for directory" 1>&2
   exit 1
 fi
 if [ ! -f "$statsdb_file" ] ; then
@@ -320,7 +291,7 @@ if [ -n "$daysadded" ] ; then
 	fi
 	tmval=`date +'%s'`
 	tmval=`expr $tmval - $daysadded \* 86400`
-	sql_query="$sql_query last_modified >= $tmval"
+	sql_query="$sql_query date_added >= $tmval"
 fi
 if [ -n "$daysheard" ] ; then
 	if [ -z "$first_condition" ] ; then
@@ -367,10 +338,10 @@ if [ $sort_popular -eq 1 ] ; then
 fi
 if [ -n "$daysadded" ] ; then
 	if [ $order_by -eq 0 ] ; then
-		sql_query="$sql_query ORDER BY last_modified ASC"
+		sql_query="$sql_query ORDER BY date_added ASC"
 		order_by=1
 	else
-		sql_query="$sql_query, last_modified ASC"
+		sql_query="$sql_query, date_added ASC"
 	fi
 fi
 if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \

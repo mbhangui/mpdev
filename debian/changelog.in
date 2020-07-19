@@ -13,3 +13,8 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * mdpev: added START_TIME, END_TIME variables
   * player: refactored script to update ratings from rompr/sticker/stats
   * player: removed hardcored MySQL connection parameters
+  * player: fixed variables getting clobbered by functions
+  * player: display sticker insert/updates after NewSong line
+  * mpdev_update: added date_added field
+  * mpdev_update: use st_mtime, instead of st_ctime for date_added field
+  * mpdplaylist: use date_added field instead of last_modified

@@ -53,9 +53,9 @@ full path to the sqlite3(1) stats database
 \fB-U\fR \fI0\fR | \fI1\fR
 0 to use insert mode, 1 to use update mode for stats.db. This requires the
 the -m option. This option uses stat(2) on every music file to get the
-\fIst_ctime\fR field. This option will make the update run slower due to stat(2)
-call on each file. the \fIst_ctime\fR is used to compute the \fIdate_added\fR
-field. For insert (-U 0), you can use stat(2) to compute the \fIdate_added\fR
+\fIst_mtime\fR field. This option will make the update run slower due to stat(2)
+call on each file. the \fIst_mtime\fR is used to compute the \fIdate_added\fR
+field. For insert (-U 0) too, you can use stat(2) to compute the \fIdate_added\fR
 field by passing the -m \fImusic_directory\fR option.
 .RS
 .RE
@@ -99,6 +99,28 @@ magnitude faster with synchronous OFF.
 Print SQL statements used during db creation
 .RS
 .RE
+
+Examples
+1. create stats.db in the current directory
+
+.EX
+$ mpdev_update -S -j -t -D 0 -d stats.db
+Processed 42630 rows, Failures 0 rows, Updated 42636 rows
+
+real    0m0.830s
+user    0m0.405s
+sys     0m0.096s
+.EE
+
+2. Update stats.db in the current directory and add 6 new songs
+.EX
+$ mpdev_update -S -j -t -D 0 -d stats.db
+Processed 42636 rows, Failures 0 rows, Updated 6 rows
+
+real    0m0.725s
+user    0m0.353s
+sys     0m0.067s
+.EE
 
 .SH REPORTING BUGS
 .PP
