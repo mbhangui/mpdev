@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.8  2020-07-19 12:55:22+05:30  Cprogrammer
+# display sticker insert/updates after NewSong line
+#
 # Revision 1.7  2020-07-18 16:50:10+05:30  Cprogrammer
 # fixed variables getting clobbered by functions
 #
@@ -23,7 +26,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.7 2020-07-18 16:50:10+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.8 2020-07-19 12:55:22+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -211,17 +214,14 @@ update_song()
 {
 	uri="$1"
 	rating=`get_mpd_rating "$uri"`
+	inserted=0
 	if [ -z "$rating" ] ; then
 		rating=6 # assign average rating of 3 for unrated music
-		if [ $VERBOSE -gt 0 ] ; then
-			echo "INSERT sticker rating=$rating song=[$uri]"
-		fi
+		inserted=1
 		sticker_db_insert "$uri" "$rating"
 	elif [ $rating -eq 0 ] ; then
 		rating=6;
-		if [ $VERBOSE -gt 0 ] ; then
-			echo "UPDATE sticker rating=$rating song=[$uri]"
-		fi
+		inserted=2
 		sticker_db_update "$uri" "$rating"
 	fi
 	if [ $VERBOSE -gt 0 ] ; then
@@ -229,6 +229,11 @@ update_song()
 			"now-playing")
 			end_time=`expr $START_TIME + $SONG_DURATION 2>/dev/null`
 			echo "NewSong stat   Start=$START_TIME END_TIME=$end_time rating=$rating song=[$uri]"
+			if [ $inserted -eq 1 ] ; then
+				echo "INSERT sticker rating=$rating song=[$uri]"
+			elif [ $inserted -eq 2 ] ; then
+				echo "UPDATE sticker rating=$rating song=[$uri]"
+			fi
 			;;
 			"end-song")
 			echo "EndSong stat   Start=$START_TIME END_TIME=$END_TIME rating=$rating song=[$uri]"
