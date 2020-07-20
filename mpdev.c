@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.2  2020-07-20 15:56:53+05:30  Cprogrammer
+ * added ELAPSED_TIME, PLAYER_STATE env variables when a song is pause / play is pressed
+ *
  * Revision 1.1  2020-07-19 18:14:46+05:30  Cprogrammer
  * Initial revision
  *
@@ -42,11 +45,12 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.1 2020-07-19 18:14:46+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.2 2020-07-20 15:56:53+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
 ssize_t         safewrite(int, char *, int);
+unsigned int    scan_double(const char *, double *);
 
 substdio        mpdin, mpdout, ssout, sserr;
 stralloc        line = {0};
@@ -312,6 +316,91 @@ get_song_details(char **uri, char **last_modified, char **album, char **artist,
 	return (flag);
 }
 
+/*
+ * OK MPD 0.21.11
+ * command_list_ok_begin
+ * status
+ * currentsong
+ * command_list_end
+ * volume: 100
+ * repeat: 0
+ * random: 0
+ * single: 0
+ * consume: 1
+ * playlist: 14
+ * playlistlength: 336
+ * mixrampdb: 0.000000
+ * state: play
+ * song: 0
+ * songid: 13
+ * time: 28:289
+ * elapsed: 27.729
+ * bitrate: 192
+ * duration: 289.071
+ * audio: 44100:24:2
+ * nextsong: 1
+ * nextsongid: 14
+ * list_OK
+ * file: Hindi Soundtrack/Talat Mahmood/The Silken/CD 5/12 - Mohabbat Ki Kahaniyan (with Lata) - Woh Din Yaad Karo - 1971.mp3
+ * Last-Modified: 2019-11-14T11:26:37Z
+ * Artist: Talat Mahmood; Lata Mangeshkar
+ * Title: Mohabbat Ki Kahaniyan
+ * Album: Woh Din Yaad Karo
+ * Track: 12
+ * Date: 1971
+ * Genre: Hindi
+ * Disc: 1
+ * Time: 289
+ * duration: 289.071
+ * Pos: 0
+ * Id: 13
+ * list_OK
+ * OK
+ */
+#define PAUSE_STATE   0
+#define PLAY_STATE    1
+
+int
+get_status(double *elapsed, double *duration)
+{
+	int             match, status = -1;
+
+	mpd_out("command_list_ok_begin\nstatus\ncurrentsong\ncommand_list_end");
+	for (;;) {
+		if (getln(&mpdin, &line, &match, '\n') == -1)
+			die_read("status");
+		if (!match && line.len == 0) {
+			if (verbose) {
+				out("EOF status\n");
+				flush();
+			}
+			return (0);
+		}
+		if (verbose > 1) {
+			if (substdio_put(&ssout, line.s, line.len) == -1)
+				die_write();
+			flush();
+		}
+		if (!str_diffn(line.s, "OK\n", 3))
+			break;
+		else
+		if (!str_diffn(line.s, "elapsed: ", 9)) {
+			scan_double(line.s + 9, elapsed);
+			continue;
+		} else
+		if (!str_diffn(line.s, "duration: ", 10)) {
+			scan_double(line.s + 10, duration);
+			continue;
+		} else
+		if (!str_diffn(line.s, "state: play\n", 12))
+			status = PLAY_STATE;
+		else
+		if (!str_diffn(line.s, "state: pause\n", 13))
+			status = PAUSE_STATE;
+	}
+	return status;
+}
+
 #define DATABASE_EVENT        1
 #define UPDATE_EVENT          2
 #define STORED_PLAYLIST_EVENT 3
@@ -332,6 +421,7 @@ int
 run_command(int status, char *arg)
 {
 	int             i, wstat, childrc, fd;
+	double          elapsed, duration;
 	pid_t           child;
 
 	if (!status) {
@@ -341,6 +431,27 @@ run_command(int status, char *arg)
 	{
 		case STICKER_EVENT:
 			player_cmd[0] = ".mpdev/sticker";
+			break;
+		case PLAYER_EVENT:
+			i = get_status(&elapsed, &duration);
+			strnum[fmt_double(strnum, elapsed, 1)] = 0;
+			if (!env_put2("ELAPSED_TIME", strnum))
+				die_nomem();
+			strnum[fmt_double(strnum, duration, 1)] = 0;
+			if (!env_put2("DURATION", strnum))
+				die_nomem();
+			switch (i)
+			{
+			case PAUSE_STATE:
+				if (!env_put2("PLAYER_STATE", "pause"))
+					die_nomem();
+				break;
+			case PLAY_STATE:
+				if (!env_put2("PLAYER_STATE", "play"))
+					die_nomem();
+				break;
+			}
+			player_cmd[0] = ".mpdev/playpause";
 			break;
 		case MIXER_EVENT:
 			player_cmd[0] = ".mpdev/mixer";
@@ -356,6 +467,9 @@ run_command(int status, char *arg)
 			break;
 		case DATABASE_EVENT:
 			player_cmd[0] = ".mpdev/database";
+			break;
+		case PLAYLIST_EVENT:
+			player_cmd[0] = ".mpdev/playlist";
 			break;
 		case STORED_PLAYLIST_EVENT:
 			player_cmd[0] = ".mpdev/stored_playlist";
@@ -529,7 +643,10 @@ do_idle()
 			switch(status)
 			{
 			case PLAYER_EVENT:
+				run_command(status, "player-event");
+				break;
 			case PLAYLIST_EVENT:
+				run_command(status, "playlist-event");
 				break;
 			default:
 				run_command(status, "mpd-event");
@@ -670,6 +787,8 @@ set_environ()
 	if (uri_s.len && !env_put2("SONG_URI", uri_s.s))
 		die_nomem();
 	if (!env_unset("END_TIME"))
+		die_nomem();
+	if (!env_unset("ELAPSED_TIME"))
 		die_nomem();
 	if (last_modified_s.len) {
 		if (!strptime(last_modified_s.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
@@ -865,7 +984,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.1 2020-07-19 18:14:46+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.2 2020-07-20 15:56:53+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
