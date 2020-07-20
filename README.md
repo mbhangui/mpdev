@@ -1,6 +1,7 @@
 # mpdev
 
-**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/). The need for doing this project came from the necessity of maintaining play counts and history for [RompR](https://fatg3erman.github.io/RompR/) music player. It is a good player but you can't be running it when you are especially using a headless devices running mpd, like the Raspberry PI, Sparky and others. You could just be powering on these device, select a playlist using an application on your linux/OSX desktop (mpc, ncmpc, ncmpcpp, GMPC, Sonata, Cantata), android (MPDroid, MPD control), IOS (MPoD, MPaD) and browser based (RompR, O!MPD, ympd). Once you have chosen your playlist, you could come out of your application. When you come out any of these applications maintaining of history and play counts will stop. As a workaraound, you can enable scrobbling to submit your songs to last.fm, libre.fm. But what if you don't want to submit your songs outside? What if you want to have your listening habits with you in your own database? In such case you can run mpdev and maintain your own database to capture your listening habits.
+**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/).
+
 
 mpdev helps in bulding a database of your played tracks. Along with a script `mpdplaylist`, it can generate a playlist for mpd as per your taste and mood.
 
@@ -62,7 +63,7 @@ SCROBBLER_LIBREFM
 VERBOSE
 ```
 
-If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX. mpdev can also update [RompR](https://fatg3erman.github.io/RompR/) ratings and play counts and synchronize the ratings between [RompR](https://fatg3erman.github.io/RompR/) MySQL and sticker sqlite databases. Since mpdev runs in the background, it can keep updating [RompR](https://fatg3erman.github.io/RompR/) db and stats db play counts and history without you having to keep [RompR](https://fatg3erman.github.io/RompR/) running.
+If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX. mpdev can also update [RompR](https://fatg3erman.github.io/RompR/) ratings and play counts and synchronize the ratings between [RompR](https://fatg3erman.github.io/RompR/) MySQL and sticker sqlite databases. Since mpdev runs in the background, it can keep updating [RompR](https://fatg3erman.github.io/RompR/), stats db play counts and history without you having to keep [RompR Web Frontend](https://fatg3erman.github.io/RompR/) running.
 
 The sticker database can be enabled by having the followinng entry in `/etc/mpd.conf`
 
@@ -117,6 +118,9 @@ do
         MYSQL_USER=rompr
         MYSQL_PASS=romprdbpass
         MYSQL_DATABASE=romprdb \
+		HOME=/home/pi \
+		XDG_RUNTIME_DIR=/home/pi \
+		PATH=\$PATH:/usr/bin:/bin \
     /usr/bin/mpdev -v
 done
 ```
