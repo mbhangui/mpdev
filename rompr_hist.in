@@ -1,18 +1,17 @@
 #!/bin/sh
 #
 # $Log: rompr_hist.in,v $
+# Revision 1.2  2020-07-20 22:15:18+05:30  Cprogrammer
+# warn if rompr.conf is missing
+#
 # Revision 1.1  2020-07-20 21:45:03+05:30  Cprogrammer
 # Initial revision
 #
 #
 # utility to update 
 #
-# $Id: rompr_hist.in,v 1.1 2020-07-20 21:45:03+05:30 Cprogrammer Exp mbhangui $
+# $Id: rompr_hist.in,v 1.2 2020-07-20 22:15:18+05:30 Cprogrammer Exp mbhangui $
 #
-MYSQL_HOST=`grep MYSQL_HOST $HOME/.mpdev/rompr.conf |awk '{print $2}'`
-MYSQL_USER=`grep MYSQL_USER $HOME/.mpdev/rompr.conf |awk '{print $2}'`
-MYSQL_PASS=`grep MYSQL_PASS $HOME/.mpdev/rompr.conf |awk '{print $2}'`
-MYSQL_DATABASE=`grep MYSQL_DATABASE $HOME/.mpdev/rompr.conf |awk '{print $2}'`
 usage()
 {
     (
@@ -142,6 +141,14 @@ if [ $? -ne 0 ] ; then
     echo "could not get sticker database from mpd.conf" 1>&2
     exit 1
 fi
+if [ ! -f $HOME/.mpdev/rompr.conf ] ; then
+	echo "$HOME/.mpdev/rompr.conf missing" 1>&2
+    exit 1
+fi
+MYSQL_HOST=`grep MYSQL_HOST $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+MYSQL_USER=`grep MYSQL_USER $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+MYSQL_PASS=`grep MYSQL_PASS $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+MYSQL_DATABASE=`grep MYSQL_DATABASE $HOME/.mpdev/rompr.conf |awk '{print $2}'`
 
 update_stats_table=0
 update_sticker_table=0
