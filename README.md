@@ -16,12 +16,14 @@ The above three are actually done by running a hook, a script named `player` in 
 MPD EVENT|Hook script
 ---------|-----------
 SONG_CHANGE|~/.mpdev/player
+PLAY/PAUSE|~/.mpdev/playpause
 STICKER_EVENT|~/.mpdev/sticker
 MIXER_EVENT|~/.mpdev/mixer
 OPTIONS_EVENT|~/.mpdev/options
 OUTPUT_EVENT|~/.mpdev/output
 UPDATE_EVENT|~/.mpdev/update
 DATABASE_EVENT|~/.mpdev/database
+PLAYLIST_EVENT|~/.mpdev/playlist
 STORED_PLAYLIST_EVENT|~/.mpdev/stored_playlist
 PARTITION_EVENT|~/.mpdev/partition
 SUBSCRIPTION_EVENT|~/.mpdev/subscription
@@ -33,9 +35,11 @@ CUSTOM_EVENT|~/.mpdev/custom
 The hooks are passed the following arguments
 
 ```
-mpd-event   - Passed when the above events listed, apart from SONG_CHANGE happen.
-now-playing - Passed when a song starts playing
-end-song    - Passed when a song finishes playing
+mpd-event      - Passed when the above events listed, apart from SONG_CHANGE happen.
+player-event   - Passwd when you play/pause player
+playlist-event - Passwd when the playlist changes
+now-playing    - Passed when a song starts playing
+end-song       - Passed when a song finishes playing
 ```
 
 The default installation makes a copy of `/usr/libexec/mpdev/player` in `$HOME/.mpdev` for the user with uid `1000`.
@@ -45,22 +49,25 @@ The **mpdev** package also comes with `mpdev_update` and `mpdev_cleanup` program
 ## Environment Variables available to hooks
 
 ```
+SONG_ID
 SONG_URI
-SONG_LAST_MODIFIED
-SONG_ALBUM
+SONG_TITLE
 SONG_ARTIST
+SONG_ALBUM
 SONG_DATE
 SONG_GENRE
-SONG_TITLE
 SONG_TRACK
 SONG_DURATION
 SONG_POSITION
-SONG_ID
+SONG_LAST_MODIFIED
 START_TIME
 END_TIME
 SCROBBLER_LASTFM
 SCROBBLER_LIBREFM
 VERBOSE
+ELAPSED_TIME
+PLAYER_STATE
+DURATION
 ```
 
 If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX. mpdev can also update [RompR](https://fatg3erman.github.io/RompR/) ratings and play counts and synchronize the ratings between [RompR](https://fatg3erman.github.io/RompR/) MySQL and sticker sqlite databases. Since mpdev runs in the background, it can keep updating [RompR](https://fatg3erman.github.io/RompR/), stats db play counts and history without you having to keep [RompR Web Frontend](https://fatg3erman.github.io/RompR/) running.

@@ -24,3 +24,7 @@ Release 0.2 Start 02/03/2020
 16. mpdev_update: added date_added field
 17. mpdev_update: use st_mtime, instead of st_ctime for date_added field
 18. mpdplaylist: use date_added field instead of last_modified
+20/07/2020
+19. mpdev: send status, currentsong command on player event to set
+    ELAPSED_TIME
+20. added rompr_hist play history utility for rompr

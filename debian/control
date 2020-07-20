@@ -9,7 +9,7 @@ Homepage: https://github.com/mbhangui/mpdev
 Package: mpdev
 Architecture: any
 Pre-Depends: daemontools
-Depends: mpc, mpd, sqlite3, ${shlibs:Depends}, ${misc:Depends}
+Depends: mpc, mpd, sqlite3, coreutils, ${shlibs:Depends}, ${misc:Depends}
 Description: MPD Event Watcher
  mpdev is a daemon, written in C, that watches a Music Player Daemon events,
  using mpd's idle command and execs user defined script on event changes.

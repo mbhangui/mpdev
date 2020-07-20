@@ -41,7 +41,7 @@ BuildRequires: sqlite-libs sqlite-devel
 %endif
 Requires: user(qmaill)
 Requires: group(nofiles)
-Requires: /usr/bin/mpd /usr/bin/mpc /usr/bin/sqlite3 daemontools
+Requires: /usr/bin/mpd /usr/bin/mpc /usr/bin/sqlite3 daemontools coreutils
 
 %description
 mpdev is a daemon, written in C, that watches a Music Player Daemon events,
@@ -77,6 +77,7 @@ using mpd's idle command and execs user defined script on event changes.
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
 %attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
+%attr(755,root,root)                    %{_prefix}/bin/rompr_hist
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
 %attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_update

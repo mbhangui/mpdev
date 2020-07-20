@@ -1,0 +1,246 @@
+#!/bin/sh
+#
+# $Log: rompr_hist.in,v $
+# Revision 1.1  2020-07-20 21:45:03+05:30  Cprogrammer
+# Initial revision
+#
+#
+# utility to update 
+#
+# $Id: rompr_hist.in,v 1.1 2020-07-20 21:45:03+05:30 Cprogrammer Exp mbhangui $
+#
+MYSQL_HOST=`grep MYSQL_HOST $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+MYSQL_USER=`grep MYSQL_USER $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+MYSQL_PASS=`grep MYSQL_PASS $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+MYSQL_DATABASE=`grep MYSQL_DATABASE $HOME/.mpdev/rompr.conf |awk '{print $2}'`
+usage()
+{
+    (
+    echo "rompr: incorrect usage"
+    echo "USAGE: rompr [--update-stats] [--update-sticker] [--sql] [--update-checkpoint]"
+    echo "options"
+    echo " --update-stats    - updates stats  sqlite db"
+    echo " --update-sticker  - updates sticker sqlite db"
+    echo " --update-chkpoint - reset checkpoint"
+    echo " --sql             - generate sql statements in /tmp/stats.sql, /tmp/sticker.sql"
+    ) 1>&2
+    exit 1
+}
+
+get_mpd_conf_value()
+{
+    grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+    sed -e 's{"{{g'
+}
+
+get_mpd_rating()
+{
+    uri=`echo $1|sed -e "s{'{''{g"`
+    echo "SELECT value FROM sticker WHERE type='song' AND uri='$uri';" | sqlite3 $sticker_file
+    if [ $? -ne 0 ] ; then
+        echo "error: SELECT value FROM sticker WHERE type='song' AND uri=\"$uri\";" 1>&2
+        return 1
+    fi
+}
+
+init_rompr()
+{
+    (
+    echo "CREATE TABLE IF NOT EXISTS ratingchkpoint (id INT NOT NULL PRIMARY KEY, zztimestamp INT NOT NULL);"
+    echo "INSERT INTO ratingchkpoint (id,zztimestamp) values (1, UNIX_TIMESTAMP(now()))"
+    echo "   ON DUPLICATE KEY UPDATE zztimestamp=UNIX_TIMESTAMP(now());"
+    ) | mysql -s -u $MYSQL_USER -p$MYSQL_PASS -h $MYSQL_HOST $MYSQL_DATABASE 2>/dev/null
+    if [ $? -ne 0 ] ; then
+        exit 1
+    fi
+}
+
+chk_ratingchkpoint()
+{
+    echo "SELECT COUNT(*) from ratingchkpoint;" | mysql -s -u $MYSQL_USER -p$MYSQL_PASS -h $MYSQL_HOST $MYSQL_DATABASE > /dev/null 2>&1
+    if [ $? -ne 0 ] ; then
+        echo "initiliazing"
+        init_rompr
+    fi
+}
+
+update_chkpoint()
+{
+    (
+    if [ $# -eq 1 ] ; then
+        echo -n "INSERT INTO ratingchkpoint (id, zztimestamp) VALUES (1, $1)"
+        echo " ON DUPLICATE KEY UPDATE zztimestamp=$1;"
+    else
+        echo -n "INSERT INTO ratingchkpoint (id, zztimestamp) VALUES (1, UNIX_TIMESTAMP(now()))"
+        echo " ON DUPLICATE KEY UPDATE zztimestamp=UNIX_TIMESTAMP(now());"
+    fi
+    ) | mysql -s -u $MYSQL_USER -p$MYSQL_PASS -h $MYSQL_HOST $MYSQL_DATABASE 2>/dev/null
+    if [ $? -ne 0 ] ; then
+        (
+        if [ $# -eq 1 ] ; then
+            echo -n "ERROR1: INSERT INTO ratingchkpoint (id, zztimestamp) VALUES (1, $1)"
+            echo " ON DUPLICATE KEY UPDATE zztimestamp=$1;"
+        else
+            echo -n "ERROR2: INSERT INTO ratingchkpoint (id, zztimestamp) VALUES (1, now())"
+            echo " ON DUPLICATE KEY UPDATE zztimestamp=UNIX_TIMESTAMP(now());"
+        fi
+        ) 1>&2
+    fi
+}
+
+get_rompr()
+{
+    (
+    echo "SELECT r.TTindex, p.Lastplayed, p.Playcount, r.Rating, t.Uri FROM Ratingtable r, Tracktable t, Playcounttable p, "
+    echo "    ratingchkpoint u WHERE r.TTindex = t.TTindex and p.TTindex = t.TTindex AND UNIX_TIMESTAMP(r.zztimestamp) > u.zztimestamp"
+    echo "    ORDER BY r.zztimestamp asc;"
+    ) | mysql -s -u $MYSQL_USER -p$MYSQL_PASS -h $MYSQL_HOST $MYSQL_DATABASE 2>/dev/null
+    if [ $? -ne 0 ] ; then
+        (
+        echo "SELECT r.TTindex, r.Rating, t.Uri from Ratingtable r, Tracktable t,"
+        echo "    ratingchkpoint u WHERE r.TTindex = t.TTindex AND UNIX_TIMESTAMP(r.zztimestamp) > u.zztimestamp"
+        echo "    ORDER BY r.zztimestamp asc;"
+        ) 1>&2
+    fi
+}
+
+update_stats()
+{
+    uri=`echo "$1" | sed -e "s{'{''{g"`
+    if [ $sql_mode -eq 1 ] ; then
+        echo "UPDATE song SET rating=$2 WHERE uri='$uri';"
+    else
+        echo "UPDATE song SET rating=$2 WHERE uri='$uri';" | sqlite3 $music_dir/.mpd/stats_dietpi.db
+        if [ $? -ne 0 ] ; then
+            echo "error: UPDATE song SET rating=$2 WHERE uri='$uri';" 1>&2
+            return 1
+        fi
+    fi
+}
+
+update_sticker()
+{
+    uri=`echo "$1" | sed -e "s{'{''{g"`
+    if [ $sql_mode -eq 1 ] ; then
+        echo "UPDATE sticker SET value=$2 WHERE uri='$uri';"
+    else
+        echo "UPDATE sticker SET value=$2 WHERE uri='$uri';" | sqlite3 $music_dir/.mpd/sticker.db
+        if [ $? -ne 0 ] ; then
+            echo "UPDATE sticker SET value=$2 WHERE uri='$uri';" 1>&2
+            return 1
+        fi
+    fi
+}
+
+music_dir=`get_mpd_conf_value music_directory`
+if [ $? -ne 0 ] ; then
+    echo "could not get music directory from mpd.conf" 1>&2
+    exit 1
+fi
+sticker_file=`get_mpd_conf_value sticker_file`
+if [ $? -ne 0 ] ; then
+    echo "could not get sticker database from mpd.conf" 1>&2
+    exit 1
+fi
+
+update_stats_table=0
+update_sticker_table=0
+sql_mode=0
+chkpoint=0
+verbose=0
+while test $# -gt 0; do
+    case "$1" in
+        -*=*)
+        optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
+        optval=`echo "$1" | cut -d'=' -f1`
+        ;;
+        *)
+        optarg=
+        ;;
+    esac
+
+    case "$1" in
+        --sql)
+        sql_mode=1
+        ;;
+        --update-stats)
+        update_stats_table=1
+        ;;
+        --update-sticker)
+        update_sticker_table=1
+        ;;
+        --update-chkpoint)
+        chkpoint=1
+        ;;
+        --verbose)
+        verbose=1
+        ;;
+        *)
+        usage
+        ;;
+    esac
+    shift
+done
+
+if [ $update_stats_table -eq 0 -a $update_sticker_table -eq 0 ] ; then
+	verbose=1
+fi
+
+chk_ratingchkpoint
+status1=1
+status2=1
+if [ $sql_mode -eq 1 ] ; then
+    if [ $update_stats_table -eq 1 ] ; then
+        /bin/rm -f /tmp/stats.sql
+    fi
+    if [ $update_sticker_table -eq 1 ] ; then
+        /bin/rm -f /tmp/sticker.sql
+    fi
+fi
+printf "%-6s %-19s %s %s %s\n" "Index" "End Time" "Star" "Count" "Filename"
+get_rompr | while read line
+do
+    set $line
+    TTindex=$1
+    pdate=$2
+    ptime=$3
+    pcount=$4
+    rating=$5
+    shift 5
+    uri="$*"
+    if [ $verbose -eq 1 ] ; then
+        printf "%06d %s %s %02d   %d     %s\n" $TTindex $pdate $ptime $pcount $rating "$uri"
+    fi
+    if [ $update_stats_table -eq 1 ] ; then
+        rating=`expr $rating \* 2`
+        if [ $sql_mode -eq 1 ] ; then
+            update_stats "$uri" $rating >> /tmp/stats.sql
+        else
+            update_stats "$uri" $rating
+        fi
+        status1=$?
+    fi
+    if [ $update_sticker_table -eq 1 ] ; then
+        rating=`expr $rating \* 2`
+        if [ $sql_mode -eq 1 ] ; then
+            update_sticker "$uri" $rating >> /tmp/sticker.sql
+        else
+            update_sticker "$uri" $rating
+        fi
+        status2=$?
+    fi
+    if [ $chkpoint -eq 1 -a $status1 -eq 0 -a $status2 -eq 0 ] ; then
+        update_chkpoint $tmval
+    fi
+done
+if [ $sql_mode -eq 1 ] ; then
+    if [ $update_stats_table -eq 1 ] ; then
+        cat /tmp/stats.sql   | sqlite3 $music_dir/.mpd/stats_dietpi.db
+    fi
+    if [ $update_sticker_table -eq 1 ] ; then
+        cat /tmp/sticker.sql | sqlite3 $music_dir/.mpd/sticker.db
+    fi
+fi
+if [ $chkpoint -eq 1 ] ; then
+    update_chkpoint
+fi
