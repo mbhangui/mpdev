@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.6  2020-07-21 18:31:38+05:30  Cprogrammer
+# added error condition for getting rating from Ratingtable.
+#
 # Revision 1.5  2020-07-21 18:02:29+05:30  Cprogrammer
 # create temp file for recording original start time
 #
@@ -17,7 +20,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.5 2020-07-21 18:02:29+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.6 2020-07-21 18:31:38+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -354,7 +357,9 @@ update_song()
 	case "$state" in
 		"now-playing")
 		if [ ! -f /tmp/mpdev/start_time.$csum ] ; then
-			echo $START_TIME > /tmp/mpdev/start_time.$csum
+			if [ -n "$START_TIME" ] ; then
+				echo $START_TIME > /tmp/mpdev/start_time.$csum
+			fi
 		else
 			START_TIME=`cat /tmp/mpdev/start_time.$csum`
 		fi
@@ -403,9 +408,14 @@ update_song()
 			fi
 			if [ -n "$TTindex" ] ; then
 				line=`get_rompr_rating $TTindex`
-				set $line
-				rompr_rating=$1
-				tstamp=$2
+				if [ -n "$line" ] ; then
+					set $line
+					rompr_rating=$1
+					tstamp=$2
+				else
+					rompr_rating=""
+					tstamp=""
+				fi
 				if [ -n "$line" -a -n "$tstamp" -a -n "$rompr_rating" -a $tstamp -gt $START_TIME -a $rompr_rating -gt 0 ] ; then # rompr Rating table has a newer entry
 					tmp=`expr $rompr_rating \* 2`
 					if [ $tmp -ne $rating ] ; then
