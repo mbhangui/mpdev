@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.4  2020-07-21 17:04:02+05:30  Cprogrammer
+# option to run without sticker or stats db enabled
+#
 # Revision 1.3  2020-07-21 12:25:20+05:30  Cprogrammer
 # added get_rompr_playcount_ts() function to get playcount and timestamp from Playcounttable
 #
@@ -11,7 +14,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.3 2020-07-21 12:25:20+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.4 2020-07-21 17:04:02+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -33,10 +36,10 @@ get_TTindex()
 
 get_rompr_rating()
 {
-	echo "SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+	echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
 		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
+		echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
 		return 1
 	fi
 	return 0
@@ -66,7 +69,7 @@ get_stat_rating()
 
 sticker_db_insert()
 {
-    turi=`echo $1|sed -e "s{'{''{g"`
+	turi=`echo $1|sed -e "s{'{''{g"`
 	tmprate=$2
 	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker values('song', '$turi', 'rating', $tmprate);"
 	if [ $? -ne 0 ] ; then
@@ -123,13 +126,22 @@ stats_db_insert()
 
 stats_db_update()
 {
-	last_played=$1
-    turi=`echo "$2" | sed -e "s{'{''{g"`
-	tmprate=$3
-	sqlite3 -batch $stats_file \
-		"UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$tmprate where uri='$turi';"
+	turi=`echo "$1" | sed -e "s{'{''{g"`
+	tmprate=$2
+	last_played=$3
+	if [ -n "$last_played" ] ; then
+		sqlite3 -batch $stats_file \
+			"UPDATE song set last_played=$last_played, play_count=play_count+1, rating=$tmprate where uri='$turi';"
+	else
+		sqlite3 -batch $stats_file \
+			"UPDATE song set rating=$tmprate where uri='$turi';"
+	fi
 	if [ $? -ne 0 ] ; then
-		echo  "ERROR: UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$tmprate where uri='$turi';" 1>&2
+		if [ -n "$last_played" ] ; then
+			echo  "ERROR: UPDATE song set last_played=$last_played, play_count=play_count+1, rating=$tmprate where uri='$turi';" 1>&2
+		else
+			echo  "ERROR: UPDATE song set rating=$tmprate where uri='$turi';" 1>&2
+		fi
 		return 1
 	fi
 	return 0
@@ -137,7 +149,7 @@ stats_db_update()
 
 rompr_update_playcount()
 {
-	turi=$(echo "$1" | sed s/"'"/"\\\'"/g)
+	turi="$1"
 	tm="$2"
 	if [ $# -eq 3 ] ; then
 		TTidx=$3
@@ -173,11 +185,6 @@ rompr_update_playcount()
 
 rompr_db_update()
 {
-	# curl -b "currenthost=Argos;skin=desktop;player_backend=mpd" \
-	#	-d '[["status"]]' -H "Content-Type: application/json" \
-	#	-X POST http://pi4/rompr/player/mpd/postcommand.php;echo
-	#{"volume":"100","repeat":"0","random":"0","single":"0","consume":"1","playlist":"33","playlistlength":"199","mixrampdb":"0.000000","state":"pause","song":"0","songid":"229","time":"30:895","elapsed":"30.165","bitrate":"597","duration":"894.906","audio":"44100:16:2","nextsong":"1","nextsongid":"230","file":"Wayne Shorter\/Emanon (2018, Blue Note)\/CD1\/01 - Pegasus.flac","Last-Modified":"2020-06-26T09:43:38Z","Title":"Pegasus","Album":"Emanon CD1","AlbumArtist":"Wayne Shorter","Artist":"Wayne Shorter","Genre":"Jazz","Date":"2018","Track":"1","Time":"895","Pos":"0","Id":"229","replay_gain_mode":"off","radiomode":"","radioparam":"","radiomaster":"","radioconsume":0}
-
 	turi=$(echo "$1" | sed s/"'"/"\\\'"/g)
 	tstamp="$2"
 	rompr_rating=`expr "$3" / 2`
@@ -265,73 +272,123 @@ update_song()
 		fi
 	fi
 	inserted=0
-	if [ -f /tmp/mpdev/sticker.$csum ] ; then
-		rating=`cat /tmp/mpdev/sticker.$csum`
+	# presence of rating.$csum indicates that
+	# the script was run when a song started
+	# we are being called again
+	if [ -f /tmp/mpdev/rating.$csum ] ; then
+		rating=`cat /tmp/mpdev/rating.$csum`
 	else
-		rating=`get_mpd_rating "$uri"`
+		# you can have ratings maintained in sticker, rompr or both
+		# prefer the sticker value as I use cantata more than rompr
+		# at the moment because I started using cantata much
+		# before rompr. You may alter the script if you want
+		# but remember this script synchronizes both values
+		if [ $sticker_enabled -eq 1 ] ; then
+			rating=`get_mpd_rating "$uri"`
+		elif  [ -n "$ROMPR" ] ; then
+			tmp=`get_rompr_rating "$uri" | awk '{print $1}'`
+			rating=`expr $tmp \* 2`
+		elif [ $stats_enabled -eq 1 ] ; then
+			rating=`get_stats_rating "$uri"`
+		else
+			echo "Nothing to do"
+			exit 0
+		fi
 		if [ -z "$rating" ] ; then
 			rating=6 # assign average rating of 3 for unrated music
 			inserted=1
-			sticker_db_insert "$uri" "$rating"
+			if [ $sticker_enabled -eq 1 ] ; then
+				sticker_db_insert "$uri" "$rating"
+				touch /tmp/sticker.$csum
+			elif [ -n "$ROMPR" ] ; then
+				rompr_db_update "$uri" "$START_TIME" "$rating"
+				touch /tmp/rompr.$csum
+			elif [ $stats_enabled -eq 1 ] ; then
+				stats_db_insert "$uri" "$rating"
+				touch /tmp/mpdev/stats.$csum
+			fi
 		elif [ $rating -eq 0 ] ; then
 			rating=6;
 			inserted=2
-			sticker_db_update "$uri" "$rating"
+			if [ $sticker_enabled -eq 1 ] ; then
+				sticker_db_update "$uri" "$rating"
+				touch /tmp/sticker.$csum
+			elif [ -n "$ROMPR" ] ; then
+				rompr_db_update "$uri" "$START_TIME" "$rating"
+				touch /tmp/rompr.$csum
+			elif  [ $stats_enabled -eq 1 ] ; then
+				stats_db_update "$uri" "$rating" ""
+				touch /tmp/mpdev/stats.$csum
+			fi
 		fi
-		echo $rating > /tmp/mpdev/sticker.$csum
 	fi
 	if [ $VERBOSE -gt 0 ] ; then
-		if [ ! -f /tmp/mpdev/sticker."$uri" ] ; then
-			case "$state" in
-				"now-playing")
-				echo "NewSong stat Start=$START_TIME duration=$SONG_DURATION rating=$rating"
-				echo "song=[$uri]"
-				if [ $inserted -eq 1 ] ; then
-					echo "INSERT sticker rating=$rating"
-				elif [ $inserted -eq 2 ] ; then
-					echo "UPDATE sticker rating=$rating"
+		if [ ! -f /tmp/mpdev/rating.$csum -a " $state" = " now-playing" ] ; then
+			echo "NewSong Start=$START_TIME duration=$SONG_DURATION rating=$rating"
+			echo "song=[$uri]"
+			if [ $inserted -eq 1 ] ; then
+				if [ $sticker_enabled -eq 1 ] ; then
+					echo "INSERT stker rating=$rating"
+				elif [ -n "$ROMPR" ] ; then
+					echo "INSERT RompR rating=$rating  Start=$START_TIME"
+				elif  [ $stats_enabled -eq 1 ] ; then
+					echo "INSERT stats rating=$rating"
 				fi
-				;;
-			esac
+			elif [ $inserted -eq 2 ] ; then
+				if [ $sticker_enabled -eq 1 ] ; then
+					echo "UPDATE stker rating=$rating"
+				elif [ -n "$ROMPR" ] ; then
+					echo "UPDATE RompR rating=$rating  Start=$START_TIME"
+				elif  [ $stats_enabled -eq 1 ] ; then
+					echo "UPDATE stats rating=$rating"
+				fi
+			fi
 		fi
+	fi
+	if [ ! -f /tmp/mpdev/rating.$csum ] ; then
+		echo $rating > /tmp/mpdev/rating.$csum
 	fi
 	case "$state" in
 		"now-playing")
-		if [ ! -f /tmp/mpdev/stats."$uri" ] ; then
-			stats_db_insert "$uri" "$rating"
-			touch /tmp/mpdev/stats."$csum"
-		fi
-		if [ -n "$ROMPR" ] ; then
-			if [ ! -f /tmp/mpdev/rompr."$uri" ] ; then
-				if [ $VERBOSE -gt 0 ] ; then
-					echo "UPDATE RompR rating=$rating Start=$START_TIME"
-				fi
-				rompr_db_update "$uri" "$START_TIME" "$rating"
-				touch /tmp/mpdev/rompr."$csum"
+		if [ $stats_enabled -eq 1 -a ! -f /tmp/mpdev/stats.$csum ] ; then
+			if [ $VERBOSE -gt 0 ] ; then
+				echo "INSERT stats rating=$rating  Start=$START_TIME"
 			fi
+			stats_db_insert "$uri" "$rating"
+			touch /tmp/mpdev/stats.$csum
+		fi
+		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" -a ! -f /tmp/mpdev/rompr.$csum ] ; then
+			if [ $VERBOSE -gt 0 ] ; then
+				echo "UPDATE RompR rating=$rating  Start=$START_TIME"
+			fi
+			rompr_db_update "$uri" "$START_TIME" "$rating"
+			touch /tmp/mpdev/rompr.$csum
 		fi
 		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
-			if [ ! -f /tmp/mpdev/scrobble."$csum" ] ; then
+			if [ ! -f /tmp/mpdev/scrobble.$csum ] ; then
 				scrobble
-				touch /tmp/mpdev/scrobble."$csum"
+				touch /tmp/mpdev/scrobble.$csum
 			fi
 		fi
 		;;
 		"end-song")
-		/bin/rm -f /tmp/mpdev/stats."$csum" /tmp/mpdev/scrobble."$csum" /tmp/mpdev/rompr."$csum"
+		/bin/rm -f /tmp/mpdev/stats.$csum /tmp/mpdev/scrobble.$csum /tmp/mpdev/rompr.$csum /tmp/sticker.$csum
 		if [ -n "$ROMPR" ] ; then
+			rompr_uri=$(echo "$uri" | sed s/"'"/"\\\'"/g)
+			TTindex=`get_TTindex "$rompr_uri"`
+		fi
+		# sync rating between sticker and rompr
+		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" ] ; then
 			rating=`get_mpd_rating "$uri"`
-			if [ -f /tmp/sticker.$csum ] ; then
-				old_rating=`cat /tmp/mpdev/sticker.$csum`
-				/bin/rm -f /tmp/mpdev/sticker.$csum
+			if [ -f /tmp/rating.$csum ] ; then
+				old_rating=`cat /tmp/mpdev/rating.$csum`
+				/bin/rm -f /tmp/mpdev/rating.$csum
 			else
 				old_rating=`get_stat_rating $uri`
 			fi
 			if [ -z "$old_rating" ] ; then
 				old_rating=0
 			fi
-			rompr_uri=$(echo "$uri" | sed s/"'"/"\\\'"/g)
-			TTindex=`get_TTindex "$rompr_uri"`
 			if [ -n "$TTindex" ] ; then
 				line=`get_rompr_rating $TTindex`
 				set $line
@@ -341,7 +398,7 @@ update_song()
 					tmp=`expr $rompr_rating \* 2`
 					if [ $tmp -ne $rating ] ; then
 						if [ $VERBOSE -gt 0 ] ; then
-							echo "UPDATE sticker from RompR new=$tmp old=$rating, TTindex=$TTindex, Times=old[$START_TIME], new[$tstamp]"
+							echo "UPDATE stker from RompR new=$tmp old=$rating, TTindex=$TTindex, Times=old[$START_TIME], new[$tstamp]"
 						fi
 						rating=$tmp
 						# update sticker with rating from rompr
@@ -349,40 +406,51 @@ update_song()
 					fi
 				elif [ $old_rating -gt 0 -a $old_rating -ne $rating ] ; then # sticker table has a newer entry
 					if [ $VERBOSE -gt 0 ] ; then
-						echo "UPDATE RompR from sticker new=$rating old=$old_rating, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
+						echo "UPDATE RompR from stker new=$rating old=$old_rating, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
 					fi
 					# update rompr with rating from sticker
 					rompr_db_update "$uri" "$START_TIME" "$rating" "$TTindex"
 				fi
 			fi
-			if [ $VERBOSE -gt 0 ] ; then
-				line=`get_rompr_playcount_ts "$TTindex"`
-				if [ -z "$line" ] ; then
-					pcount="0"
-					ts=$START_TIME
-				else
-					set $line
-					pcount=$1
-					ts=$2
-				fi
-				echo -n "UPDATE RompR Playcount TTindex=$TTindex, "
-				echo -n "Times=[$START_TIME, $ts, $END_TIME - $pcount] "
-				echo -n "`date +"%H:%M:%S" --date=@"$START_TIME"`, "
-				echo -n "`date +"%H:%M:%S" --date=@"$ts"`, "
-				echo -n "`date +"%H:%M:%S" --date=@"$END_TIME"`"
-				echo
-			fi
-			rompr_update_playcount "$uri" "$START_TIME" "$TTindex"
-		else
-			/bin/rm -f /tmp/mpdev/sticker.$csum
 		fi
-		stats_db_update $START_TIME "$uri" "$rating"
+		if [ $stats_enabled -eq 1 ] ; then
+			if [ $VERBOSE -gt 0 ] ; then
+				echo -n "UPDATE stats Playcount Start=$START_TIME End=$END_TIME"
+			fi
+			if [ $VERBOSE -gt 0 ] ; then
+				echo " rating=[$rating]"
+			fi
+			stats_db_update "$uri" "$rating" "$START_TIME"
+		fi
+		if [ -n "$ROMPR" ] ; then
+			if [ -n "$TTindex" ] ; then
+				if [ $VERBOSE -gt 0 ] ; then
+					line=`get_rompr_playcount_ts "$TTindex"`
+					if [ -z "$line" ] ; then
+						pcount="1" #hopefully update will be successfull
+						ts=$START_TIME
+					else
+						set $line
+						pcount=$1
+						ts=$2
+					fi
+					echo -n "UPDATE RompR Playcount TTindex=$TTindex, "
+					echo -n "Times=[$START_TIME, $ts, $END_TIME - $pcount] "
+					echo -n "`date +"%H:%M:%S" --date=@"$START_TIME"`, "
+					echo -n "`date +"%H:%M:%S" --date=@"$ts"`, "
+					echo -n "`date +"%H:%M:%S" --date=@"$END_TIME"`"
+					echo
+				fi
+				rompr_update_playcount "$rompr_uri" "$START_TIME" "$TTindex"
+			fi
+		fi
+		/bin/rm -f /tmp/mpdev/rating.$csum
 		;;
 	esac
 	if [ $VERBOSE -gt 0 ] ; then
 		case "$state" in
 			"end-song")
-			echo "EndSong stat Start=$START_TIME END_TIME=$END_TIME rating=$rating"
+			echo "EndSong stat Start=$START_TIME END_TIME=$END_TIME"
 			echo
 			;;
 		esac
@@ -399,10 +467,21 @@ if [ $? -ne 0 ] ; then
 fi
 sticker_file=`get_mpd_conf_value sticker_file`
 if [ $? -ne 0 ] ; then
-	echo "could not get sticker database from mpd.conf" 1>&2
-	exit 1
+	sticker_enabled=0
+else
+	if [ -f $sticker_file ] ; then
+		sticker_enabled=1
+	else
+		sticker_enabled=0
+	fi
 fi
 stats_file=$music_dir/.mpd/stats.db
+if [ -f $stats_file ] ; then
+	stats_enabled=1
+else
+	stats_enabled=0
+fi
+do_rating=1
 mkdir -p /tmp/mpdev
 update_song "$SONG_URI" "$1"
 exit 0
