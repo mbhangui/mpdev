@@ -33,3 +33,4 @@ Release 0.2 Start 02/03/2020
 22. player: added get_rompr_playcount_ts() function to get playcount and
     timestamp from Playcounttable
 23. player: option to run without sticker, stats enabled
+24. player: create temp file for recording original start time

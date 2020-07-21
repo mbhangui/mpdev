@@ -23,3 +23,4 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * renamed rompr_hist to romprhist
   * player: added get_rompr_playcount_ts() function to get playcount and timestamp from Playcounttable
   * player: option to run without sticker, stats enabled
+  * player: create temp file for recording original start time
