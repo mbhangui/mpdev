@@ -25,3 +25,5 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * player: option to run without sticker, stats enabled
   * player: create temp file for recording original start time
   * player: added error condition for getting rating from Ratingtable.
+  * player: BUG. fixed rating tmp filename
+  * player: display rating for RompR in logs in RompR scale
