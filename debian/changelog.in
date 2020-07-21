@@ -24,3 +24,4 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * player: added get_rompr_playcount_ts() function to get playcount and timestamp from Playcounttable
   * player: option to run without sticker, stats enabled
   * player: create temp file for recording original start time
+  * player: added error condition for getting rating from Ratingtable.
