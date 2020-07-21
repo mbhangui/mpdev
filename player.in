@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.7  2020-07-21 19:20:29+05:30  Cprogrammer
+# BUG. fixed rating tmp filename
+#
 # Revision 1.6  2020-07-21 18:31:38+05:30  Cprogrammer
 # added error condition for getting rating from Ratingtable.
 #
@@ -20,7 +23,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.6 2020-07-21 18:31:38+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.7 2020-07-21 19:20:29+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -326,6 +329,8 @@ update_song()
 				stats_db_update "$uri" "$rating" ""
 				touch /tmp/mpdev/stats.$csum
 			fi
+		else
+			inserted=0
 		fi
 	fi
 	if [ $VERBOSE -gt 0 ] ; then
@@ -397,7 +402,7 @@ update_song()
 		# sync rating between sticker and rompr
 		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" ] ; then
 			rating=`get_mpd_rating "$uri"`
-			if [ -f /tmp/rating.$csum ] ; then
+			if [ -f /tmp/mpdev/rating.$csum ] ; then
 				old_rating=`cat /tmp/mpdev/rating.$csum`
 				/bin/rm -f /tmp/mpdev/rating.$csum
 			else
