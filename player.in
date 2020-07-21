@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.5  2020-07-21 18:02:29+05:30  Cprogrammer
+# create temp file for recording original start time
+#
 # Revision 1.4  2020-07-21 17:04:02+05:30  Cprogrammer
 # option to run without sticker or stats db enabled
 #
@@ -14,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.4 2020-07-21 17:04:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.5 2020-07-21 18:02:29+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -350,6 +353,11 @@ update_song()
 	fi
 	case "$state" in
 		"now-playing")
+		if [ ! -f /tmp/mpdev/start_time.$csum ] ; then
+			echo $START_TIME > /tmp/mpdev/start_time.$csum
+		else
+			START_TIME=`cat /tmp/mpdev/start_time.$csum`
+		fi
 		if [ $stats_enabled -eq 1 -a ! -f /tmp/mpdev/stats.$csum ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
 				echo "INSERT stats rating=$rating  Start=$START_TIME"
@@ -372,7 +380,11 @@ update_song()
 		fi
 		;;
 		"end-song")
-		/bin/rm -f /tmp/mpdev/stats.$csum /tmp/mpdev/scrobble.$csum /tmp/mpdev/rompr.$csum /tmp/sticker.$csum
+		if [ -f /tmp/mpdev/start_time.$csum ] ; then
+			START_TIME=`cat /tmp/mpdev/start_time.$csum`
+		fi
+		/bin/rm -f /tmp/mpdev/stats.$csum /tmp/mpdev/scrobble.$csum \
+			/tmp/mpdev/rompr.$csum /tmp/sticker.$csum /tmp/mpdev/start_time.$csum
 		if [ -n "$ROMPR" ] ; then
 			rompr_uri=$(echo "$uri" | sed s/"'"/"\\\'"/g)
 			TTindex=`get_TTindex "$rompr_uri"`
