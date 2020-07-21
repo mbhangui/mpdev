@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.3  2020-07-21 12:25:20+05:30  Cprogrammer
+# added get_rompr_playcount_ts() function to get playcount and timestamp from Playcounttable
+#
 # Revision 1.2  2020-07-20 15:58:32+05:30  Cprogrammer
 # multiple fixes to work properly with rompr
 #
@@ -8,7 +11,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.2 2020-07-20 15:58:32+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.3 2020-07-21 12:25:20+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -25,6 +28,7 @@ get_TTindex()
 		echo "error: SELECT TTindex FROM Tracktable WHERE Uri='$uri';" 1>&2
 		return 1
 	fi
+	return 0
 }
 
 get_rompr_rating()
@@ -35,6 +39,7 @@ get_rompr_rating()
 		echo "error: SELECT Rating,UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
 		return 1
 	fi
+	return 0
 }
 
 get_mpd_rating()
@@ -45,6 +50,7 @@ get_mpd_rating()
 		echo "error: SELECT value from sticker where type='song' and uri=\"$turi\";" 1>&2
 		return 1
 	fi
+	return 0
 }
 
 get_stat_rating()
@@ -55,6 +61,7 @@ get_stat_rating()
 		echo "error: SELECT rating from song where uri='$turi';" 1>&2
 		return 1
 	fi
+	return 0
 }
 
 sticker_db_insert()
@@ -66,6 +73,7 @@ sticker_db_insert()
 		echo "error: INSERT into sticker values('song', '$turi', 'rating',$tmprate);" 1>&2
 		return 1
 	fi
+	return 0
 }
 
 sticker_db_update()
@@ -110,6 +118,7 @@ stats_db_insert()
 		) 1>&2
 		return 1
 	fi
+	return 0
 }
 
 stats_db_update()
@@ -123,6 +132,7 @@ stats_db_update()
 		echo  "ERROR: UPDATE song set last_played=$last_played,play_count=play_count+1,rating=$tmprate where uri='$turi';" 1>&2
 		return 1
 	fi
+	return 0
 }
 
 rompr_update_playcount()
@@ -158,6 +168,7 @@ rompr_update_playcount()
 			return 1
 		fi
 	fi
+	return 0
 }
 
 rompr_db_update()
@@ -195,6 +206,19 @@ rompr_db_update()
 			return 1
 		fi
 	fi
+	return 0
+}
+
+get_rompr_playcount_ts()
+{
+	ts=$1
+	echo "select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" \
+		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	if [ $? -ne 0 ] ; then
+		echo "ERROR: select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" 1>&2
+		return 1
+	fi
+	return 0
 }
 
 scrobble()
@@ -260,11 +284,12 @@ update_song()
 		if [ ! -f /tmp/mpdev/sticker."$uri" ] ; then
 			case "$state" in
 				"now-playing")
-				echo "NewSong stat Start=$START_TIME duration=$SONG_DURATION rating=$rating song=[$uri]"
+				echo "NewSong stat Start=$START_TIME duration=$SONG_DURATION rating=$rating"
+				echo "song=[$uri]"
 				if [ $inserted -eq 1 ] ; then
-					echo "INSERT sticker rating=$rating song=[$uri]"
+					echo "INSERT sticker rating=$rating"
 				elif [ $inserted -eq 2 ] ; then
-					echo "UPDATE sticker rating=$rating song=[$uri]"
+					echo "UPDATE sticker rating=$rating"
 				fi
 				;;
 			esac
@@ -279,7 +304,7 @@ update_song()
 		if [ -n "$ROMPR" ] ; then
 			if [ ! -f /tmp/mpdev/rompr."$uri" ] ; then
 				if [ $VERBOSE -gt 0 ] ; then
-					echo "UPDATE RompR rating=$rating Start=$START_TIME song=[$uri]"
+					echo "UPDATE RompR rating=$rating Start=$START_TIME"
 				fi
 				rompr_db_update "$uri" "$START_TIME" "$rating"
 				touch /tmp/mpdev/rompr."$csum"
@@ -331,7 +356,21 @@ update_song()
 				fi
 			fi
 			if [ $VERBOSE -gt 0 ] ; then
-				echo "UPDATE RompR Playcount TTindex=$TTindex, Times=[$START_TIME, $END_TIME] `date --date=@"$START_TIME"`, `date --date=@"$END_TIME"`"
+				line=`get_rompr_playcount_ts "$TTindex"`
+				if [ -z "$line" ] ; then
+					pcount="0"
+					ts=$START_TIME
+				else
+					set $line
+					pcount=$1
+					ts=$2
+				fi
+				echo -n "UPDATE RompR Playcount TTindex=$TTindex, "
+				echo -n "Times=[$START_TIME, $ts, $END_TIME - $pcount] "
+				echo -n "`date +"%H:%M:%S" --date=@"$START_TIME"`, "
+				echo -n "`date +"%H:%M:%S" --date=@"$ts"`, "
+				echo -n "`date +"%H:%M:%S" --date=@"$END_TIME"`"
+				echo
 			fi
 			rompr_update_playcount "$uri" "$START_TIME" "$TTindex"
 		else
@@ -343,7 +382,7 @@ update_song()
 	if [ $VERBOSE -gt 0 ] ; then
 		case "$state" in
 			"end-song")
-			echo "EndSong stat Start=$START_TIME END_TIME=$END_TIME rating=$rating song=[$uri]"
+			echo "EndSong stat Start=$START_TIME END_TIME=$END_TIME rating=$rating"
 			echo
 			;;
 		esac
