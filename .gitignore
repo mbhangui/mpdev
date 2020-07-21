@@ -82,4 +82,4 @@ replacestr.o
 mpdev_cleanup
 mpdev_cleanup.o
 mpdev_rename
-rompr_hist
+romprhist

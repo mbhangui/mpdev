@@ -94,7 +94,7 @@ MYSQL_PASS     - Password for MYSQL_USER (e.g. romprdbpass)
 MYSQL_DATABASE - Database name for rompr db (e.g. romprdb)
 ```
 
-One can use supervise from the indimail-mta package to run this. The default rpm/debian installation of mpdev will that for you. But it will not enable rompr. To do that you need to run the following commands to create the above environment variables
+One can use [supervise](https://en.wikipedia.org/wiki/Daemontools) from the indimail-mta package to run this. The default rpm/debian installation of mpdev will that for you. But it will not enable rompr. To do that you need to run the following commands to create the above environment variables
 
 ```
 $ sudo /bin/bash
@@ -106,7 +106,7 @@ $ sudo /bin/bash
 # echo romprdb       > /service/mpdev/variables/MYSQL_DATABASE
 ```
 
-To restart the mpdev daemon, you then just need to run the following command
+You need to restart mpdev for the new environment variables to be available to mpdev. To restart the mpdev daemon, you then just need to run the following command. `svc -d` stops the daemon, `svc -u` starts the daemon.
 
 ```
 $ sudo svc -d /service/mpdev # this stops  the mpdev daemon

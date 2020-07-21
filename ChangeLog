@@ -28,3 +28,7 @@ Release 0.2 Start 02/03/2020
 19. mpdev: send status, currentsong command on player event to set
     ELAPSED_TIME
 20. added rompr_hist play history utility for rompr
+21. renamed rompr_hist to romprhist
+21/07/2020
+22. player: added get_rompr_playcount_ts() function to get playcount and
+    timestamp from Playcounttable

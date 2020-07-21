@@ -16,7 +16,7 @@ mpdevbindir=@prefix@/bin
 mpdevsbindir=@prefix@/sbin
 
 mpdevbin_PROGRAMS = mpdev
-mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist rompr_hist
+mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
 libexec_SCRIPTS = mpdev_maintenance player mpdev_rename create_service
 noinst_DATA = mpdev.spec
@@ -25,7 +25,7 @@ man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 
 MOSTLYCLEANFILES = mpdev player mpdev_maintenance librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \
-				   create_service rompr_host
+				   create_service romprhost
 
 mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
 mpdev_LDADD = $(LIB_QMAIL)
@@ -87,7 +87,7 @@ mpdplaylist: mpdplaylist.in
 	$(edit) $@.in > $@
 	chmod +x $@
 
-rompr_hist: rompr_hist.in
+romprhist: romprhist.in
 	$(edit) $@.in > $@
 	chmod +x $@
 

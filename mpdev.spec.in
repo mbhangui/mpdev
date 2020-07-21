@@ -77,7 +77,7 @@ using mpd's idle command and execs user defined script on event changes.
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
 %attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
-%attr(755,root,root)                    %{_prefix}/bin/rompr_hist
+%attr(755,root,root)                    %{_prefix}/bin/romprhist
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
 %attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_update

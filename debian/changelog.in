@@ -20,3 +20,5 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * mpdplaylist: use date_added field instead of last_modified
   * mpdev: send status, currentsong command on player event to set ELAPSED_TIME
   * added rompr_hist play history utility for rompr
+  * renamed rompr_hist to romprhist
+  * player: added get_rompr_playcount_ts() function to get playcount and timestamp from Playcounttable
