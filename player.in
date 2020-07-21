@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.8  2020-07-21 22:28:19+05:30  Cprogrammer
+# display rating for RompR in logs in RompR scale
+#
 # Revision 1.7  2020-07-21 19:20:29+05:30  Cprogrammer
 # BUG. fixed rating tmp filename
 #
@@ -23,7 +26,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.7 2020-07-21 19:20:29+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.8 2020-07-21 22:28:19+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -377,7 +380,8 @@ update_song()
 		fi
 		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" -a ! -f /tmp/mpdev/rompr.$csum ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
-				echo "UPDATE RompR rating=$rating  Start=$START_TIME"
+				tmp1=`expr "$rating" / 2`
+				echo "UPDATE RompR rating=$tmp1  Start=$START_TIME"
 			fi
 			rompr_db_update "$uri" "$START_TIME" "$rating"
 			touch /tmp/mpdev/rompr.$csum
@@ -433,7 +437,9 @@ update_song()
 					fi
 				elif [ $old_rating -gt 0 -a $old_rating -ne $rating ] ; then # sticker table has a newer entry
 					if [ $VERBOSE -gt 0 ] ; then
-						echo "UPDATE RompR from stker new=$rating old=$old_rating, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
+						tmp1=`expr "$rating" / 2`
+						tmp2=`expr "$old_rating" / 2`
+						echo "UPDATE RompR from stker new=$tmp1 old=$tmp2, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
 					fi
 					# update rompr with rating from sticker
 					rompr_db_update "$uri" "$START_TIME" "$rating" "$TTindex"
