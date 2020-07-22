@@ -83,3 +83,5 @@ mpdev_cleanup
 mpdev_cleanup.o
 mpdev_rename
 romprhist
+misc
+transfer_play
