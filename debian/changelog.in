@@ -29,3 +29,4 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * player: display rating for RompR in logs in RompR scale
   * added transfer_play
   * player: use AUTO_RATING env variable for automatic rating of unrated songs
+  * create_service: fix for raspberrypi, dietpi
