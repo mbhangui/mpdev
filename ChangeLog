@@ -37,3 +37,6 @@ Release 0.2 Start 02/03/2020
 25. player: added error condition for getting rating from Ratingtable.
 26. player: BUG. fixed rating tmp filename
 27. player: display rating for RompR in logs in RompR scale
+22/07/2020
+28. added transfer_play
+29. player: use AUTO_RATING env variable for automatic rating of unrated songs
