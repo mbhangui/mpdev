@@ -16,7 +16,8 @@ mpdevbindir=@prefix@/bin
 mpdevsbindir=@prefix@/sbin
 
 mpdevbin_PROGRAMS = mpdev
-mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist
+mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
+				   transfer_play
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
 libexec_SCRIPTS = mpdev_maintenance player mpdev_rename create_service
 noinst_DATA = mpdev.spec
@@ -104,6 +105,10 @@ create_stats: create_stats.in
 	chmod +x $@
 
 player: player.in
+	$(edit) $@.in > $@
+	chmod +x $@
+
+transfer_play: transfer_play.in
 	$(edit) $@.in > $@
 	chmod +x $@
 
