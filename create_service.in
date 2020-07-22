@@ -1,11 +1,14 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.2  2020-07-22 15:51:03+05:30  Cprogrammer
+# added AUTO_RATING env variable
+#
 # Revision 1.1  2020-07-19 18:17:00+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.1 2020-07-19 18:17:00+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.2 2020-07-22 15:51:03+05:30 Cprogrammer Exp mbhangui $
 #
 
 add_service()
@@ -35,6 +38,7 @@ add_service()
 	mkdir -p $servicedir/$service_name/variables
 	echo "127.0.0.1" > $servicedir/$service_name/variables/MPD_HOST
 	echo "6600"      > $servicedir/$service_name/variables/MPD_PORT
+	echo "6"         > $servicedir/$service_name/variables/AUTO_RATING
 	home=$(getent passwd $userid|cut -d: -f6)
 	if [ -n "$home" ] ; then
 		echo $home > $servicedir/$service_name/variables/HOME
