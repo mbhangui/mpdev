@@ -1,10 +1,13 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.2  2020-07-23 01:47:58+05:30  Cprogrammer
+# removed incorrect check for tohost
+#
 # Revision 1.1  2020-07-22 15:50:47+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.1 2020-07-22 15:50:47+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.2 2020-07-23 01:47:58+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -52,10 +55,6 @@ fromhost=$1
 tohost=$2
 if [ ! -f $music_dir/.mpd/mpd_state.$fromhost ] ; then
 	echo "No such host $fromhost" 1>&2
-	exit 1
-fi
-if [ ! -f $music_dir/.mpd/mpd_state.$tohost ] ; then
-	echo "No such host $tohost" 1>&2
 	exit 1
 fi
 out=`mktemp -t mpdevXXXXXXXXXX`
