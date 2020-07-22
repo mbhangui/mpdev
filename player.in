@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.9  2020-07-22 15:51:33+05:30  Cprogrammer
+# use AUTO_RATING env variable
+#
 # Revision 1.8  2020-07-21 22:28:19+05:30  Cprogrammer
 # display rating for RompR in logs in RompR scale
 #
@@ -26,7 +29,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.8 2020-07-21 22:28:19+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.9 2020-07-22 15:51:33+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -195,7 +198,7 @@ rompr_update_playcount()
 	return 0
 }
 
-rompr_db_update()
+rompr_rating_update()
 {
 	turi=$(echo "$1" | sed s/"'"/"\\\'"/g)
 	tstamp="$2"
@@ -279,7 +282,7 @@ update_song()
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
 	if [ " $state" = " now-playing" ] ; then
 		if [ -n "$ELAPSED_TIME" ] ; then
-			echo "Play/Pause elapsed=$ELAPSED_TIME song=[$uri]"
+			echo "Play/Pause elapsed=$ELAPSED_TIME uri=[$uri]"
 			return 0
 		fi
 	fi
@@ -307,30 +310,36 @@ update_song()
 			exit 0
 		fi
 		if [ -z "$rating" ] ; then
-			rating=6 # assign average rating of 3 for unrated music
+			if [ -n "$AUTO_RATING" ] ; then
+				rating=$AUTO_RATING # assign average rating of 3 for unrated music
+			else
+				rating=0
+			fi
 			inserted=1
 			if [ $sticker_enabled -eq 1 ] ; then
 				sticker_db_insert "$uri" "$rating"
 				touch /tmp/sticker.$csum
 			elif [ -n "$ROMPR" ] ; then
-				rompr_db_update "$uri" "$START_TIME" "$rating"
+				rompr_rating_update "$uri" "$START_TIME" "$rating"
 				touch /tmp/rompr.$csum
 			elif [ $stats_enabled -eq 1 ] ; then
 				stats_db_insert "$uri" "$rating"
 				touch /tmp/mpdev/stats.$csum
 			fi
 		elif [ $rating -eq 0 ] ; then
-			rating=6;
-			inserted=2
-			if [ $sticker_enabled -eq 1 ] ; then
-				sticker_db_update "$uri" "$rating"
-				touch /tmp/sticker.$csum
-			elif [ -n "$ROMPR" ] ; then
-				rompr_db_update "$uri" "$START_TIME" "$rating"
-				touch /tmp/rompr.$csum
-			elif  [ $stats_enabled -eq 1 ] ; then
-				stats_db_update "$uri" "$rating" ""
-				touch /tmp/mpdev/stats.$csum
+			if [ -n "$AUTO_RATING" ] ; then
+				rating=$AUTO_RATING;
+				inserted=2
+				if [ $sticker_enabled -eq 1 ] ; then
+					sticker_db_update "$uri" "$rating"
+					touch /tmp/sticker.$csum
+				elif [ -n "$ROMPR" ] ; then
+					rompr_rating_update "$uri" "$START_TIME" "$rating"
+					touch /tmp/rompr.$csum
+				elif  [ $stats_enabled -eq 1 ] ; then
+					stats_db_update "$uri" "$rating" ""
+					touch /tmp/mpdev/stats.$csum
+				fi
 			fi
 		else
 			inserted=0
@@ -338,8 +347,9 @@ update_song()
 	fi
 	if [ $VERBOSE -gt 0 ] ; then
 		if [ ! -f /tmp/mpdev/rating.$csum -a " $state" = " now-playing" ] ; then
-			echo "NewSong Start=$START_TIME duration=$SONG_DURATION rating=$rating"
-			echo "song=[$uri]"
+			echo -n "NewSong Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+			echo    "duration=$SONG_DURATION rating=[$rating]"
+			echo "uri=[$uri]"
 			if [ $inserted -eq 1 ] ; then
 				if [ $sticker_enabled -eq 1 ] ; then
 					echo "INSERT stker rating=$rating"
@@ -383,7 +393,7 @@ update_song()
 				tmp1=`expr "$rating" / 2`
 				echo "UPDATE RompR rating=$tmp1  Start=$START_TIME"
 			fi
-			rompr_db_update "$uri" "$START_TIME" "$rating"
+			rompr_rating_update "$uri" "$START_TIME" "$rating"
 			touch /tmp/mpdev/rompr.$csum
 		fi
 		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
@@ -416,16 +426,18 @@ update_song()
 				old_rating=0
 			fi
 			if [ -n "$TTindex" ] ; then
+				# we get the timpstamp for the rating entry from Ratingtable
 				line=`get_rompr_rating $TTindex`
 				if [ -n "$line" ] ; then
 					set $line
 					rompr_rating=$1
 					tstamp=$2
 				else
-					rompr_rating=""
-					tstamp=""
+					rompr_rating=-1
+					tstamp=-1
 				fi
-				if [ -n "$line" -a -n "$tstamp" -a -n "$rompr_rating" -a $tstamp -gt $START_TIME -a $rompr_rating -gt 0 ] ; then # rompr Rating table has a newer entry
+				if [ -n "$line" ] && [ $tstamp -gt $START_TIME ] && [ $rompr_rating -gt 0 ] ; then
+					# rompr Rating table has a newer entry
 					tmp=`expr $rompr_rating \* 2`
 					if [ $tmp -ne $rating ] ; then
 						if [ $VERBOSE -gt 0 ] ; then
@@ -435,23 +447,21 @@ update_song()
 						# update sticker with rating from rompr
 						sticker_db_update "$uri" $rating
 					fi
-				elif [ $old_rating -gt 0 -a $old_rating -ne $rating ] ; then # sticker table has a newer entry
+				elif [ $old_rating -gt 0 ] && [ $old_rating -ne $rating ] ; then # sticker table has a newer entry
+					# sticker table has a newer entry
 					if [ $VERBOSE -gt 0 ] ; then
 						tmp1=`expr "$rating" / 2`
 						tmp2=`expr "$old_rating" / 2`
 						echo "UPDATE RompR from stker new=$tmp1 old=$tmp2, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
 					fi
 					# update rompr with rating from sticker
-					rompr_db_update "$uri" "$START_TIME" "$rating" "$TTindex"
+					rompr_rating_update "$uri" "$START_TIME" "$rating" "$TTindex"
 				fi
 			fi
 		fi
 		if [ $stats_enabled -eq 1 ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
-				echo -n "UPDATE stats Playcount Start=$START_TIME End=$END_TIME"
-			fi
-			if [ $VERBOSE -gt 0 ] ; then
-				echo " rating=[$rating]"
+				echo "UPDATE stats Playcount Start=$START_TIME End=$END_TIME rating=[$rating]"
 			fi
 			stats_db_update "$uri" "$rating" "$START_TIME"
 		fi
@@ -467,12 +477,12 @@ update_song()
 						pcount=$1
 						ts=$2
 					fi
-					echo -n "UPDATE RompR Playcount TTindex=$TTindex, "
-					echo -n "Times=[$START_TIME, $ts, $END_TIME - $pcount] "
-					echo -n "`date +"%H:%M:%S" --date=@"$START_TIME"`, "
-					echo -n "`date +"%H:%M:%S" --date=@"$ts"`, "
-					echo -n "`date +"%H:%M:%S" --date=@"$END_TIME"`"
-					echo
+					echo -n "UPDATE RompR Playcount TTindex=$TTindex, Playcount=`expr $pcount + 1` "
+					if [ -n "$ts" ] && [ $ts -gt $START_TIME ] && [ $ts -lt $END_TIME ] ; then
+						echo "[`date +"%Y-%m-%d %H:%M:%S" --date=@"$ts"`] updated by RompR"
+					else
+						echo "[`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] updated by mpdev"
+					fi
 				fi
 				rompr_update_playcount "$rompr_uri" "$START_TIME" "$TTindex"
 			fi
@@ -483,7 +493,8 @@ update_song()
 	if [ $VERBOSE -gt 0 ] ; then
 		case "$state" in
 			"end-song")
-			echo "EndSong stat Start=$START_TIME END_TIME=$END_TIME"
+			echo -n "EndSong stat Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+			echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
 			echo
 			;;
 		esac
