@@ -1,0 +1,67 @@
+#!/bin/sh
+# $Log: transfer_play.in,v $
+# Revision 1.1  2020-07-22 15:50:47+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: transfer_play.in,v 1.1 2020-07-22 15:50:47+05:30 Cprogrammer Exp mbhangui $
+#
+get_mpd_conf_value()
+{
+    grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+    sed -e 's{"{{g'
+}
+
+get_playlist()
+{
+	host=$1
+	(
+	do_print=0
+	cat $music_dir/.mpd/mpd_state.$host | while read line
+	do
+		if [ " $line" = " playlist_begin" ] ; then
+			do_print=1
+			continue
+		fi
+		if [ " $line" = " playlist_end" ] ; then
+			break
+		fi
+		if [ $do_print -eq 1 ] ; then
+			echo $line
+		fi
+	done
+	) | sed -e 's{^.*:{{'
+}
+
+music_dir=`get_mpd_conf_value music_dir`
+if [ $? -ne 0 ] ; then
+	echo "could not get music directory from mpd.conf" 1>&2
+	exit 1
+fi
+
+playlist_dir=`get_mpd_conf_value playlist_directory`
+if [ $? -ne 0 ] ; then
+	echo "could not get playlist directory from mpd.conf" 1>&2
+	exit 1
+fi
+if [ $# -ne 2 ] ; then
+	echo "transfer_play fromhost tohost" 1>&2
+	exit 1
+fi
+fromhost=$1
+tohost=$2
+if [ ! -f $music_dir/.mpd/mpd_state.$fromhost ] ; then
+	echo "No such host $fromhost" 1>&2
+	exit 1
+fi
+if [ ! -f $music_dir/.mpd/mpd_state.$tohost ] ; then
+	echo "No such host $tohost" 1>&2
+	exit 1
+fi
+out=`mktemp -t mpdevXXXXXXXXXX`
+get_playlist $fromhost > $out.m3u
+mv $out.m3u $playlist_dir
+out=`basename $out`
+echo "mpc --host=$tohost load $out"
+mpc --host=$tohost load $out
+/bin/rm -f $playlist_dir/$out.m3u
