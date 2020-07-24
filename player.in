@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.10  2020-07-24 21:48:34+05:30  Cprogrammer
+# for song-end exit if END_TIME is not set
+#
 # Revision 1.9  2020-07-22 15:51:33+05:30  Cprogrammer
 # use AUTO_RATING env variable
 #
@@ -29,7 +32,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.9 2020-07-22 15:51:33+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.10 2020-07-24 21:48:34+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -404,6 +407,9 @@ update_song()
 		fi
 		;;
 		"end-song")
+		if [ -z "$END_TIME" ] ; then
+			exit 0
+		fi
 		if [ -f /tmp/mpdev/start_time.$csum ] ; then
 			START_TIME=`cat /tmp/mpdev/start_time.$csum`
 		fi
@@ -470,7 +476,7 @@ update_song()
 				if [ $VERBOSE -gt 0 ] ; then
 					line=`get_rompr_playcount_ts "$TTindex"`
 					if [ -z "$line" ] ; then
-						pcount="1" #hopefully update will be successfull
+						pcount="0" #hopefully update will be successfull
 						ts=$START_TIME
 					else
 						set $line
@@ -493,9 +499,11 @@ update_song()
 	if [ $VERBOSE -gt 0 ] ; then
 		case "$state" in
 			"end-song")
-			echo -n "EndSong stat Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
-			echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
-			echo
+			if [ -n "$END_TIME" ] ; then
+				echo -n "EndSong stat Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
+				echo
+			fi
 			;;
 		esac
 	fi
