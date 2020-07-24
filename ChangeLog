@@ -43,3 +43,5 @@ Release 0.2 Start 02/03/2020
 30. create_service: fix for raspberrypi, dietpi
 24/07/2020
 31. mpdev_update: removed requirement of -m option for update mode
+32. player: exit end-song if END_TIME is not set
+33. player: fixed display playcount number in verbose output
