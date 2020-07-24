@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.2  2020-07-24 09:41:15+05:30  Cprogrammer
+ * removed requirement of -m option for update mode
+ *
  * Revision 1.1  2020-07-19 18:15:46+05:30  Cprogrammer
  * Initial revision
  *
@@ -44,7 +47,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.1 2020-07-19 18:15:46+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.2 2020-07-24 09:41:15+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -52,7 +55,9 @@ ssize_t         safewrite(int, char *, int);
 ssize_t         saferead(int, char *, int);
 
 substdio        mpdin, mpdout, ssout, sserr;
-stralloc        line = {0};
+static stralloc uri = {0}, last_modified = {0}, album = {0}, artist = {0},
+				date = {0}, genre = {0}, title = {0}, track = {0},
+				duration = {0}, line = {0};
 char            strnum[FMT_ULONG];
 int             timeout = 1200, verbose, db_type = -1, do_update = 0;
 static sqlite3 *db;
@@ -67,7 +72,7 @@ char           *usage =
 				" -S        - Enable Synch Mode\n"
 				" -P        - Print sql statment\n"
 				" -t        - Enable Transaction Mode\n"
-				" -D 0|1    - insert stats | insert sticker (new records)\n"
+				" -D 0|1    - insert stats | insert sticker (insert new records)\n"
 				" -U        - update stats (insert new records + update old records)\n"
 				" -v        - verbose output";
 
@@ -184,10 +189,6 @@ print_missing(char *uri, char *what)
 	err_flush();
 }
 
-static stralloc uri = {0}, last_modified = {0}, album = {0},
-	artist = {0}, date = {0}, genre = {0}, title = {0},
-	track = {0}, duration = {0};
-
 void
 print_song()
 {
@@ -266,69 +267,8 @@ print_song()
 	return;
 }
 
-void
-insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, unsigned long *failure, char **ptr)
-{
-	struct tm       tm = {0};
-	time_t          mod_time, add_time;
-	struct stat     statbuf;
-
-	if (db_type == 0) {
-		if (!strptime(last_modified.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
-			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
-			return;
-		} else
-		if (!(mod_time = mktime(&tm))) {
-			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
-			return;
-		}
-		if (use_mtime && !stat(uri.s, &statbuf))
-			add_time = statbuf.st_mtime;
-		else
-			add_time = time(0);
-		if (do_update == 0) {
-			sqlite3_bind_text(res,  1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  2, artist.len ? artist.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  3, album.len ? album.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  4, title.len ? title.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  5, track.len ? track.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  6, genre.len ? genre.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  7, date.len ? date.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_int(res,   8, add_time);
-			sqlite3_bind_int(res,   9, mod_time);
-			sqlite3_bind_text(res, 10, duration.s, -1, SQLITE_STATIC);
-		} else {
-			sqlite3_bind_text(res,  1, artist.len ? artist.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  2, album.len ? album.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  3, title.len ? title.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  4, track.len ? track.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  5, genre.len ? genre.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_text(res,  6, date.len ? date.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_int(res,   7, add_time);
-			sqlite3_bind_int(res,   8, mod_time);
-			sqlite3_bind_text(res,  9, duration.s, -1, SQLITE_STATIC);
-			sqlite3_bind_text(res, 10, uri.len ? uri.s : "", -1, SQLITE_STATIC);
-			/*-
-			sql = "UPDATE song set artist=@artist, album=@album, title=@title, track=@track, "
-				"genre=@genre, date=@date, date_added=@added, last_modified=@modified, "
-				"duration=@duration where uri=@uri";
-			*/
-		}
-	} else {
-		sqlite3_bind_text(res, 1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
-	}
-	if (ptr)
-		*ptr = sqlite3_expanded_sql(res);
-	if (sqlite3_step(res) != SQLITE_DONE) {
-		*failure += 1;
-	} else
-		*processed += 1;
-	sqlite3_clear_bindings(res);
-	sqlite3_reset(res);
-}
-
 sqlite3_stmt   *
-stats_database_init(char *database, int synch_mode, int journal_in_memory, int transaction_mode)
+stats_database_init(char *database, int synch_mode, int journal_in_memory, int transaction_mode, int use_mtime)
 {
 	char           *sql, *err_msg;
 	sqlite3_stmt   *res;
@@ -447,21 +387,91 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 		sqlite3_free(err_msg);
 	if (db_type == 0) {
 		if (do_update == 0)
-			sql = "INSERT or IGNORE into song (uri, artist, album, title, track, genre, date, date_added, last_modified, duration)"
-			  	" values (@uri, @artist, @album, @title, @track, @genre, @date, @added, @modified, @duration)";
-		else
-			sql = "UPDATE song set artist=@artist, album=@album, title=@title, track=@track, "
-				"genre=@genre, date=@date, date_added=@added, last_modified=@modified, "
-				"duration=@duration where uri=@uri";
-	} else {
+			sql = "INSERT or IGNORE into song (uri, artist, album, title, track, "
+				"genre, date, date_added, last_modified, duration) "
+			  	"values (@uri, @artist, @album, @title, @track, @genre, @date, "
+				"@added, @modified, @duration)";
+		else {
+			if (use_mtime)
+				sql = "UPDATE song set artist=@artist, album=@album, title=@title, "
+					"track=@track, genre=@genre, date=@date, date_added=@added, "
+					"last_modified=@modified, duration=@duration where uri=@uri";
+			else
+				sql = "UPDATE song set artist=@artist, album=@album, title=@title, "
+					"track=@track, genre=@genre, date=@date, last_modified=@modified, "
+					"duration=@duration where uri=@uri";
+		}
+	} else
 		sql = "INSERT or IGNORE into sticker (type, uri, name, value)"
 			  " values ('song', @uri, 'rating', 0)";
-	}
 	if (sqlite3_prepare_v2(db, sql, -1, &res, 0) != SQLITE_OK) {
 		sqlite3_close(db);
 		strerr_die5x(111, database, ": sqlite3_prepare_v2: ", sql, ": ", (char *) sqlite3_errmsg(db));
 	}
 	return (res);
+}
+
+void
+insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, unsigned long *failure, char **ptr)
+{
+	struct tm       tm = {0};
+	int             i;
+	time_t          mod_time, add_time;
+	struct stat     statbuf;
+
+	if (db_type == 0) {
+		if (!strptime(last_modified.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
+			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
+			return;
+		} else
+		if (!(mod_time = mktime(&tm))) {
+			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
+			return;
+		}
+		if (use_mtime && !stat(uri.s, &statbuf))
+			add_time = statbuf.st_mtime;
+		else
+			add_time = 0;
+		if (do_update == 0) {
+			sqlite3_bind_text(res,  1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res,  2, artist.len ? artist.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res,  3, album.len ? album.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res,  4, title.len ? title.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res,  5, track.len ? track.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res,  6, genre.len ? genre.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res,  7, date.len ? date.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_int(res,   8, add_time);
+			sqlite3_bind_int(res,   9, mod_time);
+			sqlite3_bind_text(res, 10, duration.s, -1, SQLITE_STATIC);
+		} else {
+			i = 1;
+			sqlite3_bind_text(res, i++, artist.len ? artist.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res, i++, album.len ? album.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res, i++, title.len ? title.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res, i++, track.len ? track.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res, i++, genre.len ? genre.s : "", -1, SQLITE_STATIC);
+			sqlite3_bind_text(res, i++, date.len ? date.s : "", -1, SQLITE_STATIC);
+			if (add_time)
+				sqlite3_bind_int(res,  i++, add_time);
+			sqlite3_bind_int(res,  i++, mod_time);
+			sqlite3_bind_text(res, i++, duration.s, -1, SQLITE_STATIC);
+			sqlite3_bind_text(res, i++, uri.len ? uri.s : "", -1, SQLITE_STATIC);
+			/*-
+			sql = "UPDATE song set artist=@artist, album=@album, title=@title, track=@track, "
+				"genre=@genre, date=@date, date_added=@added, last_modified=@modified, "
+				"duration=@duration where uri=@uri";
+			*/
+		}
+	} else
+		sqlite3_bind_text(res, 1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
+	if (ptr)
+		*ptr = sqlite3_expanded_sql(res);
+	if (sqlite3_step(res) != SQLITE_DONE) {
+		*failure += 1;
+	} else
+		*processed += 1;
+	sqlite3_clear_bindings(res);
+	sqlite3_reset(res);
 }
 
 int
@@ -592,10 +602,6 @@ main(int argc, char **argv)
 		strerr_warn1("mpdev: db type (-D option) not specified", 0);
 		strerr_die1x(100, usage);
 	}
-	if (db_type == 0 && do_update == 1 && !music_dir) {
-		strerr_warn1("You have to specify -m music_dir for -U -D 0 option", 0);
-		strerr_die1x(100, usage);
-	}
 	port[fmt_ulong(port, port_num)] = 0;
 	if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
 		if (mpd_socket)
@@ -607,7 +613,7 @@ main(int argc, char **argv)
 	substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 	if (substdio_put(&mpdout, "listallinfo\n", 12) || substdio_flush(&mpdout) == -1)
 		die_write("unable to write to mpd");
-	res = stats_database_init(database, synch_mode, journal_in_memory, transaction_mode);
+	res = stats_database_init(database, synch_mode, journal_in_memory, transaction_mode, music_dir ? 1 : 0);
 	uri.len = last_modified.len = duration.len = artist.len = album.len = title.len = track.len = genre.len = date.len = 0;
 	if (music_dir && chdir(music_dir))
 		strerr_die3sys(111, "unable to chdir to ", music_dir, ": ");
