@@ -30,7 +30,7 @@ prerm: prerm.in
 	$(edit) $@.in > $@
 
 rules: rules.in Makefile ../conf-version ../conf-release
-	$(edit) $@.in > $@
+	$(edit) $@.in > $@;chmod +x rules
 
 mpdev.install: mpdev.install.in
 	$(edit) $@.in > $@
