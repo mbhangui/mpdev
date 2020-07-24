@@ -14,8 +14,8 @@ removing entries that do not correspond to a valid path to a music file.
 It can operate using either of the two modes below
 
 .EX
-1. Check the presence of a file by using the access(2) system call
-2. Check if an entry exists in the mpd(1) database.
+1. Check the presence of a file on the disk (uses access(2) system call).
+2. Check the presense of a file in mpd database (loads mpd database into memory)
 .EE
 
 Checking against the mpd(1) database is faster than using the access(2) call.

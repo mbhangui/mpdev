@@ -51,18 +51,16 @@ full path to the sqlite3(1) stats database
 
 .TP 3
 .B -U
-Use update mode. The default is to use insert mode.  This requires the the -m
-option. This option uses stat(2) on every music file to get the \fIst_mtime\fR
-field. This option will make the update run slower due to stat(2) call on each
-file. the \fIst_mtime\fR is used to compute the \fIdate_added\fR field. For
-insert mode too, you can use stat(2) to compute the \fIdate_added\fR
-field, by passing the -m \fImusic_directory\fR option.
+Use update mode. The default is to use insert mode.
 .RS
 .RE
 
 .TP 3
 \fB-m\fR \fImusic_directory\fR
 Full path to the \fImusic_directory\fR in the mpd.conf(5) configuration file.
+This option uses stat(2) on every music file to get the \fIst_mtime\fR
+field. This option will make the \fBmpdev_update\fR slower due to stat(2) call
+on each file. The \fIst_mtime\fR is used to compute the \fIdate_added\fR field.
 .RS
 .RE
 
