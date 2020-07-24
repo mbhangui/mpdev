@@ -81,6 +81,7 @@ if [ $copy_src -eq 1 ] ; then
 	tar \
 		--exclude="mpdev-$version/.git" \
 		--exclude="mpdev-$version/debian"  \
+		--exclude="mpdev-$version/misc"  \
 		--exclude="mpdev-$version/RCS" \
 		-cf - mpdev-"$version" \
 		| gzip -c > $rpmbuild/SOURCES/mpdev-"$version".tar.gz
