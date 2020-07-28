@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.3  2020-07-28 12:42:03+05:30  Cprogrammer
+ * added updation of Disc tag
+ *
  * Revision 1.2  2020-07-24 09:41:15+05:30  Cprogrammer
  * removed requirement of -m option for update mode
  *
@@ -47,7 +50,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.2 2020-07-24 09:41:15+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.3 2020-07-28 12:42:03+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -57,7 +60,7 @@ ssize_t         saferead(int, char *, int);
 substdio        mpdin, mpdout, ssout, sserr;
 static stralloc uri = {0}, last_modified = {0}, album = {0}, artist = {0},
 				date = {0}, genre = {0}, title = {0}, track = {0},
-				duration = {0}, line = {0};
+				disc = {0}, duration = {0}, line = {0};
 char            strnum[FMT_ULONG];
 int             timeout = 1200, verbose, db_type = -1, do_update = 0;
 static sqlite3 *db;
@@ -149,7 +152,7 @@ die_nomem()
 {
 	if (db)
 		sqlite3_close(db);
-	substdio_puts(&sserr, "mpdev: out of memory\n");
+	substdio_puts(&sserr, "mpdev_update: out of memory\n");
 	substdio_flush(&sserr);
 	_exit(111);
 }
@@ -244,6 +247,14 @@ print_song()
 		}
 	} /*else
 		print_missing(uri.s, "Track"); */
+	if (disc.len) {
+		if (verbose) {
+			out("], ");
+			out("Disc: [");
+			out(disc.s);
+		}
+	} /*else
+		print_missing(uri.s, "Disc"); */
 	if (genre.len) {
 		if (verbose) {
 			out("], ");
@@ -595,11 +606,11 @@ main(int argc, char **argv)
 	if (mpd_socket && str_diff(mpd_host, "127.0.0.1"))
 		strerr_die1x(100, "you can't specify both socket & IP");
 	if (!database) {
-		strerr_warn1("mpdev: database (-d option) not specified", 0);
+		strerr_warn1("mpdev_update: database (-d option) not specified", 0);
 		strerr_die1x(100, usage);
 	}
 	if (db_type == -1) {
-		strerr_warn1("mpdev: db type (-D option) not specified", 0);
+		strerr_warn1("mpdev_update: db type (-D option) not specified", 0);
 		strerr_die1x(100, usage);
 	}
 	port[fmt_ulong(port, port_num)] = 0;
@@ -677,6 +688,11 @@ main(int argc, char **argv)
 			if (!stralloc_copyb(&track, line.s + 7, line.len - 6))
 				die_nomem();
 			track.len--;
+		} else
+		if (!str_diffn(line.s, "Disc: ", 6)) {
+			if (!stralloc_copyb(&disc, line.s + 6, line.len - 5))
+				die_nomem();
+			disc.len--;
 		} else
 		if (!str_diffn(line.s, "Genre: ", 7)) {
 			if (!stralloc_copyb(&genre, line.s + 7, line.len - 6))
