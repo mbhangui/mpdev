@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_cleanup.c,v $
+ * Revision 1.2  2020-07-28 12:40:52+05:30  Cprogrammer
+ * made -m optional
+ *
  * Revision 1.1  2020-07-19 18:16:35+05:30  Cprogrammer
  * Initial revision
  *
@@ -32,7 +35,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.1 2020-07-19 18:16:35+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.2 2020-07-28 12:40:52+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 ssize_t         safewrite(int, char *, int);
@@ -370,8 +373,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (!database || !music_directory || !method) {
-		err_out("You have to specify -d, -m and either -c or -C options\n");
+	if (!database || !method) {
+		err_out("You have to specify -d and either -c or -C options\n");
 		err_flush();
 		strerr_die1x(100, usage);
 	}
@@ -398,7 +401,7 @@ main(int argc, char **argv)
 		r_res = (sqlite3_stmt *) 0;
 	if (sqlite3_open(database, &db) != SQLITE_OK)
 		strerr_die3x(111, database, ": ", (char *) sqlite3_errmsg(db));
-	if (chdir(music_directory))
+	if (music_directory && chdir(music_directory))
 		strerr_die3sys(111, "unable to chdir to ", music_directory, ": ");
 	sql = (method == 1 ? "SELECT uri from song" : "SELECT uri from sticker");
 	if (sqlite3_exec(db, sql, callback, r_res, &err_msg) != SQLITE_OK) {
