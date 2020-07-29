@@ -1,6 +1,10 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.11  2020-07-28 12:47:21+05:30  Cprogrammer
+# added zztimestamp filed to Ratingtable
+# fixed typo UNIX_TIMESTAMP
+#
 # Revision 1.10  2020-07-24 21:48:34+05:30  Cprogrammer
 # for song-end exit if END_TIME is not set
 #
@@ -32,7 +36,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.10 2020-07-24 21:48:34+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.11 2020-07-28 12:47:21+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -57,8 +61,17 @@ get_rompr_rating()
 	echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
 		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
-		return 1
+		(
+		echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
+		echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
+		echo
+		) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		if [ $? -ne 0 ] ; then
+			echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
+			return 1
+		fi
 	fi
 	return 0
 }
@@ -221,14 +234,38 @@ rompr_rating_update()
 		) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 		if [ $? -ne 0 ] ; then
 			(
-			echo "ERROR: "
-			echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
-			echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNXTIME($tstamp)) "
-			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
-			echo -n "zztimestamp=FROM_UNXTIME($tstamp);"
+			echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
+			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
 			echo
-			) 1>&2
-			return 1
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+			if [ $? -ne 0 ] ; then
+				(
+				echo "ERROR: "
+				echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+				echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+				echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+				echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
+				echo
+				) 1>&2
+			fi
+			(
+			echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+			echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+			echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
+			echo
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+			if [ $? -ne 0 ] ; then
+				(
+				echo "ERROR: "
+				echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+				echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+				echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+				echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
+				echo
+				) 1>&2
+				return 1
+			fi
 		fi
 	fi
 	return 0
