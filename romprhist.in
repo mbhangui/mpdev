@@ -62,7 +62,7 @@ chk_ratingchkpoint()
 {
     echo "SELECT COUNT(*) from ratingchkpoint;" | mysql -s -u $MYSQL_USER -p$MYSQL_PASS -h $MYSQL_HOST $MYSQL_DATABASE > /dev/null 2>&1
     if [ $? -ne 0 ] ; then
-        echo "initiliazing"
+        echo "initializing"
         init_rompr
     fi
 }
