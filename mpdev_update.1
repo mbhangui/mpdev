@@ -10,7 +10,8 @@ mpdev_update [\f[I]option\f[]]
 .PP
 \fBmpdev_update\fR creates/updates stats.db or sticker.db from the
 \fBmpd\fR(1) database. It sends the \fIlistinfo\fR command to mpd to
-get list of all music files.
+get list of all music files. \fBmpdev_update\fR uses the \fI%mtime%\fR
+tag for a file from the mpd(1) database.
 
 .SH OPTIONS
 .TP 3
@@ -52,15 +53,6 @@ full path to the sqlite3(1) stats database
 .TP 3
 .B -U
 Use update mode. The default is to use insert mode.
-.RS
-.RE
-
-.TP 3
-\fB-m\fR \fImusic_directory\fR
-Full path to the \fImusic_directory\fR in the mpd.conf(5) configuration file.
-This option uses stat(2) on every music file to get the \fIst_mtime\fR
-field. This option will make the \fBmpdev_update\fR slower due to stat(2) call
-on each file. The \fIst_mtime\fR is used to compute the \fIdate_added\fR field.
 .RS
 .RE
 
@@ -140,5 +132,4 @@ Manvendra Bhangui <manvendra@indimail.org>
 mpd(1),
 sqlite3(1),
 mpdev_cleanup(1),
-mpdev(1),
-stat(2)
+mpdev(1)

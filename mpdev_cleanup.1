@@ -15,7 +15,7 @@ It can operate using either of the two modes below
 
 .EX
 1. Check the presence of a file on the disk (uses access(2) system call).
-2. Check the presense of a file in mpd database (loads mpd database into memory)
+2. Check the presence of a file in mpd database (loads mpd database into memory)
 .EE
 
 Checking against the mpd(1) database is faster than using the access(2) call.
@@ -27,6 +27,13 @@ using the mpdev_cleanup(1) command.
 Examples
 
 .EX
+# Use mpd database as reference
+
+$ mpdev_cleanup -c -d /var/lib/mpd/Music/.mpd/stats.db
+$ mpdev_cleanup -C -d /var/lib/mpd/Music/.mpd/sticker.db
+
+# Use the filesystem as reference
+
 $ mpdev_cleanup -c -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/stats.db
 $ mpdev_cleanup -C -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/sticker.db
 .EE
@@ -101,4 +108,5 @@ mpd(1),
 mpc(1),
 sqlite3(1),
 mpdev(1)
-mpdev_update(1)
+mpdev_update(1),
+access(2)

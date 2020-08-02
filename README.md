@@ -8,10 +8,10 @@ mpdev helps in bulding a database of your played tracks. Along with a script `mp
 You can create scripts in $HOME/.mpdev directory. The default installation installs a script named $HOME/.mpdev/player for the uid 1000. The script does the following
 
 1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
-2. updates play counts in the sqlite stats.db and [RompR](https://fatg3erman.github.io/RompR/) db
-3. Synchronizes the ratings in the sticker (sqlite), [RompR](https://fatg3erman.github.io/RompR/) (MySQL) and the stats (sqlite) databases. It also initializes the rating to 3 when you play an unrated song.
+2. updates play counts in the sqlite stats.db. You can write your own script and update any external database. An example of this is in the player script which updates the Playcounttable for [RompR](https://fatg3erman.github.io/RompR/).
+3. Synchronizes the ratings in the sticker (sqlite). You an write your own script and update any external database. An exampe of this is in the player script which updates the Ratingtable for [RompR](https://fatg3erman.github.io/RompR/) (MySQL). You can also do automatic rating to some default value by setting an environment variable AUTO\_RATING.
 
-The above three are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song playing, available to it. Below is a list of of events and corresping hooks that will be executed if available.
+The above three are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song playing, available to it. Below is a list of of events and corresponding hooks that will be executed if available.
 
 MPD EVENT|Hook script
 ---------|-----------
@@ -128,6 +128,7 @@ do
 		HOME=/home/pi \
 		XDG_RUNTIME_DIR=/home/pi \
 		PATH=\$PATH:/usr/bin:/bin \
+		AUTO_RATING=6 \
     /usr/bin/mpdev -v
 done
 ```
