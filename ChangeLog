@@ -49,3 +49,6 @@ Release 0.2 Start 02/03/2020
 34. mpdev_cleanup.c: made -m optional
 35. mpdev_update.c: added updation of Disc tag
 35. player.in: added zztimestamp filed to Ratingtable
+02/08/2020
+36. set default values for play_count, rating, date_added fields.
+37. use %mtime% tag from mpd datatabase for date_added filed instead of using stat(2) call
