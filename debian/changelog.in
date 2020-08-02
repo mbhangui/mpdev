@@ -38,3 +38,5 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * player.in: added zztimestamp filed to Ratingtable
   * set default values for play_count, rating, date_added fields.
   * use %mtime% tag from mpd datatabase for date_added filed instead of using stat(2) call
+  * mpdplaylist: added --host option to specify mpd host
+  * mpdplaylist: added --shuffle option to shuffle playlist

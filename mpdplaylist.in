@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.3  2020-08-02 20:48:38+05:30  Cprogrammer
+# added --shuffle option to shuffle playlist
+#
 # Revision 1.2  2020-08-02 17:52:35+05:30  Cprogrammer
 # added --host option to specify mpd host
 #
@@ -8,7 +11,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.2 2020-08-02 17:52:35+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.3 2020-08-02 20:48:38+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -102,6 +105,9 @@ Known values for OPTION are:
 --host=host
   mpd host to use
 
+--shuffle
+  shuffle playlist
+
 --dummy
   Display the SQL query and exit
 
@@ -125,19 +131,23 @@ minrate=""
 oldfirst=0
 sort_popular=0
 dummy=0
+shuffle=0
 playlist=""
 daysadded=""
 daysheard=""
 daysnotheard=""
 mpd_host=""
+prog_args="$0"
 while test $# -gt 0; do
 	case "$1" in
 	-*=*)
 	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
 	optval=`echo "$1" | cut -d'=' -f1`
+	prog_args="$prog_args $optval=\"$optarg\""
 	;;
 	*)
 	optarg=
+	prog_args="$prog_args $1"
 	;;
 	esac
 
@@ -193,6 +203,9 @@ while test $# -gt 0; do
 	;;
 	--dummy)
 	dummy=1
+	;;
+	--shuffle)
+	shuffle=1
 	;;
 	--verbose)
 	verbose="-v"
@@ -363,17 +376,34 @@ if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$
 fi
 if [ $dummy -eq 0 ] ; then
 	if [ -n "$playlist" ] ; then
-		/usr/bin/sqlite3 $statsdb_file "$sql_query;" | tee $playlist_dir/"$playlist".m3u
 		if [ "$playlist" = "now" ] ; then
+			if [ $shuffle -eq 1 ] ; then
+				/usr/bin/sqlite3 $statsdb_file "$sql_query;" | shuf > $playlist_dir/now.m3u
+			else
+				/usr/bin/sqlite3 $statsdb_file "$sql_query;" > $playlist_dir/now.m3u
+			fi
 			if [ -z "$mpd_host" ] ; then
 				mpd_host=localhost
 			fi
 			/usr/bin/mpc --host="$mpd_host" clear
-			/usr/bin/mpc --host="$mpd_host" load "$playlist"
+			/usr/bin/mpc --host="$mpd_host" load now
 			/usr/bin/mpc --host="$mpd_host" play
-			/usr/bin/mpc --host="$mpd_host" rm "$playlist"
+			/usr/bin/mpc --host="$mpd_host" rm now
+		else
+			if [ $shuffle -eq 1 ] ; then
+				(
+				echo "# $prog_args"
+				/usr/bin/sqlite3 $statsdb_file "$sql_query;" | shuf
+				) | tee $playlist_dir/"$playlist".m3u
+			else
+				(
+				echo "# $prog_args"
+				/usr/bin/sqlite3 $statsdb_file "$sql_query;" 
+				) | tee $playlist_dir/"$playlist".m3u
+			fi
 		fi
 	else
+		echo "# $prog_args"
 		/usr/bin/sqlite3 $statsdb_file "$sql_query;"
 	fi
 else
