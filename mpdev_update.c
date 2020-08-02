@@ -1,5 +1,9 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.4  2020-08-02 09:11:14+05:30  Cprogrammer
+ * set default values for play_count, rating, date_added fields.
+ * use %mtime% tag from mpd datatabase for date_added filed instead of using stat(2) call
+ *
  * Revision 1.3  2020-07-28 12:42:03+05:30  Cprogrammer
  * added updation of Disc tag
  *
@@ -28,9 +32,6 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 #ifdef HAVE_SQLITE3
 #include <sqlite3.h>
 #endif
@@ -50,7 +51,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.3 2020-07-28 12:42:03+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.4 2020-08-02 09:11:14+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -69,7 +70,6 @@ char           *usage =
 				" -i IP     - IP address of MPD host. default 127.0.0.1\n"
 				" -p port   - MPD listening port. default 6600\n"
 				" -s socket - unix domain socket path\n"
-				" -m path   - music directory path\n"
 				" -d        - sqlite3 dbfile path\n"
 				" -j        - Enable Journal in Memory\n"
 				" -S        - Enable Synch Mode\n"
@@ -279,7 +279,7 @@ print_song()
 }
 
 sqlite3_stmt   *
-stats_database_init(char *database, int synch_mode, int journal_in_memory, int transaction_mode, int use_mtime)
+stats_database_init(char *database, int synch_mode, int journal_in_memory, int transaction_mode)
 {
 	char           *sql, *err_msg;
 	sqlite3_stmt   *res;
@@ -356,12 +356,12 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 	if (db_type == 0) {
 		sql = "CREATE TABLE IF NOT EXISTS song(\n"
         	"id              INTEGER PRIMARY KEY,\n"
-        	"play_count      INTEGER,\n"
-        	"rating          INTEGER,\n"
+			"play_count      INTEGER DEFAULT 0,\n"
+			"rating          INTEGER DEFAULT 0,\n"
         	"uri             TEXT UNIQUE NOT NULL,\n"
         	"duration        INTEGER,\n"
         	"last_modified   INTEGER,\n"
-        	"date_added      INTEGER,\n"
+			"date_added      INTEGER DEFAULT (strftime('%s','now')),\n"
         	"artist          TEXT,\n"
         	"album           TEXT,\n"
         	"title           TEXT,\n"
@@ -397,21 +397,15 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 	if (err_msg)
 		sqlite3_free(err_msg);
 	if (db_type == 0) {
-		if (do_update == 0)
+		if (do_update == 0) /*- insert */
 			sql = "INSERT or IGNORE into song (uri, artist, album, title, track, "
 				"genre, date, date_added, last_modified, duration) "
 			  	"values (@uri, @artist, @album, @title, @track, @genre, @date, "
 				"@added, @modified, @duration)";
-		else {
-			if (use_mtime)
-				sql = "UPDATE song set artist=@artist, album=@album, title=@title, "
-					"track=@track, genre=@genre, date=@date, date_added=@added, "
-					"last_modified=@modified, duration=@duration where uri=@uri";
-			else
-				sql = "UPDATE song set artist=@artist, album=@album, title=@title, "
-					"track=@track, genre=@genre, date=@date, last_modified=@modified, "
-					"duration=@duration where uri=@uri";
-		}
+		else /*- update stats for any metadata updation */
+			sql = "UPDATE song set artist=@artist, album=@album, title=@title, "
+				"track=@track, genre=@genre, date=@date, last_modified=@modified, "
+				"duration=@duration where uri=@uri";
 	} else
 		sql = "INSERT or IGNORE into sticker (type, uri, name, value)"
 			  " values ('song', @uri, 'rating', 0)";
@@ -423,12 +417,11 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
 }
 
 void
-insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, unsigned long *failure, char **ptr)
+insert_update_data(sqlite3_stmt *res, unsigned long *processed, unsigned long *failure, char **ptr)
 {
 	struct tm       tm = {0};
 	int             i;
-	time_t          mod_time, add_time;
-	struct stat     statbuf;
+	time_t          mod_time;
 
 	if (db_type == 0) {
 		if (!strptime(last_modified.s, "%Y-%m-%dT%H:%M:%SZ", &tm)) {
@@ -439,11 +432,7 @@ insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, u
 			strerr_warn4("uri: ", uri.s, ": invalid timestamp: ", last_modified.s, 0);
 			return;
 		}
-		if (use_mtime && !stat(uri.s, &statbuf))
-			add_time = statbuf.st_mtime;
-		else
-			add_time = 0;
-		if (do_update == 0) {
+		if (do_update == 0) { /*- insert */
 			sqlite3_bind_text(res,  1, uri.len ? uri.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res,  2, artist.len ? artist.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res,  3, album.len ? album.s : "", -1, SQLITE_STATIC);
@@ -451,10 +440,10 @@ insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, u
 			sqlite3_bind_text(res,  5, track.len ? track.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res,  6, genre.len ? genre.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res,  7, date.len ? date.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_int(res,   8, add_time);
+			sqlite3_bind_int(res,   8, mod_time);
 			sqlite3_bind_int(res,   9, mod_time);
 			sqlite3_bind_text(res, 10, duration.s, -1, SQLITE_STATIC);
-		} else {
+		} else { /*- update stats for any metadata updation */
 			i = 1;
 			sqlite3_bind_text(res, i++, artist.len ? artist.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res, i++, album.len ? album.s : "", -1, SQLITE_STATIC);
@@ -462,8 +451,6 @@ insert_update_data(sqlite3_stmt *res, int use_mtime, unsigned long *processed, u
 			sqlite3_bind_text(res, i++, track.len ? track.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res, i++, genre.len ? genre.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res, i++, date.len ? date.s : "", -1, SQLITE_STATIC);
-			if (add_time)
-				sqlite3_bind_int(res,  i++, add_time);
 			sqlite3_bind_int(res,  i++, mod_time);
 			sqlite3_bind_text(res, i++, duration.s, -1, SQLITE_STATIC);
 			sqlite3_bind_text(res, i++, uri.len ? uri.s : "", -1, SQLITE_STATIC);
@@ -542,7 +529,7 @@ main(int argc, char **argv)
 	time_t          t;
 	struct tm       tm = {0};
 	char            port[FMT_ULONG], mpdinbuf[1024], mpdoutbuf[512], ssoutbuf[512], sserrbuf[512];
-	char           *mpd_socket, *mpd_host, *ptr, *database, *music_dir = 0;
+	char           *mpd_socket, *mpd_host, *ptr, *database;
 	sqlite3_stmt   *res;
 
 	substdio_fdbuf(&ssout, write, 1, ssoutbuf, sizeof(sserrbuf));
@@ -555,7 +542,7 @@ main(int argc, char **argv)
 	else
 		scan_uint(ptr, (unsigned int *) &port_num);
 	database = (char *) 0;
-	while ((opt = getopt(argc, argv, "vjSUPth:m:p:s:d:D:")) != opteof) {
+	while ((opt = getopt(argc, argv, "vjSUPth:p:s:d:D:")) != opteof) {
 		switch (opt) {
 		case 'd':
 			database = optarg;
@@ -586,9 +573,6 @@ main(int argc, char **argv)
 			break;
 		case 'U':
 			do_update = 1;
-			break;
-		case 'm':
-			music_dir = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -624,10 +608,8 @@ main(int argc, char **argv)
 	substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 	if (substdio_put(&mpdout, "listallinfo\n", 12) || substdio_flush(&mpdout) == -1)
 		die_write("unable to write to mpd");
-	res = stats_database_init(database, synch_mode, journal_in_memory, transaction_mode, music_dir ? 1 : 0);
+	res = stats_database_init(database, synch_mode, journal_in_memory, transaction_mode);
 	uri.len = last_modified.len = duration.len = artist.len = album.len = title.len = track.len = genre.len = date.len = 0;
-	if (music_dir && chdir(music_dir))
-		strerr_die3sys(111, "unable to chdir to ", music_dir, ": ");
 	for (processed = failure = 0;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("getln");
@@ -641,7 +623,7 @@ main(int argc, char **argv)
 		if (!str_diffn(line.s, "file: ", 6)) {
 			is_directory = 0;
 			if (uri.len) {
-				insert_update_data(res, music_dir ? 1 : 0, &processed, &failure, print_sql ? &ptr : 0);
+				insert_update_data(res, &processed, &failure, print_sql ? &ptr : 0);
 				if (sqlite3_changes(db) == 1) {
 					print_song(uri.s, last_modified.s, duration.s, artist.s, album.s, title.s, track.s, genre.s, date.s);
 					if (print_sql && ptr) {
