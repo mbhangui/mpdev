@@ -125,10 +125,10 @@ do
         MYSQL_USER=rompr
         MYSQL_PASS=romprdbpass
         MYSQL_DATABASE=romprdb \
-		HOME=/home/pi \
-		XDG_RUNTIME_DIR=/home/pi \
-		PATH=\$PATH:/usr/bin:/bin \
-		AUTO_RATING=6 \
+        HOME=/home/pi \
+        XDG_RUNTIME_DIR=/home/pi \
+        PATH=\$PATH:/usr/bin:/bin \
+        AUTO_RATING=6 \
     /usr/bin/mpdev -v
 done
 ```
