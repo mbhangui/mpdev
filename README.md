@@ -104,6 +104,9 @@ $ sudo /bin/bash
 # echo rompr         > /service/mpdev/variables/MYSQL_USER
 # echo romprdbpas    > /service/mpdev/variables/MYSQL_PASS
 # echo romprdb       > /service/mpdev/variables/MYSQL_DATABASE
+# echo /home/pi      > /service/mpdev/variables/HOME
+# echo /bin:/usr/bin > /service/mpdev/variables/PATH
+# echo 6             > /service/mpdev/variables/AUTO_RATING
 ```
 
 You need to restart mpdev for the new environment variables to be available to mpdev. To restart the mpdev daemon, you then just need to run the following command. `svc -d` stops the daemon, `svc -u` starts the daemon.
