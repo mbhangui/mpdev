@@ -138,12 +138,12 @@ The stats database can be created running the `mpdev_update` program
 ```
 CREATE TABLE IF NOT EXISTS song(
         id              INTEGER PRIMARY KEY,
-        play_count      INTEGER,
-        rating          INTEGER,
+        play_count      INTEGER DEFAULT 0,
+        rating          INTEGER DEFAULT 0,
         uri             TEXT UNIQUE NOT NULL,
         duration        INTEGER,
-        date_added      INTEGER,
         last_modified   INTEGER,
+        date_added      INTEGER DEFAULT (strftime('%s','now')),
         artist          TEXT,
         album           TEXT,
         title           TEXT,
