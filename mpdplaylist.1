@@ -61,7 +61,12 @@ Known values for OPTION are:
   (Songs with high rating come at top)
 
 --save=playlist
-  save the playlist in the filename $playlist_dir/playlist
+  save the playlist in the filename $playlist_dir/\fIplaylist\fR. If the
+  playlist is named now, the current playlist will be cleared and and
+  loaded without saving the playlist.
+
+--host=host
+  mpd host to use
 
 --dummy
   Display the SQL query and exit

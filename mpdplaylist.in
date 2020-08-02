@@ -1,11 +1,14 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.2  2020-08-02 17:52:35+05:30  Cprogrammer
+# added --host option to specify mpd host
+#
 # Revision 1.1  2020-07-19 18:17:52+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.1 2020-07-19 18:17:52+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.2 2020-08-02 17:52:35+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -92,7 +95,12 @@ Known values for OPTION are:
   (Songs with high rating come at top)
 
 --save=playlist
-  save the playlist in the filename $playlist_dir/playlist
+  save the playlist in the filename $playlist_dir/playlist. If the
+  playlist is named now, the current playlist will be cleared and and
+  loaded without saving the playlist.
+
+--host=host
+  mpd host to use
 
 --dummy
   Display the SQL query and exit
@@ -121,6 +129,7 @@ playlist=""
 daysadded=""
 daysheard=""
 daysnotheard=""
+mpd_host=""
 while test $# -gt 0; do
 	case "$1" in
 	-*=*)
@@ -187,6 +196,9 @@ while test $# -gt 0; do
 	;;
 	--verbose)
 	verbose="-v"
+	;;
+	--host=*)
+	mpd_host=$optarg
 	;;
 	--help)
 	usage 0
@@ -351,11 +363,18 @@ if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$
 fi
 if [ $dummy -eq 0 ] ; then
 	if [ -n "$playlist" ] ; then
-		echo "$sql_query;" | /usr/bin/sqlite3 $statsdb_file | tee $playlist_dir/"$playlist".m3u
-		/usr/bin/mpc clear
-		/usr/bin/mpc load "$playlist".m3u
+		/usr/bin/sqlite3 $statsdb_file "$sql_query;" | tee $playlist_dir/"$playlist".m3u
+		if [ "$playlist" = "now" ] ; then
+			if [ -z "$mpd_host" ] ; then
+				mpd_host=localhost
+			fi
+			/usr/bin/mpc --host="$mpd_host" clear
+			/usr/bin/mpc --host="$mpd_host" load "$playlist"
+			/usr/bin/mpc --host="$mpd_host" play
+			/usr/bin/mpc --host="$mpd_host" rm "$playlist"
+		fi
 	else
-		echo "$sql_query;" | /usr/bin/sqlite3 $statsdb_file
+		/usr/bin/sqlite3 $statsdb_file "$sql_query;"
 	fi
 else
 	echo "$sql_query;"
