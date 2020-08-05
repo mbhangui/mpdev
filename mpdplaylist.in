@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.4  2020-08-05 12:08:02+05:30  Cprogrammer
+# renamed --save to --playlist
+#
 # Revision 1.3  2020-08-02 20:48:38+05:30  Cprogrammer
 # added --shuffle option to shuffle playlist
 #
@@ -11,7 +14,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.3 2020-08-02 20:48:38+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.4 2020-08-05 12:08:02+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -97,16 +100,20 @@ Known values for OPTION are:
   Order playlist in decreasing order of Rating field
   (Songs with high rating come at top)
 
---save=playlist
+--playlist=playlist
   save the playlist in the filename $playlist_dir/playlist. If the
-  playlist is named now, the current playlist will be cleared and and
-  loaded without saving the playlist.
+  playlist is named now, new playlist will be added. If --clear
+  is also specified, the current playlist will be cleared and
+  loaded. The 'now' playlist is not saved to the playlist directory
 
 --host=host
   mpd host to use
 
 --shuffle
   shuffle playlist
+  
+--clear
+  clear playlist before adding. See --playlist option
 
 --dummy
   Display the SQL query and exit
@@ -132,6 +139,7 @@ oldfirst=0
 sort_popular=0
 dummy=0
 shuffle=0
+do_clear=0
 playlist=""
 daysadded=""
 daysheard=""
@@ -192,7 +200,7 @@ while test $# -gt 0; do
 	--daysnotheard=*)
 	daysnotheard=$optarg
 	;;
-	--save=*)
+	--playlist=*)
 	playlist=$optarg
 	;;
 	--oldfirst)
@@ -206,6 +214,9 @@ while test $# -gt 0; do
 	;;
 	--shuffle)
 	shuffle=1
+	;;
+	--clear)
+	do_clear=0
 	;;
 	--verbose)
 	verbose="-v"
@@ -385,7 +396,9 @@ if [ $dummy -eq 0 ] ; then
 			if [ -z "$mpd_host" ] ; then
 				mpd_host=localhost
 			fi
-			/usr/bin/mpc --host="$mpd_host" clear
+			if [ $do_clear -eq 1 ] ; then
+				/usr/bin/mpc --host="$mpd_host" clear
+			fi
 			/usr/bin/mpc --host="$mpd_host" load now
 			/usr/bin/mpc --host="$mpd_host" play
 			/usr/bin/mpc --host="$mpd_host" rm now

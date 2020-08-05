@@ -16,7 +16,7 @@ on tracks played using \fBmpd\fR(1). It uses the stats.db sqlite database genera
 
 \fBmpdplaylist\fR(1) displays the result on stdout. You can redirect the output to any filename
 with m3u extension. You can also save the result to a playlist in the \fIplaylist_directory\fR
-in mpd.conf(5), by using the --save option.
+in mpd.conf(5), by using the --playlist option.
 
 .EX
 Usage: mpdplaylist [OPTION]
@@ -60,16 +60,20 @@ Known values for OPTION are:
   Order playlist in decreasing order of Rating field
   (Songs with high rating come at top)
 
---save=playlist
-  save the playlist in the filename $playlist_dir/\fIplaylist\fR. If the
-  playlist is named now, the current playlist will be cleared and and
-  loaded without saving the playlist.
+--playlist=playlist
+  save the playlist in the filename $playlist_dir/playlist. If the
+  playlist is named now, new playlist will be added. If --clear
+  is also specified, the current playlist will be cleared and
+  loaded. The 'now' playlist is not saved to the playlist directory
 
 --host=host
   mpd host to use
 
 --shuffle
   shuffle playlist
+  
+--clear
+  clear playlist before adding. See --playlist option
 
 --dummy
   Display the SQL query and exit
@@ -109,7 +113,7 @@ List all songs not heard in the last 20 days order by last played with the last 
 \fBmpdplaylist\fR --oldfirst --daysnotheard=20
 
 Save the output in the mpd playlist new
-\fBmpdplaylist\fR --incgenre="Heavy Metal, Hard Rock" --new=30 --save=new
+\fBmpdplaylist\fR --incgenre="Heavy Metal, Hard Rock" --new=30 --playlist=new
 
 .EE
 
