@@ -55,3 +55,6 @@ Release 0.2 Start 02/03/2020
 03/08/2020
 38. mpdplaylist: added --host option to specify mpd host
 39. mpdplaylist: added --shuffle option to shuffle playlist
+05/08/2020
+40. mpdplaylist: renamed --save option to --playlist
+41. mpdev_rename: use SQL REPLACE instead of sed
