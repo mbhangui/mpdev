@@ -1,11 +1,14 @@
 #!/bin/sh
 #
 # $Log: mpdev_rename.in,v $
+# Revision 1.2  2020-08-05 21:15:00+05:30  Cprogrammer
+# replaced sed with SQL REPLACE
+#
 # Revision 1.1  2020-07-19 18:20:04+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: mpdev_rename.in,v 1.1 2020-07-19 18:20:04+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdev_rename.in,v 1.2 2020-08-05 21:15:00+05:30 Cprogrammer Exp mbhangui $
 #
 
 usage()
@@ -13,10 +16,10 @@ usage()
 prog_args=""
 cat <<EOF
 Usage: mpdev_rename [OPTIONS]
-mpdev_rename --sticker_db|stats_db=path --prefix=prefix --query | --pattern=patt --replacement=str
-echo "prefix is any string that can be given in a SQL 'WHERE' clause"
-echo "patt   is any regular expression or string that can be given to sed"
-echo "str    is any string that can be given to sed as the replacement string"
+mpdev_rename --sticker_db|stats_db=path --pattern=patt --query | --string=str --replacement=repl
+echo "patt is any string that can be given in a SQL 'WHERE' clause"
+echo "str  is string to replace"
+echo "repl is replacement string"
 EOF
 echo "Press ENTER for options, Cntrl C to quit" 1>&2
 read key
@@ -53,14 +56,14 @@ while test $# -gt 0; do
 	--query)
 	query=1
 	;;
-	--prefix=*)
-	prefix="$optarg"
-	;;
 	--pattern=*)
-	pattern="$optarg"
+	patt="$optarg"
+	;;
+	--string=*)
+	str="$optarg"
 	;;
 	--replacement=*)
-	replace="$optarg"
+	repl="$optarg"
 	;;
 	*)
 	echo "invalid option [$1]" 1>&2
@@ -83,19 +86,16 @@ if [ -z "$prefix" ] ; then
 	usage 1
 fi
 if [ $query -eq 0 ] ; then
-	if [ -z "$pattern" -o -z "$replace" ] ; then
+	if [ -z "$str" -o -z "$repl" ] ; then
 		echo "You have to specify string to replace and replacement string or specify --query" 1>&2
-	usage 1
+		usage 1
 	fi
 fi
-echo executing sqlite3 --batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$prefix'" 1>&2
 if [ $query -eq 1 ] ; then
-	sqlite3 --batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$prefix'"
+	echo executing sqlite3 --batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$patt'" 1>&2
+	sqlite3 --batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$patt'"
 else
-	sqlite3 --batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$prefix'"  | while read line
-	do
-	uri=`echo $line | sed -e "s{'{''{g"`
-		newuri=`echo $uri | sed -e "s{$pattern{$replace{"`
-		echo "UPDATE $table SET uri='$newuri' WHERE uri='$uri';"
-	done
+	echo "UPDATE $table SET uri=REPLACE(uri, '$str', '$repl') WHERE uri LIKE '$patt'" 1>&2
+	sqlite3 --batch $dbpath \
+		"UPDATE $table SET uri=REPLACE(uri, '$str', '$repl') WHERE uri LIKE '$patt'"
 fi
