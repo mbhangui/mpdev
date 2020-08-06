@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.5  2020-08-06 16:15:39+05:30  Cprogrammer
+# renamed --dummy option to --query
+#
 # Revision 1.4  2020-08-05 12:08:02+05:30  Cprogrammer
 # renamed --save to --playlist
 #
@@ -14,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.4 2020-08-05 12:08:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.5 2020-08-06 16:15:39+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -115,7 +118,7 @@ Known values for OPTION are:
 --clear
   clear playlist before adding. See --playlist option
 
---dummy
+--query
   Display the SQL query and exit
 
 --help
@@ -209,7 +212,7 @@ while test $# -gt 0; do
 	--popular)
 	sort_popular=1
 	;;
-	--dummy)
+	--query)
 	dummy=1
 	;;
 	--shuffle)
