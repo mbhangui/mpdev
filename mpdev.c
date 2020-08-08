@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.3  2020-08-08 11:07:55+05:30  Cprogrammer
+ * fixed error message strings
+ *
  * Revision 1.2  2020-07-20 15:56:53+05:30  Cprogrammer
  * added ELAPSED_TIME, PLAYER_STATE env variables when a song is pause / play is pressed
  *
@@ -45,7 +48,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.2 2020-07-20 15:56:53+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.3 2020-08-08 11:07:55+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -904,9 +907,9 @@ main(int argc, char **argv)
 			flush_err();
 			strnum[i = fmt_ulong(strnum, connection_num)] = 0;
 			if (mpd_socket)
-				strerr_warn6("mpdev: connection ", strnum, ": tcpopen: ", "socket [", mpd_socket, "]", &strerr_sys);
+				strerr_warn6("mpdev: connection ", strnum, ": tcpopen: ", "socket [", mpd_socket, "]: ", &strerr_sys);
 			else
-				strerr_warn8("mpdev: connection ", strnum, ": tcpopen: ", "host [", mpd_host, "] port [", port, "]", &strerr_sys);
+				strerr_warn8("mpdev: connection ", strnum, ": tcpopen: ", "host [", mpd_host, "] port [", port, "]: ", &strerr_sys);
 			sleep(retry_interval);
 			continue;
 		}
@@ -984,7 +987,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.2 2020-07-20 15:56:53+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.3 2020-08-08 11:07:55+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

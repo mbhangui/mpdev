@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_cleanup.c,v $
+ * Revision 1.3  2020-08-08 11:07:46+05:30  Cprogrammer
+ * fixed usage, error messages
+ *
  * Revision 1.2  2020-07-28 12:40:52+05:30  Cprogrammer
  * made -m optional
  *
@@ -35,7 +38,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.2 2020-07-28 12:40:52+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.3 2020-08-08 11:07:46+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 ssize_t         safewrite(int, char *, int);
@@ -48,7 +51,7 @@ char            method = 0;
 static sqlite3 *db, *memdb;
 char           *usage =
 				"usage: mpdev_cleanup [-i IP/Host | -s unix_socket] [-p port]\n"
-				"  -i IP   - IP address of MPD host. default 127.0.0.1\n"
+				"  -h IP   - IP address of MPD host. default 127.0.0.1\n"
 				"  -p port - MPD listening port. default 6600\n"
 				"  -s unix - domain socket path\n"
 				"  -m path - music directory path\n"
@@ -392,9 +395,9 @@ main(int argc, char **argv)
 		port[fmt_ulong(port, port_num)] = 0;
 		if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
 			if (mpd_socket)
-				strerr_die4sys(111, "mpdev_cleanup: tcpopen: ", "socket [", mpd_socket, "]");
+				strerr_die4sys(111, "mpdev_cleanup: tcpopen: ", "socket [", mpd_socket, "]: ");
 			else
-				strerr_die6sys(111, "mpdev_cleanup: tcpopen: ", "host [", mpd_host, "] port [", port, "]");
+				strerr_die6sys(111, "mpdev_cleanup: tcpopen: ", "host [", mpd_host, "] port [", port, "]: ");
 		}
 		r_res = dump_mpd_into_mem(sock);
 	} else
