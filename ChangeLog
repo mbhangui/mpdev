@@ -58,3 +58,8 @@ Release 0.2 Start 02/03/2020
 05/08/2020
 40. mpdplaylist: renamed --save option to --playlist
 41. mpdev_rename: use SQL REPLACE instead of sed
+06/08/2020
+42. mpdplaylist: renamed --dummy option to --query
+08/08/2020
+42. mpdev.c, mpdev_cleanup.c: fixed usage/error strings
+43. tcpopen.c: added missing return on connect() failure

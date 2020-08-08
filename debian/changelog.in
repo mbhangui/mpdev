@@ -42,3 +42,6 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * mpdplaylist: added --shuffle option to shuffle playlist
   * mpdplaylist: renamed --save option to --playlist
   * mpdev_rename: use SQL REPLACE instead of sed
+  * mpdplaylist: renamed --dummy option to --query
+  * mpdev.c, mpdev_cleanup.c: fixed usage/error strings
+  * tcpopen.c: added missing return on connect() failure
