@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.12  2020-08-09 20:50:50+05:30  Cprogrammer
+# use unix domain socket if MYSQL_SOCKET env variable is defined
+#
 # Revision 1.11  2020-07-28 12:47:21+05:30  Cprogrammer
 # added zztimestamp filed to Ratingtable
 # fixed typo UNIX_TIMESTAMP
@@ -36,7 +39,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.11 2020-07-28 12:47:21+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.12 2020-08-09 20:50:50+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -47,8 +50,13 @@ get_mpd_conf_value()
 get_TTindex()
 {
 	uri="$1"
-	echo "SELECT TTindex FROM Tracktable WHERE Uri='$uri';" \
-		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	if [ -n "$MYSQL_SOCKET" ] ; then
+		echo "SELECT TTindex FROM Tracktable WHERE Uri='$uri';" \
+			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+	else
+		echo "SELECT TTindex FROM Tracktable WHERE Uri='$uri';" \
+			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	fi
 	if [ $? -ne 0 ] ; then
 		echo "error: SELECT TTindex FROM Tracktable WHERE Uri='$uri';" 1>&2
 		return 1
@@ -58,16 +66,31 @@ get_TTindex()
 
 get_rompr_rating()
 {
-	echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
-		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-	if [ $? -ne 0 ] ; then
-		(
-		echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
-		echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
-		echo
-		) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	if [ -n "$MYSQL_SOCKET" ] ; then
+		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+	else
 		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	fi
+	if [ $? -ne 0 ] ; then
+		if [ -n "$MYSQL_SOCKET" ] ; then
+			(
+			echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
+			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
+			echo
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+				| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+		else
+			(
+			echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
+			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
+			echo
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+				| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		fi
 		if [ $? -ne 0 ] ; then
 			echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
 			return 1
@@ -188,16 +211,29 @@ rompr_update_playcount()
 		TTidx=`get_TTindex "$turi"`
 	fi
 	if [ -n "$TTidx" ] ; then
-		(
-		# update Playcount only when it is not being updated by RompR
-		echo -n "UPDATE Playcounttable set Playcount=Playcount+1, LastPlayed=NOW() "
-		echo -n "WHERE TTindex=$TTidx and UNIX_TIMESTAMP(LastPlayed) < $tm;"
-		echo 
-		# insert when the above update returns 0 rows
-		echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
-		echo -n "VALUES ($TTidx, 1, NOW());"
-		echo
-		) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		if [ -n "$MYSQL_SOCKET" ] ; then
+			(
+			# update Playcount only when it is not being updated by RompR
+			echo -n "UPDATE Playcounttable set Playcount=Playcount+1, LastPlayed=NOW() "
+			echo -n "WHERE TTindex=$TTidx and UNIX_TIMESTAMP(LastPlayed) < $tm;"
+			echo 
+			# insert when the above update returns 0 rows
+			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
+			echo -n "VALUES ($TTidx, 1, NOW());"
+			echo
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+		else
+			(
+			# update Playcount only when it is not being updated by RompR
+			echo -n "UPDATE Playcounttable set Playcount=Playcount+1, LastPlayed=NOW() "
+			echo -n "WHERE TTindex=$TTidx and UNIX_TIMESTAMP(LastPlayed) < $tm;"
+			echo 
+			# insert when the above update returns 0 rows
+			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
+			echo -n "VALUES ($TTidx, 1, NOW());"
+			echo
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		fi
 		if [ $? -ne 0 ] ; then
 			(
 			echo "ERROR: "
@@ -225,19 +261,37 @@ rompr_rating_update()
 		TTidx=`get_TTindex "$turi"`
 	fi
 	if [ -n "$TTidx" ] ; then
-		(
-		echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
-		echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
-		echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
-		echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
-		echo
-		) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-		if [ $? -ne 0 ] ; then
+		if [ -n "$MYSQL_SOCKET" ] ; then
 			(
-			echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
-			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
+			echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+			echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+			echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
+			echo
+			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+		else
+			(
+			echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+			echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+			echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+		fi
+		if [ $? -ne 0 ] ; then
+			if [ -n "$MYSQL_SOCKET" ] ; then
+				(
+				echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
+				echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
+				echo
+				) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+			else
+				(
+				echo -n "ALTER TABLE Ratingtable ADD COLUMN zztimestamp TIMESTAMP DEFAULT "
+				echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
+				echo
+				) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+			fi
 			if [ $? -ne 0 ] ; then
 				(
 				echo "ERROR: "
@@ -248,13 +302,23 @@ rompr_rating_update()
 				echo
 				) 1>&2
 			fi
-			(
-			echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
-			echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
-			echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
-			echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
-			echo
-			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+			if [ -n "$MYSQL_SOCKET" ] ; then
+				(
+				echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+				echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+				echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+				echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
+				echo
+				) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+			else
+				(
+				echo -n "INSERT INTO Ratingtable (TTindex, Rating, zztimestamp) "
+				echo -n "VALUES ($TTidx, $rompr_rating, FROM_UNIXTIME($tstamp)) "
+				echo -n "ON DUPLICATE KEY UPDATE Rating = $rompr_rating, "
+				echo -n "zztimestamp=FROM_UNIXTIME($tstamp);"
+				echo
+				) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+			fi
 			if [ $? -ne 0 ] ; then
 				(
 				echo "ERROR: "
@@ -274,8 +338,13 @@ rompr_rating_update()
 get_rompr_playcount_ts()
 {
 	ts=$1
-	echo "select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" \
-		| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	if [ -n "$MYSQL_SOCKET" ] ; then
+		echo "select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" \
+			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
+	else
+		echo "select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" \
+			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
+	fi
 	if [ $? -ne 0 ] ; then
 		echo "ERROR: select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" 1>&2
 		return 1
