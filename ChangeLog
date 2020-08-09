@@ -63,3 +63,5 @@ Release 0.2 Start 02/03/2020
 08/08/2020
 42. mpdev.c, mpdev_cleanup.c: fixed usage/error strings
 43. tcpopen.c: added missing return on connect() failure
+09/08/2020
+44. player: use unix domain socket if MYSQL_SOCKET is defined

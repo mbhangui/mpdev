@@ -45,3 +45,4 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * mpdplaylist: renamed --dummy option to --query
   * mpdev.c, mpdev_cleanup.c: fixed usage/error strings
   * tcpopen.c: added missing return on connect() failure
+  * player: use unix domain socket if MYSQL_SOCKET is defined
