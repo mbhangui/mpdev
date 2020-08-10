@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.7  2020-08-10 20:35:00+05:30  Cprogrammer
+ * fixed logic of play/pause/stop
+ *
  * Revision 1.6  2020-08-10 17:43:31+05:30  Cprogrammer
  * fixed setting of initial_state
  *
@@ -58,7 +61,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.6 2020-08-10 17:43:31+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.7 2020-08-10 20:35:00+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -1046,9 +1049,11 @@ main(int argc, char **argv)
 							pos, id, response);
 						flush();
 					}
-					if (!initial_state || initial_state == PLAY_STATE) /*- we are not in pause/stop state */
-						submit_song(verbose, "now-playing");
-					prev_id2 = id;
+					submit_song(verbose, "now-playing");
+					/*- we are not in pause/stop state */
+					if (!initial_state || initial_state == PLAY_STATE)
+						prev_id2 = id;
+					initial_state = 0; /*-reset state */
 				}
 				uri_s.len = last_modified_s.len = album_s.len = artist_s.len = 0;
 				date_s.len = genre_s.len = title_s.len = track_s.len =  0;
@@ -1068,7 +1073,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.6 2020-08-10 17:43:31+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.7 2020-08-10 20:35:00+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
