@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.13  2020-08-10 11:54:38+05:30  Cprogrammer
+# skip http urls
+#
 # Revision 1.12  2020-08-09 20:50:50+05:30  Cprogrammer
 # use unix domain socket if MYSQL_SOCKET env variable is defined
 #
@@ -39,7 +42,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.12 2020-08-09 20:50:50+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.13 2020-08-10 11:54:38+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -618,6 +621,11 @@ update_song()
 if [ -z "$VERBOSE" ] ; then
 	VERBOSE=0
 fi
+# we don't handle stream uri currently
+echo $SONG_URI|grep "^http://" >/dev/null
+if [ $? -eq 0 ] ; then
+	exit 0
+fi
 music_dir=`get_mpd_conf_value music_directory`
 if [ $? -ne 0 ] ; then
 	echo "could not get music directory from mpd.conf" 1>&2
@@ -641,5 +649,8 @@ else
 fi
 do_rating=1
 mkdir -p /tmp/mpdev
+if [ $VERBOSE -ne 0 ] ; then
+	env > /tmp/mpdev/.env.log
+fi
 update_song "$SONG_URI" "$1"
 exit 0
