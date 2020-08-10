@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.15  2020-08-10 20:35:40+05:30  Cprogrammer
+# fixed debug message call
+#
 # Revision 1.14  2020-08-10 17:25:14+05:30  Cprogrammer
 # replaced /tmp/mpdev with MPDEV_TMPDIR
 # exit now-playing when in pause or stop state
@@ -46,7 +49,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.14 2020-08-10 17:25:14+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.15 2020-08-10 20:35:40+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -420,10 +423,10 @@ update_song()
 				fi
 				for i in sticker rompr stats scrobble
 				do
-					if [ $VERBOSE -gt 0 ] ; then
-						echo "creating $MPDEV_TMPDIR/$i.$csum"
-					fi
 					if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
+						if [ $VERBOSE -gt 0 ] ; then
+							echo "creating $MPDEV_TMPDIR/$i.$csum"
+						fi
 						touch $MPDEV_TMPDIR/$i.$csum
 					fi
 				done
