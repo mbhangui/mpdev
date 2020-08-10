@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.6  2020-08-10 17:43:31+05:30  Cprogrammer
+ * fixed setting of initial_state
+ *
  * Revision 1.5  2020-08-10 17:20:59+05:30  Cprogrammer
  * set PLAYER_STATE environment variable when starting
  * set ELAPSED_TIME, DURATION only when available
@@ -55,7 +58,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.5 2020-08-10 17:20:59+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.6 2020-08-10 17:43:31+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -1025,7 +1028,7 @@ main(int argc, char **argv)
 			if (prev_id1 && prev_id1 != id) {
 				t = time(0);
 				initial_state = 0; /*-reset state */
-				if (initial_state != PLAY_STATE && !env_unset("PLAYER_STATE"))
+				if (initial_state && !env_unset("PLAYER_STATE"))
 					die_nomem();
 				strnum[i = fmt_ulong(strnum, t)] = 0;
 				if (i && !env_put2("END_TIME", strnum))
@@ -1043,7 +1046,7 @@ main(int argc, char **argv)
 							pos, id, response);
 						flush();
 					}
-					if (initial_state != PLAY_STATE) /*- we are not in play state */
+					if (!initial_state || initial_state == PLAY_STATE) /*- we are not in pause/stop state */
 						submit_song(verbose, "now-playing");
 					prev_id2 = id;
 				}
@@ -1065,7 +1068,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.5 2020-08-10 17:20:59+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.6 2020-08-10 17:43:31+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
