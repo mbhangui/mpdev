@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.4  2020-08-10 11:53:13+05:30  Cprogrammer
+ * skip submit-song when starting from pause state
+ *
  * Revision 1.3  2020-08-08 11:07:55+05:30  Cprogrammer
  * fixed error message strings
  *
@@ -48,7 +51,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.3 2020-08-08 11:07:55+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.4 2020-08-10 11:53:13+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -190,6 +193,53 @@ safewrite(int fd, char *buf, int len)
 	if ((r = timeoutwrite(timeout, fd, buf, len)) <= 0)
 		die_write();
 	return r;
+}
+
+int
+get_play_state()
+{
+	int             match, state;
+
+	mpd_out("status");
+	for (state = 0;;) {
+		if (getln(&mpdin, &line, &match, '\n') == -1)
+			die_read("status");
+		if (!match && line.len == 0) {
+			if (verbose) {
+				out("EOF status\n");
+				flush();
+			}
+			return 0;
+		}
+		if (verbose > 1) {
+			if (substdio_put(&ssout, line.s, line.len) == -1)
+				die_write();
+		}
+		if (!str_diffn(line.s, "OK MPD ", 7))
+			continue;
+		if (!str_diffn(line.s, "OK\n", 3))
+			break;
+		line.len--;
+		line.s[line.len] = 0;
+		if (!str_diffn(line.s, "state: ", 7)) {
+			if (!str_diffn(line.s + 7, "stop", 4))
+				state=0;
+			else
+			if (!str_diffn(line.s + 7, "pause", 5))
+				state=1;
+			else
+			if (!str_diffn(line.s + 7, "play", 4))
+				state=2;
+			if (verbose) {
+				out("MPD status: ");
+				if (substdio_put(&ssout, line.s + 7, line.len - 7) == -1)
+					die_write();
+				out("\n");
+				flush();
+			}
+		}
+	}
+	return (state);
 }
 
 static stralloc uri_s = {0}, last_modified_s = {0}, album_s = {0},
@@ -833,7 +883,7 @@ set_environ()
 int
 main(int argc, char **argv)
 {
-	int             i, opt, pos, sock, port_num = 6600, retry_interval = 60, connection_num;
+	int             i, opt, pos, sock, port_num = 6600, retry_interval = 60, connection_num, initial_state;
 	char           *mpd_socket, *uri, *last_modified, *album, *artist,
 				   *date, *genre, *title, *track, *duration, *response, *mpd_host, *ptr;
 	char            port[FMT_ULONG], mpdinbuf[1024], mpdoutbuf[512], ssoutbuf[512], sserrbuf[512];
@@ -933,6 +983,8 @@ main(int argc, char **argv)
 		}
 		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
 		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
+
+		initial_state = get_play_state();
 		prev_id1 = prev_id2 = 0;
 		for (;;) {
 			if ((i = get_song_details(&uri, &last_modified, &album, &artist, &date, &genre,
@@ -953,6 +1005,7 @@ main(int argc, char **argv)
 			}
 			if (prev_id1 && prev_id1 != id) {
 				t = time(0);
+				initial_state = 0; /*-reset state */
 				strnum[i = fmt_ulong(strnum, t)] = 0;
 				if (i && !env_put2("END_TIME", strnum))
 					die_nomem();
@@ -962,16 +1015,20 @@ main(int argc, char **argv)
 			if (id) {
 				set_environ();
 				prev_id1 = id;
-				if (!prev_id2 || (id && prev_id2 != id)) {
+				if (!prev_id2 || prev_id2 != id) {
 					if (verbose == 3) {
 						print_song_details(uri, last_modified, album, artist,
 							date, genre, title, track, duration, duration_i,
 							pos, id, response);
 						flush();
 					}
-					submit_song(verbose, "now-playing");
+					if (initial_state != 1) /*- we are in pause state */
+						submit_song(verbose, "now-playing");
 					prev_id2 = id;
 				}
+				uri_s.len = last_modified_s.len = album_s.len = artist_s.len = 0;
+				date_s.len = genre_s.len = title_s.len = track_s.len =  0;
+				duration_s.len = position_s.len = id_s.len = 0;
 			} else
 				run_command(CUSTOM_EVENT, "mpd-event");
 			if (!do_idle()) {
@@ -987,7 +1044,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.3 2020-08-08 11:07:55+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.4 2020-08-10 11:53:13+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
