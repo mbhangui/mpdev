@@ -1,6 +1,10 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.14  2020-08-10 17:25:14+05:30  Cprogrammer
+# replaced /tmp/mpdev with MPDEV_TMPDIR
+# exit now-playing when in pause or stop state
+#
 # Revision 1.13  2020-08-10 11:54:38+05:30  Cprogrammer
 # skip http urls
 #
@@ -42,7 +46,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.13 2020-08-10 11:54:38+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.14 2020-08-10 17:25:14+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -394,16 +398,54 @@ update_song()
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
 	if [ " $state" = " now-playing" ] ; then
 		if [ -n "$ELAPSED_TIME" ] ; then
-			echo "Play/Pause elapsed=$ELAPSED_TIME uri=[$uri]"
+			if [ $VERBOSE -gt 0 ] ; then
+				echo "Play/Pause elapsed=$ELAPSED_TIME uri=[$uri]"
+			fi
 			return 0
+		fi
+		if [ -n "$PLAYER_STATE" ] ; then
+			if [ "$PLAYER_STATE" = "pause" ] ; then
+				if [ ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
+					if [ $sticker_enabled -eq 1 ] ; then
+						rating=`get_mpd_rating "$uri"`
+					elif  [ -n "$ROMPR" ] ; then
+						tmp=`get_rompr_rating "$uri" | awk '{print $1}'`
+						rating=`expr $tmp \* 2`
+					elif [ $stats_enabled -eq 1 ] ; then
+						rating=`get_stats_rating "$uri"`
+					else
+						echo "Nothing to do"
+						exit 0
+					fi
+				fi
+				for i in sticker rompr stats scrobble
+				do
+					if [ $VERBOSE -gt 0 ] ; then
+						echo "creating $MPDEV_TMPDIR/$i.$csum"
+					fi
+					if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
+						touch $MPDEV_TMPDIR/$i.$csum
+					fi
+				done
+				return 0
+			elif [ "$PLAYER_STATE" = "stop" ] ; then
+				for i in sticker rompr stats scrobble start_time rating
+				do
+					if [ $VERBOSE -gt 0 ] ; then
+						echo "removing $MPDEV_TMPDIR/$i.$csum"
+					fi
+					/bin/rm -f $MPDEV_TMPDIR/$i.$csum
+				done
+				return 0
+			fi
 		fi
 	fi
 	inserted=0
 	# presence of rating.$csum indicates that
 	# the script was run when a song started
 	# we are being called again
-	if [ -f /tmp/mpdev/rating.$csum ] ; then
-		rating=`cat /tmp/mpdev/rating.$csum`
+	if [ -f $MPDEV_TMPDIR/rating.$csum ] ; then
+		rating=`cat $MPDEV_TMPDIR/rating.$csum`
 	else
 		# you can have ratings maintained in sticker, rompr or both
 		# prefer the sticker value as I use cantata more than rompr
@@ -436,7 +478,7 @@ update_song()
 				touch /tmp/rompr.$csum
 			elif [ $stats_enabled -eq 1 ] ; then
 				stats_db_insert "$uri" "$rating"
-				touch /tmp/mpdev/stats.$csum
+				touch $MPDEV_TMPDIR/stats.$csum
 			fi
 		elif [ $rating -eq 0 ] ; then
 			if [ -n "$AUTO_RATING" ] ; then
@@ -450,7 +492,7 @@ update_song()
 					touch /tmp/rompr.$csum
 				elif  [ $stats_enabled -eq 1 ] ; then
 					stats_db_update "$uri" "$rating" ""
-					touch /tmp/mpdev/stats.$csum
+					touch $MPDEV_TMPDIR/stats.$csum
 				fi
 			fi
 		else
@@ -458,7 +500,7 @@ update_song()
 		fi
 	fi
 	if [ $VERBOSE -gt 0 ] ; then
-		if [ ! -f /tmp/mpdev/rating.$csum -a " $state" = " now-playing" ] ; then
+		if [ ! -f $MPDEV_TMPDIR/rating.$csum -a " $state" = " now-playing" ] ; then
 			echo -n "NewSong Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 			echo    "duration=$SONG_DURATION rating=[$rating]"
 			echo "uri=[$uri]"
@@ -481,37 +523,37 @@ update_song()
 			fi
 		fi
 	fi
-	if [ ! -f /tmp/mpdev/rating.$csum ] ; then
-		echo $rating > /tmp/mpdev/rating.$csum
+	if [ ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
+		echo $rating > $MPDEV_TMPDIR/rating.$csum
 	fi
 	case "$state" in
 		"now-playing")
-		if [ ! -f /tmp/mpdev/start_time.$csum ] ; then
+		if [ ! -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			if [ -n "$START_TIME" ] ; then
-				echo $START_TIME > /tmp/mpdev/start_time.$csum
+				echo $START_TIME > $MPDEV_TMPDIR/start_time.$csum
 			fi
 		else
-			START_TIME=`cat /tmp/mpdev/start_time.$csum`
+			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
 		fi
-		if [ $stats_enabled -eq 1 -a ! -f /tmp/mpdev/stats.$csum ] ; then
+		if [ $stats_enabled -eq 1 -a ! -f $MPDEV_TMPDIR/stats.$csum ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
 				echo "INSERT stats rating=$rating  Start=$START_TIME"
 			fi
 			stats_db_insert "$uri" "$rating"
-			touch /tmp/mpdev/stats.$csum
+			touch $MPDEV_TMPDIR/stats.$csum
 		fi
-		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" -a ! -f /tmp/mpdev/rompr.$csum ] ; then
+		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" -a ! -f $MPDEV_TMPDIR/rompr.$csum ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
 				tmp1=`expr "$rating" / 2`
 				echo "UPDATE RompR rating=$tmp1  Start=$START_TIME"
 			fi
 			rompr_rating_update "$uri" "$START_TIME" "$rating"
-			touch /tmp/mpdev/rompr.$csum
+			touch $MPDEV_TMPDIR/rompr.$csum
 		fi
 		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
-			if [ ! -f /tmp/mpdev/scrobble.$csum ] ; then
+			if [ ! -f $MPDEV_TMPDIR/scrobble.$csum ] ; then
 				scrobble
-				touch /tmp/mpdev/scrobble.$csum
+				touch $MPDEV_TMPDIR/scrobble.$csum
 			fi
 		fi
 		;;
@@ -519,11 +561,11 @@ update_song()
 		if [ -z "$END_TIME" ] ; then
 			exit 0
 		fi
-		if [ -f /tmp/mpdev/start_time.$csum ] ; then
-			START_TIME=`cat /tmp/mpdev/start_time.$csum`
+		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
+			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
 		fi
-		/bin/rm -f /tmp/mpdev/stats.$csum /tmp/mpdev/scrobble.$csum \
-			/tmp/mpdev/rompr.$csum /tmp/sticker.$csum /tmp/mpdev/start_time.$csum
+		/bin/rm -f $MPDEV_TMPDIR/stats.$csum $MPDEV_TMPDIR/scrobble.$csum \
+			$MPDEV_TMPDIR/rompr.$csum /tmp/sticker.$csum $MPDEV_TMPDIR/start_time.$csum
 		if [ -n "$ROMPR" ] ; then
 			rompr_uri=$(echo "$uri" | sed s/"'"/"\\\'"/g)
 			TTindex=`get_TTindex "$rompr_uri"`
@@ -531,9 +573,9 @@ update_song()
 		# sync rating between sticker and rompr
 		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" ] ; then
 			rating=`get_mpd_rating "$uri"`
-			if [ -f /tmp/mpdev/rating.$csum ] ; then
-				old_rating=`cat /tmp/mpdev/rating.$csum`
-				/bin/rm -f /tmp/mpdev/rating.$csum
+			if [ -f $MPDEV_TMPDIR/rating.$csum ] ; then
+				old_rating=`cat $MPDEV_TMPDIR/rating.$csum`
+				/bin/rm -f $MPDEV_TMPDIR/rating.$csum
 			else
 				old_rating=`get_stat_rating $uri`
 			fi
@@ -602,7 +644,7 @@ update_song()
 				rompr_update_playcount "$rompr_uri" "$START_TIME" "$TTindex"
 			fi
 		fi
-		/bin/rm -f /tmp/mpdev/rating.$csum
+		/bin/rm -f $MPDEV_TMPDIR/rating.$csum
 		;;
 	esac
 	if [ $VERBOSE -gt 0 ] ; then
@@ -648,9 +690,12 @@ else
 	stats_enabled=0
 fi
 do_rating=1
-mkdir -p /tmp/mpdev
+if [ -z "$MPDEV_TMPDIR" ] ; then
+	MPDEV_TMPDIR=/tmp/mpdev
+fi
+mkdir -p $MPDEV_TMPDIR
 if [ $VERBOSE -ne 0 ] ; then
-	env > /tmp/mpdev/.env.log
+	env > $MPDEV_TMPDIR/.env.log
 fi
 update_song "$SONG_URI" "$1"
 exit 0
