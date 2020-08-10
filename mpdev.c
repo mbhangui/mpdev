@@ -1,5 +1,9 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.5  2020-08-10 17:20:59+05:30  Cprogrammer
+ * set PLAYER_STATE environment variable when starting
+ * set ELAPSED_TIME, DURATION only when available
+ *
  * Revision 1.4  2020-08-10 11:53:13+05:30  Cprogrammer
  * skip submit-song when starting from pause state
  *
@@ -51,8 +55,12 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.4 2020-08-10 11:53:13+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.5 2020-08-10 17:20:59+05:30 Cprogrammer Exp mbhangui $";
 #endif
+
+#define PAUSE_STATE   1
+#define STOP_STATE    2
+#define PLAY_STATE    3
 
 extern char    *strptime(const char *, const char *, struct tm *);
 ssize_t         safewrite(int, char *, int);
@@ -223,13 +231,15 @@ get_play_state()
 		line.s[line.len] = 0;
 		if (!str_diffn(line.s, "state: ", 7)) {
 			if (!str_diffn(line.s + 7, "stop", 4))
-				state=0;
+				state=STOP_STATE;
 			else
 			if (!str_diffn(line.s + 7, "pause", 5))
-				state=1;
+				state=PAUSE_STATE;
 			else
 			if (!str_diffn(line.s + 7, "play", 4))
-				state=2;
+				state=PLAY_STATE;
+			if (!env_put2("PLAYER_STATE", line.s + 7))
+				die_nomem();
 			if (verbose) {
 				out("MPD status: ");
 				if (substdio_put(&ssout, line.s + 7, line.len - 7) == -1)
@@ -410,8 +420,6 @@ get_song_details(char **uri, char **last_modified, char **album, char **artist,
  * list_OK
  * OK
  */
-#define PAUSE_STATE   0
-#define PLAY_STATE    1
 
 int
 get_status(double *elapsed, double *duration)
@@ -448,6 +456,9 @@ get_status(double *elapsed, double *duration)
 		if (!str_diffn(line.s, "state: play\n", 12))
 			status = PLAY_STATE;
 		else
+		if (!str_diffn(line.s, "state: stop\n", 12))
+			status = STOP_STATE;
+		else
 		if (!str_diffn(line.s, "state: pause\n", 13))
 			status = PAUSE_STATE;
 	}
@@ -474,7 +485,7 @@ int
 run_command(int status, char *arg)
 {
 	int             i, wstat, childrc, fd;
-	double          elapsed, duration;
+	double          elapsed = 0.001, duration = 0.001;
 	pid_t           child;
 
 	if (!status) {
@@ -487,14 +498,22 @@ run_command(int status, char *arg)
 			break;
 		case PLAYER_EVENT:
 			i = get_status(&elapsed, &duration);
-			strnum[fmt_double(strnum, elapsed, 1)] = 0;
-			if (!env_put2("ELAPSED_TIME", strnum))
-				die_nomem();
-			strnum[fmt_double(strnum, duration, 1)] = 0;
-			if (!env_put2("DURATION", strnum))
-				die_nomem();
+			if (elapsed) {
+				strnum[fmt_double(strnum, elapsed, 1)] = 0;
+				if (!env_put2("ELAPSED_TIME", strnum))
+					die_nomem();
+			}
+			if (duration) {
+				strnum[fmt_double(strnum, duration, 1)] = 0;
+				if (!env_put2("DURATION", strnum))
+					die_nomem();
+			}
 			switch (i)
 			{
+			case STOP_STATE:
+				if (!env_put2("PLAYER_STATE", "stop"))
+					die_nomem();
+				break;
 			case PAUSE_STATE:
 				if (!env_put2("PLAYER_STATE", "pause"))
 					die_nomem();
@@ -1006,6 +1025,8 @@ main(int argc, char **argv)
 			if (prev_id1 && prev_id1 != id) {
 				t = time(0);
 				initial_state = 0; /*-reset state */
+				if (initial_state != PLAY_STATE && !env_unset("PLAYER_STATE"))
+					die_nomem();
 				strnum[i = fmt_ulong(strnum, t)] = 0;
 				if (i && !env_put2("END_TIME", strnum))
 					die_nomem();
@@ -1022,7 +1043,7 @@ main(int argc, char **argv)
 							pos, id, response);
 						flush();
 					}
-					if (initial_state != 1) /*- we are in pause state */
+					if (initial_state != PLAY_STATE) /*- we are not in play state */
 						submit_song(verbose, "now-playing");
 					prev_id2 = id;
 				}
@@ -1044,7 +1065,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.4 2020-08-10 11:53:13+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.5 2020-08-10 17:20:59+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
