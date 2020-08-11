@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.5  2020-08-11 14:02:11+05:30  Cprogrammer
+ * adjust date_added for localtime
+ *
  * Revision 1.4  2020-08-02 09:11:14+05:30  Cprogrammer
  * set default values for play_count, rating, date_added fields.
  * use %mtime% tag from mpd datatabase for date_added filed instead of using stat(2) call
@@ -51,7 +54,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.4 2020-08-02 09:11:14+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.5 2020-08-11 14:02:11+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -440,7 +443,7 @@ insert_update_data(sqlite3_stmt *res, unsigned long *processed, unsigned long *f
 			sqlite3_bind_text(res,  5, track.len ? track.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res,  6, genre.len ? genre.s : "", -1, SQLITE_STATIC);
 			sqlite3_bind_text(res,  7, date.len ? date.s : "", -1, SQLITE_STATIC);
-			sqlite3_bind_int(res,   8, mod_time);
+			sqlite3_bind_int(res,   8, mod_time - timezone); /*- mod_time is in GMT */
 			sqlite3_bind_int(res,   9, mod_time);
 			sqlite3_bind_text(res, 10, duration.s, -1, SQLITE_STATIC);
 		} else { /*- update stats for any metadata updation */
