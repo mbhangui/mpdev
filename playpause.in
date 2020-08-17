@@ -1,0 +1,76 @@
+#!/bin/sh
+#
+# $Log: playpause.in,v $
+# Revision 1.1  2020-08-14 13:44:57+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: playpause.in,v 1.1 2020-08-14 13:44:57+05:30 Cprogrammer Exp mbhangui $
+#
+
+if [ -z "$VERBOSE" ] ; then
+	VERBOSE=0
+fi
+# we don't handle stream uri currently
+echo $SONG_URI|grep "^http://" >/dev/null
+if [ $? -eq 0 ] ; then
+	exit 0
+fi
+if [ -z "$MPDEV_TMPDIR" ] ; then
+	MPDEV_TMPDIR=/tmp/mpdev
+fi
+csum=`echo "$SONG_URI"| cksum | awk '{print $1}'`
+if [ " $PLAYER_STATE" = " play" ] ; then
+	if [ ! -f $MPDEV_TMPDIR/start_time.$csum ] ; then
+		echo $START_TIME > $MPDEV_TMPDIR/start_time.$csum
+		if [ -f $MPDEV_TMPDIR/stats.$csum ] ; then
+			touch -r $MPDEV_TMPDIR/stats.$csum $MPDEV_TMPDIR/start_time.$csum
+		fi
+	fi
+	exit 0
+fi
+if [ -z "$MIN_PLAY_PERCENT" ] ; then
+	MIN_PLAY_PERCENT=75
+fi
+percent=$(awk "BEGIN { pc=100*${ELAPSED_TIME}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+if [ " $percent" = " 0.0" ] ; then
+	percent=0
+fi
+if [ ! "$percent" = "0" ] ; then
+	echo $percent > $MPDEV_TMPDIR/percent_played
+elif [ -f $MPDEV_TMPDIR/percent_played ] ; then
+	percent=$(cat $MPDEV_TMPDIR/percent_played)
+fi
+if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
+	START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
+else
+	if [ -f $MPDEV_TMPDIR/sticker.$csum ] ; then
+		START_TIME=$(stat --terse $MPDEV_TMPDIR/stats.$csum | awk '{print $13}')
+	fi
+	echo $START_TIME > $MPDEV_TMPDIR/start_time.$csum
+	touch -r $MPDEV_TMPDIR/stats.$csum $MPDEV_TMPDIR/start_time.$csum
+fi
+var=$(awk 'BEGIN{ print "'$percent'">="'$MIN_PLAY_PERCENT'" }') 
+
+if [ $var -eq 1 ] ; then
+	if [ " $PLAYER_STATE" = " pause" ] ; then
+		END_TIME=$(date +'%s')
+		declare -x END_TIME=$END_TIME
+		exec $HOME/.mpdev/player pause-song
+	fi
+	if [ " $PLAYER_STATE" = " stop" ] ; then
+		END_TIME=$(date +'%s')
+		declare -x END_TIME=$END_TIME
+		echo "0exec $HOME/.mpdev/player end-song"
+		exec $HOME/.mpdev/player end-song
+	fi
+else
+	if [ " $PLAYER_STATE" = " stop" ] ; then
+		if [ ! -f $MPDEV_TMPDIR/percent_played -o $var -eq 1 ] ; then
+			END_TIME=$(date +'%s')
+			declare -x END_TIME=$END_TIME
+			echo "1exec $HOME/.mpdev/player end-song"
+			exec $HOME/.mpdev/player end-song
+		fi
+	fi
+fi

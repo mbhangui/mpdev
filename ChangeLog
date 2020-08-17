@@ -65,3 +65,18 @@ Release 0.2 Start 02/03/2020
 43. tcpopen.c: added missing return on connect() failure
 09/08/2020
 44. player: use unix domain socket if MYSQL_SOCKET is defined
+10/08/2020
+45. player: skip http urls
+46. mpdev: skip submit song when starting from pause state
+47. create_rpm: added comments to indicated cwd
+48. player: replaced /tmp/mpdev with MPDEV_TMPDIR
+49. player: exit now-playing when in pause or stop state
+50. mpdev.c: set PLAYER_STATE environment variable when starting
+51. mpdev.c: set ELAPSED_TIME, DURATION only when available
+52. mpdev.c: fixed setting of initial_state
+53. mpdev.c: fixed logic of play/pause/stop
+11/08/2020
+54. mpdev_update.c: adjust date_added for localtime
+55. transfer_play: use mpc to play and remove playlist
+14/08/2020
+56. added playpause script

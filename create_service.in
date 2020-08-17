@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.5  2020-08-17 22:15:20+05:30  Cprogrammer
+# set default rating to 0
+#
 # Revision 1.4  2020-07-23 10:47:04+05:30  Cprogrammer
 # fixed path variable
 #
@@ -14,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.4 2020-07-23 10:47:04+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.5 2020-08-17 22:15:20+05:30 Cprogrammer Exp mbhangui $
 #
 
 add_service()
@@ -44,7 +47,7 @@ add_service()
 	mkdir -p $servicedir/$service_name/variables
 	echo "127.0.0.1" > $servicedir/$service_name/variables/MPD_HOST
 	echo "6600"      > $servicedir/$service_name/variables/MPD_PORT
-	echo "6"         > $servicedir/$service_name/variables/AUTO_RATING
+	echo "0"         > $servicedir/$service_name/variables/AUTO_RATING
 	home=$(getent passwd $userid|cut -d: -f6)
 	if [ -n "$home" ] ; then
 		echo $home > $servicedir/$service_name/variables/HOME

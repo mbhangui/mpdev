@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.3  2020-08-11 22:23:23+05:30  Cprogrammer
+# use mpc to play and remove playlist
+#
 # Revision 1.2  2020-07-23 01:47:58+05:30  Cprogrammer
 # removed incorrect check for tohost
 #
@@ -7,7 +10,7 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.2 2020-07-23 01:47:58+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.3 2020-08-11 22:23:23+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -63,4 +66,5 @@ mv $out.m3u $playlist_dir
 out=`basename $out`
 echo "mpc --host=$tohost load $out"
 mpc --host=$tohost load $out
-/bin/rm -f $playlist_dir/$out.m3u
+mpc --host=$tohost play
+mpc --host=$tohost rm $out

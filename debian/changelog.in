@@ -46,3 +46,15 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * mpdev.c, mpdev_cleanup.c: fixed usage/error strings
   * tcpopen.c: added missing return on connect() failure
   * player: use unix domain socket if MYSQL_SOCKET is defined
+  * player: skip http urls
+  * mpdev: skip submit song when starting from pause state
+  * create_rpm: added comments to indicated cwd
+  * player: replaced /tmp/mpdev with MPDEV_TMPDIR
+  * player: exit now-playing when in pause or stop state
+  * mpdev.c: set PLAYER_STATE environment variable when starting
+  * mpdev.c: set ELAPSED_TIME, DURATION only when available
+  * mpdev.c: fixed setting of initial_state
+  * mpdev.c: fixed logic of play/pause/stop
+  * mpdev_update.c: adjust date_added for localtime
+  * transfer_play: use mpc to play and remove playlist
+  * added playpause script

@@ -87,6 +87,7 @@ using mpd's idle command and execs user defined script on event changes.
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_maintenance
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/playpause
 
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_update.1.gz

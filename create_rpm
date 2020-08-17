@@ -1,6 +1,12 @@
 #!/bin/sh
 #
 # $Log: create_rpm,v $
+# Revision 1.4  2020-08-10 12:03:41+05:30  Cprogrammer
+# fixed cwd
+#
+# Revision 1.3  2020-08-10 11:54:17+05:30  Cprogrammer
+# added comments to indicate cwd
+#
 # Revision 1.2  2020-07-28 12:40:27+05:30  Cprogrammer
 # remove misc from source archive
 #
@@ -8,7 +14,7 @@
 # Initial revision
 #
 #
-# $Id: create_rpm,v 1.2 2020-07-28 12:40:27+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_rpm,v 1.4 2020-08-10 12:03:41+05:30 Cprogrammer Exp mbhangui $
 #
 version=$(cat conf-version)
 
@@ -71,15 +77,18 @@ if [ $copy_src -eq 1 ] ; then
 	if [ $? -ne 0 ] ; then
 		exit 1
 	fi
-	cd .. # /usr/local/src
+	# /usr/local/src
+	cd ..
 	echo "Preparing mpdev-"$version""
 	/bin/cp -rp mpdev stage/mpdev-"$version"
+	# /usr/local/src/stage/mpdev-$version
 	cd stage/mpdev-$version
 	echo "Cleaning mpdev-"$version""
 	make -s clean
 	make -s distclean
 	/bin/rm -rf autom4te.cache .deps src/config.log
-	cd .. # /usr/local/src/stage
+	# /usr/local/src/stage/
+	cd ..
 	echo "Archiving mpdev-"$version".tar.gz in `pwd`"
 	tar \
 		--exclude="mpdev-$version/.git" \
@@ -88,9 +97,7 @@ if [ $copy_src -eq 1 ] ; then
 		--exclude="mpdev-$version/RCS" \
 		-cf - mpdev-"$version" \
 		| gzip -c > $rpmbuild/SOURCES/mpdev-"$version".tar.gz
-	cd .. # /usr/local/src
-	echo "Clearing stage directory"
-	/bin/rm -rf stage
+	/bin/rm -rf mpdev-"$version"
 fi
 
 dist=`uname -r |cut -d . -f4`
@@ -113,6 +120,8 @@ if [ -z "$release" ] ; then
 	fi
 fi
 
+# /usr/local/src/
+cd ..
 echo -n "Build RPM for mpdev-"$version"-1."$release" (Y/N) - "
 read key
 if [ " $key" = " Y" -o " $key" = " y" ] ; then

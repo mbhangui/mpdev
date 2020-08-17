@@ -19,12 +19,12 @@ mpdevbin_PROGRAMS = mpdev
 mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
 				   transfer_play
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
-libexec_SCRIPTS = mpdev_maintenance player mpdev_rename create_service
+libexec_SCRIPTS = mpdev_maintenance player playpause mpdev_rename create_service
 noinst_DATA = mpdev.spec
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1
 
-MOSTLYCLEANFILES = mpdev player mpdev_maintenance librefm-scrobbler \
+MOSTLYCLEANFILES = mpdev player playpause mpdev_maintenance librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \
 				   create_service romprhost
 
@@ -105,6 +105,10 @@ create_stats: create_stats.in
 	chmod +x $@
 
 player: player.in
+	$(edit) $@.in > $@
+	chmod +x $@
+
+playpause: playpause.in
 	$(edit) $@.in > $@
 	chmod +x $@
 
