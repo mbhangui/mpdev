@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.8  2020-08-18 08:17:06+05:30  Cprogrammer
+ * unset PLAYER_STATE during submit song
+ *
  * Revision 1.7  2020-08-10 20:35:00+05:30  Cprogrammer
  * fixed logic of play/pause/stop
  *
@@ -11,7 +14,7 @@
  * set ELAPSED_TIME, DURATION only when available
  *
  * Revision 1.4  2020-08-10 11:53:13+05:30  Cprogrammer
- * skip submit-song when starting from pause state
+ * skip submit_song when starting from pause state
  *
  * Revision 1.3  2020-08-08 11:07:55+05:30  Cprogrammer
  * fixed error message strings
@@ -61,7 +64,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.7 2020-08-10 20:35:00+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.8 2020-08-18 08:17:06+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -263,7 +266,7 @@ static stralloc uri_s = {0}, last_modified_s = {0}, album_s = {0},
 	track_s = {0}, duration_s = {0}, position_s = {0}, response_s = {0};
 
 int
-get_song_details(char **uri, char **last_modified, char **album, char **artist,
+get_current_song(char **uri, char **last_modified, char **album, char **artist,
 	char **date, char **genre, char **title, char **track, char **duration,
 	time_t *duration_i, int *pos, unsigned long *id, char **response)
 {
@@ -571,8 +574,11 @@ run_command(int status, char *arg)
 			player_cmd[0] = ".mpdev/custom";
 			break;
 	}
-	if (access(player_cmd[0], F_OK))
+	if (access(player_cmd[0], F_OK)) {
+		if (!env_unset("PLAYER_STATE"))
+			die_nomem();
 		return 0;
+	}
 	player_cmd[1] = arg;
 	if (verbose == 3) {
 		print_time(&ssout);
@@ -602,6 +608,8 @@ run_command(int status, char *arg)
 	default:
 		break;
 	}
+	if (!env_unset("PLAYER_STATE"))
+		die_nomem();
 	if (wait_pid(&wstat, child) == -1)
 		strerr_die1sys(111, "wait_pid: ");
 	if (wait_crashed(wstat))
@@ -1012,7 +1020,7 @@ main(int argc, char **argv)
 		initial_state = get_play_state();
 		prev_id1 = prev_id2 = 0;
 		for (;;) {
-			if ((i = get_song_details(&uri, &last_modified, &album, &artist, &date, &genre,
+			if ((i = get_current_song(&uri, &last_modified, &album, &artist, &date, &genre,
 				&title, &track, &duration, &duration_i, &pos, &id, &response)) == 1) {
 				print_time(&sserr);
 				err_out("failed to get song details\n");
@@ -1030,9 +1038,9 @@ main(int argc, char **argv)
 			}
 			if (prev_id1 && prev_id1 != id) {
 				t = time(0);
-				initial_state = 0; /*-reset state */
 				if (initial_state && !env_unset("PLAYER_STATE"))
 					die_nomem();
+				initial_state = 0; /*-reset state */
 				strnum[i = fmt_ulong(strnum, t)] = 0;
 				if (i && !env_put2("END_TIME", strnum))
 					die_nomem();
@@ -1042,7 +1050,7 @@ main(int argc, char **argv)
 			if (id) {
 				set_environ();
 				prev_id1 = id;
-				if (!prev_id2 || prev_id2 != id) {
+				if (prev_id2 != id) { /*- new song */
 					if (verbose == 3) {
 						print_song_details(uri, last_modified, album, artist,
 							date, genre, title, track, duration, duration_i,
@@ -1073,7 +1081,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.7 2020-08-10 20:35:00+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.8 2020-08-18 08:17:06+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
