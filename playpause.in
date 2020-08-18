@@ -1,11 +1,14 @@
 #!/bin/sh
 #
 # $Log: playpause.in,v $
+# Revision 1.2  2020-08-18 08:16:37+05:30  Cprogrammer
+# use export command instead of declare
+#
 # Revision 1.1  2020-08-14 13:44:57+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.1 2020-08-14 13:44:57+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.2 2020-08-18 08:16:37+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -20,6 +23,9 @@ if [ -z "$MPDEV_TMPDIR" ] ; then
 	MPDEV_TMPDIR=/tmp/mpdev
 fi
 csum=`echo "$SONG_URI"| cksum | awk '{print $1}'`
+if [ $VERBOSE -gt 0 ] ; then
+	echo "$0: PLAYER_STATE=$PLAYER_STATE"
+fi
 if [ " $PLAYER_STATE" = " play" ] ; then
 	if [ ! -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 		echo $START_TIME > $MPDEV_TMPDIR/start_time.$csum
@@ -50,27 +56,17 @@ else
 	echo $START_TIME > $MPDEV_TMPDIR/start_time.$csum
 	touch -r $MPDEV_TMPDIR/stats.$csum $MPDEV_TMPDIR/start_time.$csum
 fi
-var=$(awk 'BEGIN{ print "'$percent'">="'$MIN_PLAY_PERCENT'" }') 
+var=$(awk 'BEGIN {print ("'$percent'" >= "'$MIN_PLAY_PERCENT'")}')
 
 if [ $var -eq 1 ] ; then
 	if [ " $PLAYER_STATE" = " pause" ] ; then
 		END_TIME=$(date +'%s')
-		declare -x END_TIME=$END_TIME
+		export END_TIME=$END_TIME
 		exec $HOME/.mpdev/player pause-song
 	fi
 	if [ " $PLAYER_STATE" = " stop" ] ; then
 		END_TIME=$(date +'%s')
-		declare -x END_TIME=$END_TIME
-		echo "0exec $HOME/.mpdev/player end-song"
+		export END_TIME=$END_TIME
 		exec $HOME/.mpdev/player end-song
-	fi
-else
-	if [ " $PLAYER_STATE" = " stop" ] ; then
-		if [ ! -f $MPDEV_TMPDIR/percent_played -o $var -eq 1 ] ; then
-			END_TIME=$(date +'%s')
-			declare -x END_TIME=$END_TIME
-			echo "1exec $HOME/.mpdev/player end-song"
-			exec $HOME/.mpdev/player end-song
-		fi
 	fi
 fi

@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.17  2020-08-18 08:15:56+05:30  Cprogrammer
+# minor fixes
+#
 # Revision 1.16  2020-08-17 22:17:19+05:30  Cprogrammer
 # added playpause
 #
@@ -52,7 +55,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.16 2020-08-17 22:17:19+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.17 2020-08-18 08:15:56+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -403,9 +406,6 @@ update_song()
 	uri="$1"
 	state="$2"
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
-	if [ $VERBOSE -gt 0 ] ; then
-		echo "csum[$csum] state[$state] player_state[$PLAYER_STATE]"
-	fi
 	if [ " $state" = " now-playing" ] ; then
 		if [ -n "$ELAPSED_TIME" ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
@@ -428,26 +428,26 @@ update_song()
 						exit 0
 					fi
 				fi
-				if [ ! -f $MPDEV_TMPDIR/.env.log ] ; then
-					# Do not treat current song as New Song
-					for i in sticker rompr stats scrobble
-					do
-						if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
-							if [ $VERBOSE -gt 0 ] ; then
-								echo "creating $MPDEV_TMPDIR/$i.$csum"
-							fi
-							touch $MPDEV_TMPDIR/$i.$csum
+				# Do not treat current song as New Song
+				for i in sticker rompr stats scrobble
+				do
+					if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
+						if [ $VERBOSE -gt 0 ] ; then
+							echo "creating $MPDEV_TMPDIR/$i.$csum"
 						fi
-					done
-				fi
+						touch $MPDEV_TMPDIR/$i.$csum
+					fi
+				done
 				return 0
 			elif [ "$PLAYER_STATE" = "stop" ] ; then
 				for i in sticker rompr stats scrobble start_time rating
 				do
-					if [ $VERBOSE -gt 0 ] ; then
-						echo "removing $MPDEV_TMPDIR/$i.$csum"
+					if [ -f $MPDEV_TMPDIR/$i.$csum ] ; then
+						if [ $VERBOSE -gt 0 ] ; then
+							echo "removing $MPDEV_TMPDIR/$i.$csum"
+						fi
+						/bin/rm -f $MPDEV_TMPDIR/$i.$csum
 					fi
-					/bin/rm -f $MPDEV_TMPDIR/$i.$csum
 				done
 				return 0
 			fi
@@ -529,7 +529,7 @@ update_song()
 		if [ ! -f $MPDEV_TMPDIR/rating.$csum -a " $state" = " now-playing" ] ; then
 			echo -n "NewSong Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 			echo    "duration=$SONG_DURATION rating=[$rating]"
-			echo "uri=[$uri]"
+			echo "uri=[$uri] csum=[$csum]"
 			if [ $inserted -eq 1 ] ; then
 				if [ $sticker_enabled -eq 1 ] ; then
 					echo "INSERT stker rating=$rating"
@@ -700,14 +700,14 @@ update_song()
 		case "$state" in
 			"end-song")
 			if [ -n "$END_TIME" ] ; then
-				echo -n "EndSong stat Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+				echo -n "EndSong csum[$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
 				echo
 			fi
 			;;
 			"pause-song")
 			if [ -n "$END_TIME" ] ; then
-				echo -n "PauseSong stat Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+				echo -n "PauseSong csum[$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
 				echo
 			fi
@@ -745,11 +745,12 @@ if [ -f $stats_file ] ; then
 else
 	stats_enabled=0
 fi
-do_rating=1
 if [ -z "$MPDEV_TMPDIR" ] ; then
 	MPDEV_TMPDIR=/tmp/mpdev
 fi
 mkdir -p $MPDEV_TMPDIR
+if [ $VERBOSE -eq 2 ] ; then
+	env > $MPDEV_TMPDIR/.env.log
+fi
 update_song "$SONG_URI" "$1"
-env > $MPDEV_TMPDIR/.env.log
 exit 0
