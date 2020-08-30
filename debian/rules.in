@@ -48,8 +48,8 @@ build-stamp:
 	( \
 	echo NAME=mpdev; \
 	echo Description=\"mpd event watcher\"; \
-	echo MPDWATCH_VERSION=$(version); \
-	echo ID=indimail-spamfilter; \
+	echo MPDEV_VERSION=$(version); \
+	echo ID=mpdev; \
 	echo HOME_URL="https://github.com/mbhangui/mpdev"; \
 	echo PACKAGE_BUGREPORT=\"Manvendra Bhangui mpdev@indimail.org\"; \
 	) > mpdev-release
@@ -72,7 +72,7 @@ install: build
 	$(MAKE) -s install DESTDIR=$(DESTDIR)
 	mkdir -p $(DESTDIR)$(sysconfdir)
 	install -m 0644 mpdev-release "$(DESTDIR)$(sysconfdir)"/mpdev-release
-	${rm} -f indimail-spamfilter-release
+	${rm} -f mpdev-release
 
 binary-indep: build install
 	dh_testdir
