@@ -1,6 +1,10 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.18  2020-08-27 14:29:29+05:30  Cprogrammer
+# auto rate if $HOME/.mpdev/AUTO_RATING file is present
+# fixed path of stats.db
+#
 # Revision 1.17  2020-08-18 08:15:56+05:30  Cprogrammer
 # minor fixes
 #
@@ -55,7 +59,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.17 2020-08-18 08:15:56+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.18 2020-08-27 14:29:29+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -477,7 +481,9 @@ update_song()
 			exit 0
 		fi
 		if [ -z "$rating" ] ; then
-			if [ -n "$AUTO_RATING" ] ; then
+			if [ -f $HOME/.mpdev/AUTO_RATING ] ; then
+				rating=`cat $HOME/.mpdev/AUTO_RATING`
+			elif [ -n "$AUTO_RATING" ] ; then
 				rating=$AUTO_RATING # assign average rating of 3 for unrated music
 			else
 				rating=0
@@ -500,8 +506,14 @@ update_song()
 				fi
 			fi
 		elif [ $rating -eq 0 ] ; then
-			if [ -n "$AUTO_RATING" ] ; then
-				rating=$AUTO_RATING;
+			if [ -f $HOME/.mpdev/AUTO_RATING ] ; then
+				rating=`cat $HOME/.mpdev/AUTO_RATING`
+			elif [ -n "$AUTO_RATING" ] ; then
+				rating=$AUTO_RATING # assign average rating of 3 for unrated music
+			else
+				rating=0
+			fi
+			if [ $rating -gt 0 ] ; then
 				inserted=2
 				if [ $sticker_enabled -eq 1 ] ; then
 					if [ ! -f $MPDEV_TMPDIR/sticker.$csum ] ; then
@@ -527,9 +539,9 @@ update_song()
 	fi
 	if [ $VERBOSE -gt 0 ] ; then
 		if [ ! -f $MPDEV_TMPDIR/rating.$csum -a " $state" = " now-playing" ] ; then
-			echo -n "NewSong Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+			echo -n "NewSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 			echo    "duration=$SONG_DURATION rating=[$rating]"
-			echo "uri=[$uri] csum=[$csum]"
+			echo    "uri=[$uri]"
 			if [ $inserted -eq 1 ] ; then
 				if [ $sticker_enabled -eq 1 ] ; then
 					echo "INSERT stker rating=$rating"
@@ -700,14 +712,14 @@ update_song()
 		case "$state" in
 			"end-song")
 			if [ -n "$END_TIME" ] ; then
-				echo -n "EndSong csum[$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+				echo -n "EndSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
 				echo
 			fi
 			;;
 			"pause-song")
 			if [ -n "$END_TIME" ] ; then
-				echo -n "PauseSong csum[$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+				echo -n "PauseSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
 				echo
 			fi
@@ -739,7 +751,8 @@ else
 		sticker_enabled=0
 	fi
 fi
-stats_file=$music_dir/.mpd/stats.db
+stats_dir=$(dirname $sticker_file)
+stats_file=$stats_dir/stats.db
 if [ -f $stats_file ] ; then
 	stats_enabled=1
 else
