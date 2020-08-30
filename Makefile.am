@@ -44,6 +44,7 @@ edit = sed \
 	-e "s|@release\@|"`cat conf-release`"|g" \
 	-e 's}@pkgconfigdir\@}$(pkgconfigdir)}g' \
 	-e 's}@VERSION\@}$(VERSION)}g' \
+	-e 's}@mpdevsysconfdir\@}$(mpdevsysconfdir)}g' \
 	-e 's}@prefix\@}$(prefix)}g'
 
 editlastfm = sed \
