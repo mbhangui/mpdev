@@ -96,7 +96,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 install -m 0644 %{name}-release %{buildroot}%{sysconfdir}/%{name}-release
 
 %files
-%dir %attr(755,root,root)               %{libexecdir}/mpdev
+%dir %attr(755,root,root)               %{_prefix}/libexec/mpdev
 %ghost %dir %attr(0755,qmaill,nofiles)  %{logdir}
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
