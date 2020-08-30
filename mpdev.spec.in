@@ -13,6 +13,7 @@
 %global _hardened_build    1
 %endif
 %global _prefix            /usr
+%global sysconfdir         @mpdevsysconfdir@
 %global logdir             /var/log/svc/mpdev
 
 Name: mpdev
@@ -68,11 +69,34 @@ using mpd's idle command and execs user defined script on event changes.
 %build
 %configure --prefix=%{_prefix} --libexecdir=%{_prefix}/libexec/mpdev
 %{__make} -s %{?_smp_mflags}
+(
+echo "---------------- INFORMATION ------------------------"
+echo target         %_target
+echo target_alias   %_target_alias
+echo target_cpu     %_target_cpu
+echo target_os      %_target_os
+echo target_vendor  %_target_vendor
+echo Project        %{_project}
+echo Building %{name}-%{version}-%{release} Build %{_build} OS %{_os}
+echo "------------------------------------------------------"
+) > %{name}-rpm.info
+(
+echo "NAME=%{name}"
+echo "Description=\"MPD Event Watcher\""
+echo "MPDEV_version="%{version}""
+echo "ID=%{name}"
+echo "HOME_URL=\"https://github.com/mbhangui/mpdev\""
+echo "PACKAGE_BUGREPORT=\"Manvendra Bhangui mpdev@indimail.org\""
+) > %{name}-release
 
 %install
 %{__make} -s DESTDIR=%{buildroot} install-strip
+%{__mkdir_p} %{buildroot}%{sysconfdir}
+install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
+install -m 0644 %{name}-release %{buildroot}%{sysconfdir}/%{name}-release
 
 %files
+%dir %attr(755,root,root)               %{libexecdir}/mpdev
 %ghost %dir %attr(0755,qmaill,nofiles)  %{logdir}
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
@@ -88,6 +112,8 @@ using mpd's idle command and execs user defined script on event changes.
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/playpause
+%attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-release
+%attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-rpm.info
 
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_update.1.gz
