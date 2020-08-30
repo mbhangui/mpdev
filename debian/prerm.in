@@ -1,5 +1,5 @@
 #!/bin/sh
-# prerm script for indimail
+# prerm script for mpdev
 #
 # see: dh_installdeb(1)
 
@@ -16,8 +16,8 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
-prefix=/usr
-sysconfdir=/etc/indimail
+prefix=@prefix@
+sysconfdir=@sysconfdir@
 rm=/bin/rm
 
 ID=`id -u`
