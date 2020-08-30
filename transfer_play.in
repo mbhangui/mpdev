@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.4  2020-08-30 10:57:30+05:30  Cprogrammer
+# use state_file definition in mpd.conf to figure out state_file directory
+#
 # Revision 1.3  2020-08-11 22:23:23+05:30  Cprogrammer
 # use mpc to play and remove playlist
 #
@@ -10,7 +13,7 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.3 2020-08-11 22:23:23+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.4 2020-08-30 10:57:30+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -18,12 +21,12 @@ get_mpd_conf_value()
     sed -e 's{"{{g'
 }
 
-get_playlist()
+get_mpd_state()
 {
 	host=$1
 	(
 	do_print=0
-	cat $music_dir/.mpd/mpd_state.$host | while read line
+	cat $state_dir/mpd_state.$host | while read line
 	do
 		if [ " $line" = " playlist_begin" ] ; then
 			do_print=1
@@ -56,12 +59,15 @@ if [ $# -ne 2 ] ; then
 fi
 fromhost=$1
 tohost=$2
-if [ ! -f $music_dir/.mpd/mpd_state.$fromhost ] ; then
+
+state_file=`get_mpd_conf_value state_file`
+state_dir=$(dirname $state_file)
+if [ ! -f $state_dir/mpd_state.$fromhost ] ; then
 	echo "No such host $fromhost" 1>&2
 	exit 1
 fi
 out=`mktemp -t mpdevXXXXXXXXXX`
-get_playlist $fromhost > $out.m3u
+get_mpd_state $fromhost > $out.m3u
 mv $out.m3u $playlist_dir
 out=`basename $out`
 echo "mpc --host=$tohost load $out"
