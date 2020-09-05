@@ -61,3 +61,5 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * added self-update of scripts in $HOME/.mpdev
   * auto rate if $HOME/.mpdev/AUTO_RATING file is present
   * fixed path of stats.db
+  * fixed --clear option
+  * added --limit option

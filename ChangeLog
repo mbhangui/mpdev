@@ -85,3 +85,7 @@ Release 0.2 Start 02/03/2020
 27/08/2020
 58. auto rate if $HOME/.mpdev/AUTO_RATING file is present
 59. fixed path of stats.db
+03/08/2020
+60. fixed --clear option
+05/08/2020
+61. added --limit option

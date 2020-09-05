@@ -1,6 +1,18 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.9  2020-09-05 12:32:29+05:30  Cprogrammer
+# added --limit option
+#
+# Revision 1.8  2020-09-03 20:36:39+05:30  Cprogrammer
+# fixed --clear option
+#
+# Revision 1.7  2020-09-03 11:10:32+05:30  Cprogrammer
+# fixed stats_db path
+#
+# Revision 1.6  2020-08-30 11:34:59+05:30  Cprogrammer
+# fixed stats.db path
+#
 # Revision 1.5  2020-08-06 16:15:39+05:30  Cprogrammer
 # renamed --dummy option to --query
 #
@@ -17,7 +29,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.5 2020-08-06 16:15:39+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.9 2020-09-05 12:32:29+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -26,38 +38,13 @@ get_mpd_conf_value()
   sed -e 's{"{{g'
 }
 
-music_dir=`get_mpd_conf_value music_directory`
-if [ $? -ne 0 ] ; then
-  echo "could not get music directory from mpd.conf" 1>&2
-  exit 1
-fi
-sticker_file=`get_mpd_conf_value sticker_file`
-if [ $? -ne 0 ] ; then
-  echo "could not get sticker database from mpd.conf" 1>&2
-  exit 1
-fi
-playlist_dir=`get_mpd_conf_value playlist_dir`
-if [ $? -ne 0 ] ; then
-  echo "could not get playlist directory from mpd.conf" 1>&2
-  exit 1
-fi
-statsdb_file=$music_dir/.mpd/stats.db
-if [ -z "$statsdb_file" ] ; then
-  echo "$statsdb_file: No such file for directory" 1>&2
-  exit 1
-fi
-if [ ! -f "$statsdb_file" ] ; then
-  echo "$statsdb_file: No such file or directory" 1>&2
-  exit 1
-fi
-
+usage()
+{
 if [ -f /usr/bin/less ] ; then
 	MORE=/usr/bin/less
 else
 	MORE=/usr/bin/more
 fi
-usage()
-{
 echo "Press ENTER for options, Cntrl C to quit" 1>&2
 read key
 $MORE 1>&2 <<EOF
@@ -77,7 +64,7 @@ Known values for OPTION are:
 --exlgenre=Genre List to be excluded
   comma separated list of genre
 
---minrating=Minimum Rating (value from 0 to 10)
+--minrating=Minimum Rating (value from 0 to 10, or -1 for unrated songs)
 
 --artist=Artist
   Find songs with Artist exactly matching 'Artist'
@@ -89,8 +76,7 @@ Known values for OPTION are:
   Find songs added in the last 'd' days
 
 --daysnotheard=d
-  Find songs not heard in the last 'd' days
-  use d=0 for songs never played
+  Find songs not heard in the last 'd' days, use d=0 for songs never played
 
 --daysheard=d
   Find songs heard in the last 'd' days
@@ -114,6 +100,9 @@ Known values for OPTION are:
 
 --shuffle
   shuffle playlist
+
+--limit=n
+  Limit the playlist to n entries
   
 --clear
   clear playlist before adding. See --playlist option
@@ -143,6 +132,7 @@ sort_popular=0
 dummy=0
 shuffle=0
 do_clear=0
+limit=0
 playlist=""
 daysadded=""
 daysheard=""
@@ -219,7 +209,10 @@ while test $# -gt 0; do
 	shuffle=1
 	;;
 	--clear)
-	do_clear=0
+	do_clear=1
+	;;
+	--limit=*)
+	limit=$optarg
 	;;
 	--verbose)
 	verbose="-v"
@@ -237,6 +230,34 @@ while test $# -gt 0; do
 	esac
 	shift
 done
+
+music_dir=`get_mpd_conf_value music_directory`
+if [ $? -ne 0 ] ; then
+  echo "could not get music directory from mpd.conf" 1>&2
+  exit 1
+fi
+sticker_file=`get_mpd_conf_value sticker_file`
+if [ $? -ne 0 ] ; then
+  echo "could not get sticker database from mpd.conf" 1>&2
+  exit 1
+fi
+playlist_dir=`get_mpd_conf_value playlist_dir`
+if [ $? -ne 0 ] ; then
+  echo "could not get playlist directory from mpd.conf" 1>&2
+  exit 1
+fi
+stats_dir=$(dirname $sticker_file)
+stats_dir=$stats_dir
+stats_file=$stats_dir/stats.db
+stats_file=$stats_file
+if [ -z "$stats_file" ] ; then
+  echo "$stats_file: No such file for directory" 1>&2
+  exit 1
+fi
+if [ ! -f "$stats_file" ] ; then
+  echo "$stats_file: No such file or directory" 1>&2
+  exit 1
+fi
 
 sql_query="SELECT uri FROM song "
 first_condition=""
@@ -305,7 +326,11 @@ if [ -n "$minrate" ] ; then
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	sql_query="$sql_query rating >= $minrate"
+	if [ "$minrate" -lt 0 ] ; then
+		sql_query="$sql_query rating = 0"
+	else
+		sql_query="$sql_query rating >= $minrate"
+	fi
 fi
 if [ -n "$artist" ] ; then
 	if [ -z "$first_condition" ] ; then
@@ -383,6 +408,9 @@ if [ -n "$daysadded" ] ; then
 		sql_query="$sql_query, date_added ASC"
 	fi
 fi
+if [ $limit -gt 0 ] ; then
+		sql_query="$sql_query limit $limit"
+fi
 if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \
 	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" ] ; then
 	echo "No options given" 1>&2
@@ -392,9 +420,9 @@ if [ $dummy -eq 0 ] ; then
 	if [ -n "$playlist" ] ; then
 		if [ "$playlist" = "now" ] ; then
 			if [ $shuffle -eq 1 ] ; then
-				/usr/bin/sqlite3 $statsdb_file "$sql_query;" | shuf > $playlist_dir/now.m3u
+				/usr/bin/sqlite3 $stats_file "$sql_query;" | shuf > $playlist_dir/now.m3u
 			else
-				/usr/bin/sqlite3 $statsdb_file "$sql_query;" > $playlist_dir/now.m3u
+				/usr/bin/sqlite3 $stats_file "$sql_query;" > $playlist_dir/now.m3u
 			fi
 			if [ -z "$mpd_host" ] ; then
 				mpd_host=localhost
@@ -409,18 +437,18 @@ if [ $dummy -eq 0 ] ; then
 			if [ $shuffle -eq 1 ] ; then
 				(
 				echo "# $prog_args"
-				/usr/bin/sqlite3 $statsdb_file "$sql_query;" | shuf
+				/usr/bin/sqlite3 $stats_file "$sql_query;" | shuf
 				) | tee $playlist_dir/"$playlist".m3u
 			else
 				(
 				echo "# $prog_args"
-				/usr/bin/sqlite3 $statsdb_file "$sql_query;" 
+				/usr/bin/sqlite3 $stats_file "$sql_query;" 
 				) | tee $playlist_dir/"$playlist".m3u
 			fi
 		fi
 	else
 		echo "# $prog_args"
-		/usr/bin/sqlite3 $statsdb_file "$sql_query;"
+		/usr/bin/sqlite3 $stats_file "$sql_query;"
 	fi
 else
 	echo "$sql_query;"

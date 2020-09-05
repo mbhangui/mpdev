@@ -35,7 +35,7 @@ Known values for OPTION are:
 --exlgenre=Genre List to be excluded
   comma separated list of genre
 
---minrating=Minimum Rating (value from 0 to 10)
+--minrating=Minimum Rating (value from 0 to 10, or -1 for unrated songs)
 
 --artist=Artist
   Find songs with Artist exactly matching 'Artist'
@@ -50,7 +50,7 @@ Known values for OPTION are:
   Find songs heard in the last 'd' days
 
 --daysnotheard=d
-  Find songs not heard in the last 'd' days
+  Find songs not heard in the last 'd' days, use d=0 for songs never played
   
 --oldfirst
   Order playlist in ascending order of Last Played field
@@ -71,6 +71,9 @@ Known values for OPTION are:
 
 --shuffle
   shuffle playlist
+
+--limit=n
+  Limit the playlist to n entries
   
 --clear
   clear playlist before adding. See --playlist option
