@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: romprhist.in,v $
+# Revision 1.6  2020-08-30 11:35:06+05:30  Cprogrammer
+# fixed stats.db path
+#
 # Revision 1.5  2020-07-22 15:51:43+05:30  Cprogrammer
 # removed unused function
 #
@@ -19,7 +22,7 @@
 #
 # utility to update 
 #
-# $Id: romprhist.in,v 1.5 2020-07-22 15:51:43+05:30 Cprogrammer Exp mbhangui $
+# $Id: romprhist.in,v 1.6 2020-08-30 11:35:06+05:30 Cprogrammer Exp mbhangui $
 #
 usage()
 {
@@ -113,7 +116,7 @@ update_stats()
     if [ $sql_mode -eq 1 ] ; then
         echo "UPDATE song SET rating=$2 WHERE uri='$uri';"
     else
-        echo "UPDATE song SET rating=$2 WHERE uri='$uri';" | sqlite3 $music_dir/.mpd/stats_dietpi.db
+        echo "UPDATE song SET rating=$2 WHERE uri='$uri';" | sqlite3 $stats_file
         if [ $? -ne 0 ] ; then
             echo "error: UPDATE song SET rating=$2 WHERE uri='$uri';" 1>&2
             return 1
@@ -127,7 +130,7 @@ update_sticker()
     if [ $sql_mode -eq 1 ] ; then
         echo "UPDATE sticker SET value=$2 WHERE uri='$uri';"
     else
-        echo "UPDATE sticker SET value=$2 WHERE uri='$uri';" | sqlite3 $music_dir/.mpd/sticker.db
+        echo "UPDATE sticker SET value=$2 WHERE uri='$uri';" | sqlite3 $sticker_file
         if [ $? -ne 0 ] ; then
             echo "UPDATE sticker SET value=$2 WHERE uri='$uri';" 1>&2
             return 1
@@ -145,6 +148,8 @@ if [ $? -ne 0 ] ; then
     echo "could not get sticker database from mpd.conf" 1>&2
     exit 1
 fi
+stats_dir=$(dirname $sticker_file)
+stats_file=$stats_dir/stats.db
 if [ ! -f $HOME/.mpdev/rompr.conf ] ; then
     echo "$HOME/.mpdev/rompr.conf missing" 1>&2
     exit 1
@@ -246,10 +251,10 @@ do
 done
 if [ $sql_mode -eq 1 ] ; then
     if [ $update_stats_table -eq 1 ] ; then
-        cat /tmp/stats.sql   | sqlite3 $music_dir/.mpd/stats_dietpi.db
+        cat /tmp/stats.sql   | sqlite3 $stats_file
     fi
     if [ $update_sticker_table -eq 1 ] ; then
-        cat /tmp/sticker.sql | sqlite3 $music_dir/.mpd/sticker.db
+        cat /tmp/sticker.sql | sqlite3 $sticker_file
     fi
 fi
 if [ $chkpoint -eq 1 ] ; then
