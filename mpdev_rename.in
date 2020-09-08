@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: mpdev_rename.in,v $
+# Revision 1.3  2020-09-08 21:43:05+05:30  Cprogrammer
+# fixed usage script
+#
 # Revision 1.2  2020-08-05 21:15:00+05:30  Cprogrammer
 # replaced sed with SQL REPLACE
 #
@@ -8,7 +11,7 @@
 # Initial revision
 #
 #
-# $Id: mpdev_rename.in,v 1.2 2020-08-05 21:15:00+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdev_rename.in,v 1.3 2020-09-08 21:43:05+05:30 Cprogrammer Exp mbhangui $
 #
 
 usage()
@@ -16,7 +19,7 @@ usage()
 prog_args=""
 cat <<EOF
 Usage: mpdev_rename [OPTIONS]
-mpdev_rename --sticker_db|stats_db=path --pattern=patt --query | --string=str --replacement=repl
+mpdev_rename --sticker-db=path|stats-db=path --pattern=patt --query | --string=str --replacement=repl
 echo "patt is any string that can be given in a SQL 'WHERE' clause"
 echo "str  is string to replace"
 echo "repl is replacement string"
@@ -79,10 +82,6 @@ if [ -z "$sticker_db" -a -z "$stats_db" ] ; then
 fi
 if [ -n "$sticker_db" -a -n "$stats_db" ] ; then
 	echo "rename_fields: You cannot specify both --sticker-db and --stats-db" 1>&2
-	usage 1
-fi
-if [ -z "$prefix" ] ; then
-	echo "You have to specify prefix" 1>&2
 	usage 1
 fi
 if [ $query -eq 0 ] ; then
