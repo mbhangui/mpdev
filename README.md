@@ -36,8 +36,8 @@ The hooks are passed the following arguments
 
 ```
 mpd-event      - Passed when the above events listed, apart from SONG_CHANGE happen.
-player-event   - Passwd when you play/pause player
-playlist-event - Passwd when the playlist changes
+player-event   - Passed when you play/pause player
+playlist-event - Passed when the playlist changes
 now-playing    - Passed when a song starts playing
 end-song       - Passed when a song finishes playing
 ```
