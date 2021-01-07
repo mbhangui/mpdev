@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.10  2021-01-07 12:20:20+05:30  Cprogrammer
+# added last_played is NULL to query daysnotheard
+#
 # Revision 1.9  2020-09-05 12:32:29+05:30  Cprogrammer
 # added --limit option
 #
@@ -29,7 +32,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.9 2020-09-05 12:32:29+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.10 2021-01-07 12:20:20+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -378,7 +381,7 @@ if [ -n "$daysnotheard" ] ; then
 	if [ ! "$daysnotheard" = "0" ] ; then
 		tmval=`date +'%s'`
 		tmval=`expr $tmval - $daysnotheard \* 86400`
-		sql_query="$sql_query last_played < $tmval"
+		sql_query="$sql_query (last_played < $tmval OR last_played IS NULL)"
 	else
 		sql_query="$sql_query last_played IS NULL"
 	fi
