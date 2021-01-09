@@ -59,7 +59,10 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * transfer_play: use mpc to play and remove playlist
   * added playpause script
   * added self-update of scripts in $HOME/.mpdev
-  * auto rate if $HOME/.mpdev/AUTO_RATING file is present
-  * fixed path of stats.db
-  * fixed --clear option
-  * added --limit option
+  * mpdplaylist: auto rate if $HOME/.mpdev/AUTO_RATING file is present
+  * mpdplaylist: fixed path of stats.db
+  * mpdplaylist: fixed --clear option
+  * mpdplaylist: added --limit option
+  * mpdev_rename: fixed usage string
+  * create_services: fixed cp
+  * mpdplaylist.in: added last_played IS NULL to daysnotheard query

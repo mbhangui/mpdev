@@ -81,11 +81,16 @@ Release 0.2 Start 02/03/2020
 14/08/2020
 56. added playpause script
 26/08/2020
-57. added self-update of scripts in $HOME/.mpdev
+57. player: added self-update of scripts in $HOME/.mpdev
 27/08/2020
-58. auto rate if $HOME/.mpdev/AUTO_RATING file is present
+58. player: auto rate if $HOME/.mpdev/AUTO_RATING file is present
 59. fixed path of stats.db
 03/08/2020
-60. fixed --clear option
+60. mpdplaylist: fixed --clear option
 05/08/2020
-61. added --limit option
+61. mpdplaylist: added --limit option
+08/08/2020
+62. mpdev_rename: fixed usage string
+07/01/2021
+03. create_services: fixed cp
+04. mpdplaylist.in: added last_played IS NULL to daysnotheard query
