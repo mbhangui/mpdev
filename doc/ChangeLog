@@ -92,5 +92,7 @@ Release 0.2 Start 02/03/2020
 08/08/2020
 62. mpdev_rename: fixed usage string
 07/01/2021
-03. create_services: fixed cp
+63. create_services: fixed cp
 04. mpdplaylist.in: added last_played IS NULL to daysnotheard query
+14/02/2021
+65. transer_play - display list of valid host on wrong input

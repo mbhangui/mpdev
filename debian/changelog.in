@@ -66,3 +66,4 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * mpdev_rename: fixed usage string
   * create_services: fixed cp
   * mpdplaylist.in: added last_played IS NULL to daysnotheard query
+  * transer_play - display list of valid host on wrong input

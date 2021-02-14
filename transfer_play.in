@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.6  2021-02-14 18:43:07+05:30  Cprogrammer
+# display list of valid hosts on wrong input
+#
 # Revision 1.5  2020-09-05 12:32:42+05:30  Cprogrammer
 # clear playlist before adding
 #
@@ -16,7 +19,7 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.5 2020-09-05 12:32:42+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.6 2021-02-14 18:43:07+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -67,6 +70,8 @@ state_file=`get_mpd_conf_value state_file`
 state_dir=$(dirname $state_file)
 if [ ! -f $state_dir/mpd_state.$fromhost ] ; then
 	echo "No such host $fromhost" 1>&2
+	echo "List of valid hosts"
+	ls $state_dir/mpd_state.*|cut -d. -f2
 	exit 1
 fi
 out=`mktemp -t mpdevXXXXXXXXXX`
