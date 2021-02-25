@@ -10,7 +10,7 @@ flag=0
 if [ $# -eq 1 ] ; then
 	file=$1
 else
-	file=ChangeLog
+	file=doc/ChangeLog
 fi
 cat $file |while read line
 do

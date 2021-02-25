@@ -117,5 +117,5 @@ transfer_play: transfer_play.in
 	$(edit) $@.in > $@
 	chmod +x $@
 
-mpdev.spec: mpdev.spec.in catChangeLog ChangeLog conf-version conf-release
+mpdev.spec: mpdev.spec.in catChangeLog doc/ChangeLog conf-version conf-release
 	(cat $@.in;./catChangeLog) | $(edit) > $@
