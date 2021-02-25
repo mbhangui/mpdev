@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.9  2021-02-25 15:13:08+05:30  Cprogrammer
+# added cleanup of /tmp/mpdev and logs in scrobbles directory
+#
 # Revision 1.8  2021-01-07 12:20:08+05:30  Cprogrammer
 # fixed copy
 #
@@ -26,7 +29,7 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.8 2021-01-07 12:20:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.9 2021-02-25 15:13:08+05:30 Cprogrammer Exp mbhangui $
 #
 
 add_service()
@@ -54,9 +57,15 @@ add_service()
 	fi
 	mkdir -p $servicedir/$service_name/log
 	mkdir -p $servicedir/$service_name/variables
+	echo "0"         > $servicedir/$service_name/variables/AUTO_RATING
 	echo "127.0.0.1" > $servicedir/$service_name/variables/MPD_HOST
 	echo "6600"      > $servicedir/$service_name/variables/MPD_PORT
-	echo "0"         > $servicedir/$service_name/variables/AUTO_RATING
+	sock=$(grep "^bind_to_address" /etc/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
+	if [ -n "$sock" ] ; then
+		echo "$sock" > $servicedir/$service_name/variables/MPD_SOCKET
+	elif [ -S /run/mpd/mpd.sock ] ; then
+		echo "/run/mpd/mpd.sock" > $servicedir/$service_name/variables/MPD_SOCKET
+	fi
 	home=$(getent passwd $userid|cut -d: -f6)
 	if [ -n "$home" ] ; then
 		echo $home > $servicedir/$service_name/variables/HOME
@@ -83,6 +92,9 @@ add_service()
 		echo 
 		echo "home=\$(getent passwd $userid|cut -d: -f6)"
 		echo "user=\$(getent passwd $userid|cut -d: -f1)"
+		echo "find /tmp/mpdev -type f -exec /bin/rm -f {} \;"
+		echo "find \$home/.config/lastfm-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
+		echo "find \$home/.config/librefm-scrobbler -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
 		echo "for i in player playpause"
 		echo "do"
 		echo "  diff /usr/libexec/mpdev/\$i \$home/.mpdev/\$i > /dev/null 2>&1"
