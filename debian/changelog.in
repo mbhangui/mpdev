@@ -67,3 +67,6 @@ mpdev (@version@-@release@) unstable; urgency=medium
   * create_services: fixed cp
   * mpdplaylist.in: added last_played IS NULL to daysnotheard query
   * transer_play - display list of valid host on wrong input
+  * /service/mpdev/run - do cleanup of /tmp/mpdev and scrobble logs in $HOME/.config
+  * moc-scrobbler - create log file in ddmmyy.log format
+  * /service/mpd/run - use relative path for variables to allow renaming of service directory

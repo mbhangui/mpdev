@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.10  2021-02-25 15:40:13+05:30  Cprogrammer
+# use relative path for variables to allow renaming of service directory
+#
 # Revision 1.9  2021-02-25 15:13:08+05:30  Cprogrammer
 # added cleanup of /tmp/mpdev and logs in scrobbles directory
 #
@@ -29,7 +32,7 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.9 2021-02-25 15:13:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.10 2021-02-25 15:40:13+05:30 Cprogrammer Exp mbhangui $
 #
 
 add_service()
@@ -103,7 +106,7 @@ add_service()
 		echo "  fi"
 		echo "done"
 		echo "exec /usr/bin/setuidgid \$user /usr/bin/envdir \\"
-		echo "  /service/$service_name/variables /usr/bin/mpdev -v"
+		echo "  variables /usr/bin/mpdev -v"
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
 }

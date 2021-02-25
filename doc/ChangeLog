@@ -96,3 +96,9 @@ Release 0.2 Start 02/03/2020
 04. mpdplaylist.in: added last_played IS NULL to daysnotheard query
 14/02/2021
 65. transer_play - display list of valid host on wrong input
+25/02/2021
+66. /service/mpdev/run - do cleanup of /tmp/mpdev and scrobble logs in
+    $HOME/.config
+67. moc-scrobbler - create log file in ddmmyy.log format
+68. /service/mpd/run - use relative path for variables to allow renaming
+    of service directory
