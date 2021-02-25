@@ -163,7 +163,8 @@ $BASE_SCRIPT --update --artist=\"band name\" --title=\"song title\" --album=\"al
 
     function log_scrobble() {
         # Add to log.
-        echo "`date` $1" >> "${CONF_DIR}/scrobbles.log";
+		dt=$(date +"%m%d%y")
+        echo "`date` $1" >> "${CONF_DIR}/scrobbles.$dt.log";
     }
 
     if [ $CONNECT = true ]; then
