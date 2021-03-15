@@ -1,5 +1,7 @@
 # mpdev
 
+[![mpdev C/C++ CI](https://github.com/mbhangui/mpdev/actions/workflows/mpdev-c-cpp.yml/badge.svg)](https://github.com/mbhangui/mpdev/actions/workflows/mpdev-c-cpp.yml)
+
 **mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/).
 
 
