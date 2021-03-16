@@ -22,9 +22,10 @@ jobs:
       with:
         path: main
 
-    - uses: actions/download-artifact@v2
+    - uses: actions/upload-artifact@v2
       with:
         name: my-artifact
+          path: ${{ github.workspace }}
 
     - name: checkout_qmail
       uses: actions/checkout@v2
