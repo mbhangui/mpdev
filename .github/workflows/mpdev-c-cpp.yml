@@ -32,9 +32,12 @@ jobs:
       run: cd libqmail; ./default.configure; make; sudo make install-strip
 
     - name: build_mpdev
-      run: cd main; ./default.configure; make
+      run: |
+        cd main; ./default.configure; make
+        make clean; /bin/rm -rf .git ../libqmail autom4te.cache
+        make -C debian;make mpdev.spec
 
     - uses: actions/upload-artifact@v2
       with:
-        name: my-artifact
+        name: mpdev
         path: ${{ github.workspace }}
