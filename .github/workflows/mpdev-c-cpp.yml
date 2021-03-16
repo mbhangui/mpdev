@@ -22,6 +22,10 @@ jobs:
       with:
         path: main
 
+    - uses: actions/download-artifact@v2
+      with:
+        name: my-artifact
+
     - name: checkout_qmail
       uses: actions/checkout@v2
       with:
