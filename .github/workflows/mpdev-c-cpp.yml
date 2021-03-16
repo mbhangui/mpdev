@@ -22,11 +22,6 @@ jobs:
       with:
         path: main
 
-    - uses: actions/upload-artifact@v2
-      with:
-        name: my-artifact
-        path: ${{ github.workspace }}
-
     - name: checkout_qmail
       uses: actions/checkout@v2
       with:
@@ -38,3 +33,8 @@ jobs:
 
     - name: build_mpdev
       run: cd main; ./default.configure; make
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: my-artifact
+        path: ${{ github.workspace }}
