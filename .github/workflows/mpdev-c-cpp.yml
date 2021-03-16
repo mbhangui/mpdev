@@ -25,7 +25,7 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: my-artifact
-          path: ${{ github.workspace }}
+        path: ${{ github.workspace }}
 
     - name: checkout_qmail
       uses: actions/checkout@v2
