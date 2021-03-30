@@ -1,35 +1,35 @@
 *
 Release 0.2 Start 02/03/2020
-02/03/2020
+- 02/03/2020
 01. Initial Release
 02. added update_stats utility to maintain stats database
 03. mpdev.c: set SONG_DURATION as seconds since epoch
 04. player can now on its own add entries to stat database
-14/07/2020
+- 14/07/2020
 05. mpdev - handle empty playlist with no currentsong playing
 06. added mpdev_update, mpdev_cleanup
-15/07/2020
+- 15/07/2020
 07. moved mpdev_update, mpdev_cleanup to libexec/mpdev
 08. added mpdev_rename script
-16/07/2020
+- 16/07/2020
 09. mpdev_rename: added --query option
 10. mpdev: use read instead of timeoutread
-17/07/2020
+- 17/07/2020
 11. mdpev: added START_TIME, END_TIME variables
 12. player: refactored script to update ratings from rompr/sticker/stats
 13. player: removed hardcored MySQL connection parameters
 14. player: fixed variables getting clobbered by functions
-19/07/2020
+- 19/07/2020
 15. player: display sticker insert/updates after NewSong line
 16. mpdev_update: added date_added field
 17. mpdev_update: use st_mtime, instead of st_ctime for date_added field
 18. mpdplaylist: use date_added field instead of last_modified
-20/07/2020
+- 20/07/2020
 19. mpdev: send status, currentsong command on player event to set
     ELAPSED_TIME
 20. added rompr_hist play history utility for rompr
 21. renamed rompr_hist to romprhist
-21/07/2020
+- 21/07/2020
 22. player: added get_rompr_playcount_ts() function to get playcount and
     timestamp from Playcounttable
 23. player: option to run without sticker, stats enabled
@@ -37,35 +37,35 @@ Release 0.2 Start 02/03/2020
 25. player: added error condition for getting rating from Ratingtable.
 26. player: BUG. fixed rating tmp filename
 27. player: display rating for RompR in logs in RompR scale
-22/07/2020
+- 22/07/2020
 28. added transfer_play
 29. player: use AUTO_RATING env variable for automatic rating of unrated songs
 30. create_service: fix for raspberrypi, dietpi
-24/07/2020
+- 24/07/2020
 31. mpdev_update: removed requirement of -m option for update mode
 32. player: exit end-song if END_TIME is not set
 33. player: fixed display playcount number in verbose output
-28/07/2020
+- 28/07/2020
 34. mpdev_cleanup.c: made -m optional
 35. mpdev_update.c: added updation of Disc tag
 35. player.in: added zztimestamp filed to Ratingtable
-02/08/2020
+- 02/08/2020
 36. set default values for play_count, rating, date_added fields.
 37. use %mtime% tag from mpd datatabase for date_added filed instead of using stat(2) call
-03/08/2020
+- 03/08/2020
 38. mpdplaylist: added --host option to specify mpd host
 39. mpdplaylist: added --shuffle option to shuffle playlist
-05/08/2020
+- 05/08/2020
 40. mpdplaylist: renamed --save option to --playlist
 41. mpdev_rename: use SQL REPLACE instead of sed
-06/08/2020
+- 06/08/2020
 42. mpdplaylist: renamed --dummy option to --query
-08/08/2020
+- 08/08/2020
 42. mpdev.c, mpdev_cleanup.c: fixed usage/error strings
 43. tcpopen.c: added missing return on connect() failure
-09/08/2020
+- 09/08/2020
 44. player: use unix domain socket if MYSQL_SOCKET is defined
-10/08/2020
+- 10/08/2020
 45. player: skip http urls
 46. mpdev: skip submit song when starting from pause state
 47. create_rpm: added comments to indicated cwd
@@ -75,28 +75,28 @@ Release 0.2 Start 02/03/2020
 51. mpdev.c: set ELAPSED_TIME, DURATION only when available
 52. mpdev.c: fixed setting of initial_state
 53. mpdev.c: fixed logic of play/pause/stop
-11/08/2020
+- 11/08/2020
 54. mpdev_update.c: adjust date_added for localtime
 55. transfer_play: use mpc to play and remove playlist
-14/08/2020
+- 14/08/2020
 56. added playpause script
-26/08/2020
+- 26/08/2020
 57. player: added self-update of scripts in $HOME/.mpdev
-27/08/2020
+- 27/08/2020
 58. player: auto rate if $HOME/.mpdev/AUTO_RATING file is present
 59. fixed path of stats.db
-03/08/2020
+- 03/08/2020
 60. mpdplaylist: fixed --clear option
-05/08/2020
+- 05/08/2020
 61. mpdplaylist: added --limit option
-08/08/2020
+- 08/08/2020
 62. mpdev_rename: fixed usage string
-07/01/2021
+- 07/01/2021
 63. create_services: fixed cp
 04. mpdplaylist.in: added last_played IS NULL to daysnotheard query
-14/02/2021
+- 14/02/2021
 65. transer_play - display list of valid host on wrong input
-25/02/2021
+- 25/02/2021
 66. /service/mpdev/run - do cleanup of /tmp/mpdev and scrobble logs in
     $HOME/.config
 67. moc-scrobbler - create log file in ddmmyy.log format

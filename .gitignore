@@ -73,6 +73,8 @@ debian/mpdev.install
 debian/postinst
 debian/prerm
 debian/rules
+debian/control
+debian/copyright
 RCS
 config.h
 create_stats

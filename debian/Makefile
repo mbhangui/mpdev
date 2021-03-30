@@ -7,6 +7,8 @@ logdir=/var/log/svc
 servicedir=/service
 version=$(shell cat ../conf-version)
 release=$(shell cat ../conf-release)
+email=$(shell cat ../conf-email)
+
 edit = sed \
 	-e 's,@prefix\@,$(prefix),g' \
 	-e 's,@sysconfdir\@,$(sysconfdir),g' \
@@ -17,6 +19,7 @@ edit = sed \
 	-e 's,@servicedir\@,$(servicedir),g' \
 	-e 's,@version\@,$(version),g' \
 	-e 's,@release\@,$(release),g' \
+	-e 's,@email\@,$(email),g' \
 	-e 's,@DATE\@,$(DATE),g'
 
 all: rules changelog postinst prerm \
@@ -29,18 +32,22 @@ postinst: postinst.in
 prerm: prerm.in
 	$(edit) $@.in > $@
 
-rules: rules.in Makefile ../conf-version ../conf-release
+rules: rules.in Makefile ../conf-version ../conf-release ../conf-email
 	$(edit) $@.in > $@;chmod +x rules
 
 mpdev.install: mpdev.install.in
 	$(edit) $@.in > $@
 
-changelog: changelog.in ../conf-version ../conf-release
-	(cat $@.in; echo ""; \
-	echo " -- Manvendra Bhangui <mpdev@indimail.org>  `date +'%a, %d %b %Y %H:%M:%S %z'`" ) \
-	| $(edit) > $@
+changelog: ../doc/ChangeLog Makefile ../conf-version ../conf-release \
+../conf-email
+	../catChangeLog --debian --name=mpdev --state=unstable \
+		--urgency=low ../doc/ChangeLog > $@
+control: control.in ../conf-email
+	$(edit) $@.in > $@
+copyright: copyright.in ../conf-email
+	$(edit) $@.in > $@
 
-mpdev.dsc: mpdev.dsc.in Makefile ../conf-version ../conf-release
+mpdev.dsc: mpdev.dsc.in Makefile ../conf-version ../conf-release ../conf-email
 	$(edit) $@.in > $@
 
 debian.tar.gz: copyright postinst prerm rules changelog compat \

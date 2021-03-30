@@ -1,14 +1,14 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: mpdev
-Upstream-Contact: Manvendra Bhangu <mpdev@indimail.org>
+Upstream-Contact: @email@
 Source: <https://github.com/mbhangui/mpdev>
 
 Files: *
-Copyright: 2020 <manvendra bhangui <mpdev@indimail.org>
+Copyright: 2020 <manvendra Bhangui <mbhangui@gmail.com>
 License: GPL-2.0
 
 Files: debian/*
-Copyright: 2020 Manvendra Bhangui <mpdev@indimail.org>
+Copyright: 2020 Manvendra Bhangui <mbhangui@gmail.com>
 License: GPL-2.0
 
 License: GPL-2.0
