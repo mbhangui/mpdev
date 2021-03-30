@@ -2,14 +2,14 @@ name: mpdev C/C++ CI
 
 on:
   push:
-    branches: [ master ]
     paths:
-      - '**/mpdev/**'
+      - '**'
       - .github/workflows/mpdev-c-cpp.yml
-      - '!**/mpdev/mpdev.spec.in'
+      - '!**/debian/*'
+      - '!**/mpdev.spec.in'
+      - '!**/doc/*'
       - '!**.md'
-  pull_request:
-    branches: [ master ]
+      - '!**/mpdev-obs.yml'
 
 jobs:
   build:
