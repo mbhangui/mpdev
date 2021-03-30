@@ -102,3 +102,5 @@ Release 0.2 Start 02/03/2020
 67. moc-scrobbler - create log file in ddmmyy.log format
 68. /service/mpd/run - use relative path for variables to allow renaming
     of service directory
+- 30/03/2021
+69. obs integration
