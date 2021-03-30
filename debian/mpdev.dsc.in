@@ -6,7 +6,7 @@ Version: @version@-@release@
 Maintainer: @email@
 Homepage: http://www.indimail.org
 Debtransform-Release: 1
-Debtransform-Files-Tar: mpdev-@version@.tar.gz
-Debtransform-Tar: debian.tar.gz
+Debtransform-Tar: mpdev-@version@.tar.gz
+Debtransform-Files-Tar: debian.tar.gz
 Standards-Version: 3.9.1
 Build-Depends: cdbs, debhelper (>= 9), gcc, g++, automake, autoconf, m4, gawk, libqmail-dev, libssl-dev, libsqlite3-dev, pkg-config, lsb-release
