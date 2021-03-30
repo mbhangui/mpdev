@@ -42,6 +42,7 @@ edit = sed \
 	-e 's}@PACKAGE_VERSION\@}$(PACKAGE_VERSION)}g' \
 	-e 's}@version\@}$(VERSION)}g' \
 	-e "s|@release\@|"`cat conf-release`"|g" \
+	-e 's|@email\@|'"`cat conf-email`"'|g' \
 	-e 's}@pkgconfigdir\@}$(pkgconfigdir)}g' \
 	-e 's}@VERSION\@}$(VERSION)}g' \
 	-e 's}@mpdevsysconfdir\@}$(mpdevsysconfdir)}g' \
