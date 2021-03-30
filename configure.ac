@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([mpdev],m4_normalize(m4_include([conf-version])),[Manvendra Bhangui mpdev@indimail.org],mpdev,[https://github.com/mbhangui/mpdev])
+AC_INIT([mpdev],m4_normalize(m4_include([conf-version])),m4_normalize(m4_include([conf-email])),mpdev,[https://github.com/mbhangui/mpdev])
 AC_CONFIG_SRCDIR([mpdev.c])
 AC_CONFIG_HEADERS([config.h])
 AC_DEFINE_UNQUOTED(PACKAGE_BUGREPORT, "indimail-support@lists.sourceforge.net")
