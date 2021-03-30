@@ -53,6 +53,7 @@ config.h.in~
 haveip6.h
 libtool
 mpdev.spec
+mpdev.changes
 choose
 create_service
 lastfm-scrobbler
