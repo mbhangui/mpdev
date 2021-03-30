@@ -51,7 +51,7 @@ build-stamp:
 	echo MPDEV_VERSION=$(version); \
 	echo ID=mpdev; \
 	echo HOME_URL="https://github.com/mbhangui/mpdev"; \
-	echo PACKAGE_BUGREPORT=\"@email@\"; \
+	echo PACKAGE_BUGREPORT=\"'@email@'\"; \
 	) > mpdev-release
 	touch build-stamp
 

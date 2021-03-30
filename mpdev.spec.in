@@ -86,7 +86,7 @@ echo "Description=\"MPD Event Watcher\""
 echo "MPDEV_version="%{version}""
 echo "ID=%{name}"
 echo "HOME_URL=\"https://github.com/mbhangui/mpdev\""
-echo "PACKAGE_BUGREPORT=\"@email@\""
+echo "PACKAGE_BUGREPORT=\"'@email@'\""
 ) > %{name}-release
 
 %install
