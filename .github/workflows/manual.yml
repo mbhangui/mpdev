@@ -18,5 +18,6 @@ jobs:
       run: |
         # create gpg environment
         echo creating gpg env
-        echo "$${secrets.software_key}}" | gpg --batch --import
+        echo "$${secrets.software_key}}" | gpg --batch --import --pinentry-mode loopback
+        echo "list keys"
         gpg --list-secret-keys --keyid-format LONG
