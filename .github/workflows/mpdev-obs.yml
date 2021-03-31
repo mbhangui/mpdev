@@ -5,6 +5,7 @@ on:
     paths:
       - '**'
       - .github/workflows/mpdev-obs.yml
+      - '!**/obs/*'
       - '!**/doc/*'
       - '!**.md'
       - '!**/mpdev-c-cpp.yml'
