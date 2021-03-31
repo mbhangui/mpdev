@@ -1,0 +1,22 @@
+name: mpdev manual trigger
+
+on:
+  push:
+    paths:
+      - '**'
+      - .github/workflows/mpdev-obs.yml
+      - '!**/doc/*'
+      - '!**.md'
+      - '!**/mpdev-c-cpp.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - shell: bash
+      name: trigger_obs
+      run: |
+        # create gpg environment
+        echo creating gpg env
+        echo "$${secrets.software_key}}" | gpg --batch --import
+        gpg --list-secret-keys --keyid-format LONG
