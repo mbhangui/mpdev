@@ -19,10 +19,10 @@ jobs:
         # create gpg environment
         echo creating key file
         echo "$${secrets.software_key}}" > .private_key
+        echo "cat private key"
+        cat .private_key
         echo doing gpg import
         gpg --import --armor .private_key
-        echo cat gpg import
-        cat .private_key
         rm .private_key
         echo "list keys"
         gpg --list-secret-keys --keyid-format LONG
