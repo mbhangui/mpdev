@@ -18,7 +18,7 @@ jobs:
       run: |
         # create gpg environment
         echo creating key file
-        echo "$${secrets.software_key}}" > .private_key
+        echo "${{secrets.software_key}}" > .private_key
         echo "cat private key"
         cat .private_key
         echo doing gpg import
