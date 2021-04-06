@@ -42,7 +42,8 @@ build-stamp:
 	# run configure script
 	#
 	HOME='.';export HOME
-	./configure --prefix=${prefix} --libexecdir=${libexecdir}
+	./configure --prefix=${prefix} --sysconfdir=/etc \
+		--libexecdir=${libexecdir}
 	$(MAKE) -s DESTDIR=$(DESTDIR)
 	touch build-stamp
 

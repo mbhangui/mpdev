@@ -67,7 +67,8 @@ using mpd's idle command and execs user defined script on event changes.
 %autosetup
 
 %build
-%configure --prefix=%{_prefix} --libexecdir=%{_prefix}/libexec/mpdev
+%configure --prefix=%{_prefix} --sysconfdir=/etc \
+  --libexecdir=%{_prefix}/libexec/mpdev
 %{__make} -s %{?_smp_mflags}
 (
 echo "---------------- INFORMATION ------------------------"
