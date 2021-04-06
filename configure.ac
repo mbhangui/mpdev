@@ -42,4 +42,5 @@ AC_TYPE_SSIZE_T
 AC_CHECK_FUNCS([alarm])
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([mpdev-release:mpdev-release.in],[], [])
 AC_OUTPUT
