@@ -223,6 +223,7 @@ Prebuilt binaries using openSUSE Build Service are available for mpdev for
 * openSUSE Tumbleweed
 * Arch Linux
 * Fedora
+* Ubuntu
 
 Use the below url for installation
 
