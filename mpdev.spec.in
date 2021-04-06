@@ -13,7 +13,7 @@
 %global _hardened_build    1
 %endif
 %global _prefix            /usr
-%global sysconfdir         @mpdevsysconfdir@
+%global sysconfdir         @sysconfdir@
 %global logdir             /var/log/svc/mpdev
 
 Name: mpdev
@@ -67,7 +67,7 @@ using mpd's idle command and execs user defined script on event changes.
 %autosetup
 
 %build
-%configure --prefix=%{_prefix} --sysconfdir=/etc \
+%configure --prefix=%{_prefix} --sysconfdir=/etc/mpdev \
   --libexecdir=%{_prefix}/libexec/mpdev
 %{__make} -s %{?_smp_mflags}
 (

@@ -21,7 +21,7 @@ _shareddir=@prefix@/share/doc/mpdev
 
 build() {
   cd $srcdir/$pkgname-${pkgver}
-  ./configure --prefix=${_prefix} --sysconfdir=/etc \
+  ./configure --prefix=${_prefix} --sysconfdir=/etc/mpdev \
     --libexecdir=${_prefix}/libexec/mpdev
   make -s
 }

@@ -8,4 +8,5 @@ fi
 prefix=/usr
 ./configure \
   --prefix=$prefix \
+  --sysconfdir=/etc/mpdev \
   --libexecdir=$prefix/libexec/mpdev
