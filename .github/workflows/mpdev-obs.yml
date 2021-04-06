@@ -9,6 +9,7 @@ on:
       - '!**/doc/*'
       - '!**.md'
       - '!**/mpdev-c-cpp.yml'
+  workflow_dispatch:
 
 jobs:
   build:
