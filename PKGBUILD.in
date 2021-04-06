@@ -1,0 +1,60 @@
+# Maintainer: @email@
+pkgname=mpdev
+pkgver=@version@
+pkgrel=@release@
+pkgdesc="MPD Event Watcher"
+arch=('i686' 'x86_64')
+url="https://github.com/mbhangui/mpdev"
+license=('GPL3')
+groups=('base-devel')
+depends=('coreutils' 'findutils' 'sed' 'sqlite' 'libqmail')
+source=("$pkgname-${pkgver}.tar.gz")
+sha256sums=('SKIP')
+_sysconfdir=@mpdevsysconfdir@
+provides=("pkgname")
+options=('strip' '!libtool' 'docs' 'staticlibs' 'zipman' 'debug')
+backup=(etc/mpdev/mpdev-release)
+install=archpkg.install
+changelog=$pkgname.changes
+_prefix=@prefix@
+_shareddir=@prefix@/share/doc/mpdev
+
+build() {
+  cd $srcdir/$pkgname-${pkgver}
+  ./configure --prefix=${_prefix} --sysconfdir=/etc \
+    --libexecdir=${_prefix}/libexec/mpdev
+  make -s
+}
+
+package() {
+  depends=('shadow')
+  cd $srcdir/$pkgname-${pkgver}
+  make DESTDIR=${pkgdir} install
+  install -D -m 0644 ${pkgname}.changes "$pkgdir"${_shareddir}/${pkgname}.changes
+  cd $srcdir
+}
+#### INSTALL SCRIPTS ####
+_prefix=@prefix@
+_logdir=/var/log/svc
+
+post_install() {
+  /usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
+}
+
+pre_upgrade() {
+  svc -d /service/mpdev
+}
+
+post_upgrade() {
+  svc -d /service/mpdev
+}
+
+pre_remove() {
+  svc -d /service/mpdev
+  /usr/libexec/mpdev/create_service --servicedir=/service --del-service
+}
+
+post_remove() {
+  log_dir=${_logdir}/mpdev
+  [ "$log_dir" != "/" ] && %{__rm} -fr $log_dir
+}

@@ -20,9 +20,10 @@ mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
 				   transfer_play
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
 libexec_SCRIPTS = mpdev_maintenance player playpause mpdev_rename create_service
-noinst_DATA = mpdev.spec mpdev.changes
+noinst_DATA = mpdev.spec mpdev.changes PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1
+mpdevsysconf_DATA=mpdev-release
 
 MOSTLYCLEANFILES = mpdev player playpause mpdev_maintenance librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \
@@ -123,3 +124,6 @@ conf-release conf-email
 	(cat $@.in;./catChangeLog) | $(edit) > $@
 mpdev.changes: doc/ChangeLog conf-version conf-release conf-email
 	./catChangeLog --changes doc/ChangeLog > $@
+PKGBUILD: PKGBUILD.in catChangeLog conf-email \
+conf-version conf-release mpdev.changes
+	cat $@.in | $(edit) > $@

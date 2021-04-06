@@ -21,7 +21,6 @@ endif
 
 prefix=@prefix@
 libexecdir=@libexecdir@
-sysconfdir=@sysconfdir@
 mandir=@mandir@
 mandir=$(prefix)/share/man
 shareddir=$(prefix)/share/mpdev
@@ -45,14 +44,6 @@ build-stamp:
 	HOME='.';export HOME
 	./configure --prefix=${prefix} --libexecdir=${libexecdir}
 	$(MAKE) -s DESTDIR=$(DESTDIR)
-	( \
-	echo NAME=mpdev; \
-	echo Description=\"mpd event watcher\"; \
-	echo MPDEV_VERSION=$(version); \
-	echo ID=mpdev; \
-	echo HOME_URL="https://github.com/mbhangui/mpdev"; \
-	echo PACKAGE_BUGREPORT=\"'@email@'\"; \
-	) > mpdev-release
 	touch build-stamp
 
 clean:
@@ -70,9 +61,6 @@ install: build
 	dh_prep || dh_clean -k
 	dh_installdirs
 	$(MAKE) -s install DESTDIR=$(DESTDIR)
-	mkdir -p $(DESTDIR)$(sysconfdir)
-	install -m 0644 mpdev-release "$(DESTDIR)$(sysconfdir)"/mpdev-release
-	${rm} -f mpdev-release
 
 binary-indep: build install
 	dh_testdir

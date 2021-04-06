@@ -17,8 +17,6 @@ set -e
 # the debian-policy package
 
 prefix=@prefix@
-sysconfdir=@sysconfdir@
-rm=/bin/rm
 
 ID=`id -u`
 if [ $ID -ne 0 ] ; then
@@ -49,5 +47,5 @@ if [ " $1" = " upgrade" -o " $1" = " deconfigure" ] ; then
 	exit 0
 fi
 echo "removing mpdev service"
-/usr/libexec/mpdev/create_service --servicedir=/service --del-service
+${prefix}/libexec/mpdev/create_service --servicedir=/service --del-service
 exit 0

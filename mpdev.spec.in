@@ -80,20 +80,11 @@ echo Project        %{_project}
 echo Building %{name}-%{version}-%{release} Build %{_build} OS %{_os}
 echo "------------------------------------------------------"
 ) > %{name}-rpm.info
-(
-echo "NAME=%{name}"
-echo "Description=\"MPD Event Watcher\""
-echo "MPDEV_version="%{version}""
-echo "ID=%{name}"
-echo "HOME_URL=\"https://github.com/mbhangui/mpdev\""
-echo "PACKAGE_BUGREPORT=\"'@email@'\""
-) > %{name}-release
 
 %install
 %{__make} -s DESTDIR=%{buildroot} install-strip
 %{__mkdir_p} %{buildroot}%{sysconfdir}
 install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
-install -m 0644 %{name}-release %{buildroot}%{sysconfdir}/%{name}-release
 
 %files
 %dir %attr(755,root,root)               %{_prefix}/libexec/mpdev
@@ -155,7 +146,7 @@ if [ $argv1 -eq 1 ] ; then
   exit 0
 fi
 echo "removing mpdev logs"
-log_dir=%{logdir}/mpdev
+log_dir=%{logdir}
 [ "$log_dir" != "/" ] && %{__rm} -fr $log_dir
 echo "removing mpdev service"
 /usr/libexec/mpdev/create_service --servicedir=/service --del-service
