@@ -124,6 +124,6 @@ conf-release conf-email
 	(cat $@.in;./catChangeLog) | $(edit) > $@
 mpdev.changes: doc/ChangeLog conf-version conf-release conf-email
 	./catChangeLog --changes doc/ChangeLog > $@
-PKGBUILD: PKGBUILD.in catChangeLog conf-email \
+PKGBUILD: PKGBUILD.in conf-email \
 conf-version conf-release mpdev.changes
 	cat $@.in | $(edit) > $@
