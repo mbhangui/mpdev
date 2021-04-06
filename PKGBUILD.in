@@ -10,7 +10,6 @@ groups=('base-devel')
 depends=('coreutils' 'findutils' 'sed' 'sqlite' 'libqmail')
 source=("$pkgname-${pkgver}.tar.gz")
 sha256sums=('SKIP')
-_sysconfdir=@mpdevsysconfdir@
 provides=("pkgname")
 options=('strip' '!libtool' 'docs' 'staticlibs' 'zipman' 'debug')
 backup=(etc/mpdev/mpdev-release)
@@ -27,7 +26,7 @@ build() {
 }
 
 package() {
-  depends=('shadow')
+  depends=('shadow' 'daemontools' 'mpd')
   cd $srcdir/$pkgname-${pkgver}
   make DESTDIR=${pkgdir} install
   install -D -m 0644 ${pkgname}.changes "$pkgdir"${_shareddir}/${pkgname}.changes
