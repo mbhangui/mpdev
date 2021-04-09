@@ -93,10 +93,12 @@ Known values for OPTION are:
   (Songs with high rating come at top)
 
 --playlist=playlist
-  save the playlist in the filename $playlist_dir/playlist. If the
-  playlist is named now, new playlist will be added. If --clear
-  is also specified, the current playlist will be cleared and
-  loaded. The 'now' playlist is not saved to the playlist directory
+  save the playlist in the filename $playlist_dir/playlist.
+  If the playlist is named now, new playlist will be added to the
+  current mpd playlist. If --clear is also specified, the current
+  playlist will be cleared and loaded. The 'now' playlist is not
+  saved to the playlist directory. Without --playlist option,
+  result will be displayed on screen.
 
 --host=host
   mpd host to use
@@ -417,6 +419,7 @@ fi
 if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \
 	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" ] ; then
 	echo "No options given" 1>&2
+	usage 1
 	exit 1
 fi
 if [ $dummy -eq 0 ] ; then
