@@ -1,6 +1,12 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.12  2021-04-10 13:05:38+05:30  Cprogrammer
+# set default options (command line arguments) from .mpdplaylist.options
+#
+# Revision 1.11  2021-04-10 11:15:39+05:30  Cprogrammer
+# updated usage message for --playlist option
+#
 # Revision 1.10  2021-01-07 12:20:20+05:30  Cprogrammer
 # added last_played is NULL to query daysnotheard
 #
@@ -32,7 +38,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.10 2021-01-07 12:20:20+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.12 2021-04-10 13:05:38+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -144,6 +150,10 @@ daysheard=""
 daysnotheard=""
 mpd_host=""
 prog_args="$0"
+if [ $# -eq 0 -a -f $HOME/.mpdplaylist.options ] ; then
+	options=$(grep -v '^#' -h $HOME/.mpdplaylist.options)
+	set -- $options
+fi
 while test $# -gt 0; do
 	case "$1" in
 	-*=*)
@@ -418,7 +428,7 @@ if [ $limit -gt 0 ] ; then
 fi
 if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \
 	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" ] ; then
-	echo "No options given" 1>&2
+	echo "No options given and no default usage configuration found" 1>&2
 	usage 1
 	exit 1
 fi
