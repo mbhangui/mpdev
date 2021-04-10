@@ -22,9 +22,12 @@ edit = sed \
 	-e 's,@email\@,$(email),g' \
 	-e 's,@DATE\@,$(DATE),g'
 
-all: rules changelog postinst prerm \
+all: rules changelog preinst postinst prerm \
 	mpdev.dsc mpdev.install \
 	debian.tar.gz
+
+preinst: preinst.in
+	$(edit) $@.in > $@
 
 postinst: postinst.in
 	$(edit) $@.in > $@
@@ -50,11 +53,11 @@ copyright: copyright.in ../conf-email
 mpdev.dsc: mpdev.dsc.in Makefile ../conf-version ../conf-release ../conf-email
 	$(edit) $@.in > $@
 
-debian.tar.gz: copyright postinst prerm rules changelog compat \
+debian.tar.gz: copyright preinst postinst prerm rules changelog compat \
 Makefile control mpdev.install
-	tar cf - copyright postinst prerm rules changelog \
+	tar cf - copyright preinst postinst prerm rules changelog \
 	compat control mpdev.install | gzip > $@
 
 clean:
-	/bin/rm -f rules prerm postinst *.dsc changelog \
+	/bin/rm -f rules prerm preinst postinst *.dsc changelog \
 	mpdev.install debian.tar.gz
