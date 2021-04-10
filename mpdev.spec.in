@@ -128,6 +128,8 @@ if [ -z "$argv1" ] ; then
 fi
 # we are doing upgrade
 if [ $argv1 -eq 2 ] ; then # upgrade
+  echo "restarting mpdev"
+  /usr/bin/svc -r /service/mpdev
   exit 0
 fi
 /usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
@@ -149,7 +151,7 @@ fi
 echo "removing mpdev logs"
 log_dir=%{logdir}
 [ "$log_dir" != "/" ] && %{__rm} -fr $log_dir
-echo "removing mpdev service"
+echo "stopping and removing mpdev service"
 /usr/libexec/mpdev/create_service --servicedir=/service --del-service
 
 %changelog
