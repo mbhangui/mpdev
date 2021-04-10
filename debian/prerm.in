@@ -48,6 +48,6 @@ if [ " $1" = " upgrade" -o " $1" = " deconfigure" ] ; then
 fi
 echo "removing mpdev logs"
 rm -fr /var/log/svc/mpdev
-echo "removing mpdev service"
+echo "stopping and removing mpdev service"
 ${prefix}/libexec/mpdev/create_service --servicedir=/service --del-service
 exit 0
