@@ -116,6 +116,22 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 
 %license LICENSE
 
+%pretrans
+# stop mpdev services before upgrade
+if [ -d /run ] ; then
+  rundir=/run/svscan
+elif [ -d /var/run ] ; then
+  rundir=/var/run/svscan
+else
+  rundir=/service
+fi
+%{_prefix}/bin/svstat /service/mpdev >/dev/null 2>&1
+if [ $? -eq 0 ] ; then
+  %{__mkdir_p} ${rundir}/mpdev
+  %{_prefix}/bin/svc -d /service/mpdev
+  touch /service/mpdev/.down
+fi
+
 %post
 argv1=$1
 ID=$(id -u)
@@ -128,8 +144,13 @@ if [ -z "$argv1" ] ; then
 fi
 # we are doing upgrade
 if [ $argv1 -eq 2 ] ; then # upgrade
-  echo "restarting mpdev"
-  /usr/bin/svc -r /service/mpdev
+  # refresh indimail services
+  %{_prefix}/sbin/svctool --servicedir=/service --refreshsvc="mpdev"
+  %{_prefix}/bin/svok /service/mpdev >/dev/null 2>&1
+  if [ $? -eq 0 -a -f ${rundir}/$i/.down ] ; then
+    %{__rm} -f ${rundir}/$i/.down
+    %{_prefix}/bin/svc -u /service/mpdev
+  fi
   exit 0
 fi
 /usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
