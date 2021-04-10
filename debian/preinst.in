@@ -31,7 +31,7 @@ case "$1" in
 	if [ $? -eq 0 ] ; then
 		mkdir -p ${rundir}/mpdev
 		${prefix}/bin/svc -d /service/mpdev
-		touch /service/mpdev/.down
+		touch ${rundir}/mpdev/.down
 	fi
 	set -e
 	;;
