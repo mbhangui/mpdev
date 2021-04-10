@@ -43,7 +43,7 @@ esac
 #DEBHELPER#
 if [ $upgrade -eq 1 ] ; then # upgrade
 	# refresh indimail services
-	${prefix}/sbin/minisvc --servicedir=/service --refreshsvc="mpdev"
+	${prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev"
 	# start indimail services after upgrade
 	if [ -d /run ] ; then
 		rundir=/run/svscan
