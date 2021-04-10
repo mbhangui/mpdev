@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.11  2021-04-10 19:13:30+05:30  Cprogrammer
+# create variables/.options file
+#
 # Revision 1.10  2021-02-25 15:40:13+05:30  Cprogrammer
 # use relative path for variables to allow renaming of service directory
 #
@@ -32,7 +35,7 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.10 2021-02-25 15:40:13+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.11 2021-04-10 19:13:30+05:30 Cprogrammer Exp mbhangui $
 #
 
 add_service()
@@ -60,6 +63,7 @@ add_service()
 	fi
 	mkdir -p $servicedir/$service_name/log
 	mkdir -p $servicedir/$service_name/variables
+	echo "$prog_args" > $servicedir/$service_name/variables/.options
 	echo "0"         > $servicedir/$service_name/variables/AUTO_RATING
 	echo "127.0.0.1" > $servicedir/$service_name/variables/MPD_HOST
 	echo "6600"      > $servicedir/$service_name/variables/MPD_PORT
@@ -81,6 +85,9 @@ add_service()
 	
 	(
 		echo "#!/bin/sh"
+		echo "# generated log script for $host on `date`"
+		echo "# by the below command"
+		echo "# $prog_args"
 		echo "exec /usr/bin/setuidgid qmaill \\"
 		if [ -f /usr/sbin/multilog ] ; then
 			echo "/usr/sbin/multilog t $logdir/$service_name"
@@ -91,10 +98,14 @@ add_service()
 	chmod +x /service/$service_name/log/run
 	(
 		echo "#!/bin/sh"
+		echo "# generated run script for $host on `date`"
+		echo "# by the below command"
+		echo "# $prog_args"
 		echo "exec 2>&1"
-		echo 
+		echo
 		echo "home=\$(getent passwd $userid|cut -d: -f6)"
 		echo "user=\$(getent passwd $userid|cut -d: -f1)"
+		echo
 		echo "find /tmp/mpdev -type f -exec /bin/rm -f {} \;"
 		echo "find \$home/.config/lastfm-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
 		echo "find \$home/.config/librefm-scrobbler -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
@@ -106,7 +117,7 @@ add_service()
 		echo "  fi"
 		echo "done"
 		echo "exec /usr/bin/setuidgid \$user /usr/bin/envdir \\"
-		echo "  variables /usr/bin/mpdev -v"
+		echo "  /service/$service_name/variables /usr/bin/mpdev -v"
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
 }
