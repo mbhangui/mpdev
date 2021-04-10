@@ -1,5 +1,5 @@
 *
-Release 0.2 Start 02/03/2020
+Release 0.1 Start 02/03/2020
 - 02/03/2020
 01. Initial Release
 02. added update_stats utility to maintain stats database
@@ -51,7 +51,7 @@ Release 0.2 Start 02/03/2020
 35. player.in: added zztimestamp filed to Ratingtable
 - 02/08/2020
 36. set default values for play_count, rating, date_added fields.
-37. use %mtime% tag from mpd datatabase for date_added filed instead of using stat(2) call
+37. use %%mtime%% tag from mpd datatabase for date_added filed instead of using stat(2) call
 - 03/08/2020
 38. mpdplaylist: added --host option to specify mpd host
 39. mpdplaylist: added --shuffle option to shuffle playlist
