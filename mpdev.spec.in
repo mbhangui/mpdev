@@ -145,7 +145,7 @@ fi
 # we are doing upgrade
 if [ $argv1 -eq 2 ] ; then # upgrade
   # refresh indimail services
-  %{_prefix}/sbin/svctool --servicedir=/service --refreshsvc="mpdev"
+  %{_prefix}/sbin/minisvc --servicedir=/service --refreshsvc="mpdev"
   %{_prefix}/bin/svok /service/mpdev >/dev/null 2>&1
   if [ $? -eq 0 -a -f ${rundir}/$i/.down ] ; then
     %{__rm} -f ${rundir}/$i/.down
