@@ -107,3 +107,4 @@ Release 0.1 Start 02/03/2020
 - 10/04/2021
 70. mpdplaylist - use $HOME/.mpdplaylist.options for default options when no
     arguments are provided
+71. package install/upgrade - refresh service
