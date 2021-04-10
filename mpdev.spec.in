@@ -144,6 +144,13 @@ if [ -z "$argv1" ] ; then
 fi
 # we are doing upgrade
 if [ $argv1 -eq 2 ] ; then # upgrade
+  if [ -d /run ] ; then
+    rundir=/run/svscan
+  elif [ -d /var/run ] ; then
+    rundir=/var/run/svscan
+  else
+    rundir=/service
+  fi
   # refresh indimail services
   %{_prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev"
   %{_prefix}/bin/svok /service/mpdev >/dev/null 2>&1
