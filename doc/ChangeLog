@@ -104,3 +104,6 @@ Release 0.2 Start 02/03/2020
     of service directory
 - 30/03/2021
 69. obs integration
+- 10/04/2021
+70. mpdplaylist - use $HOME/.mpdplaylist.options for default options when no
+    arguments are provided
