@@ -71,6 +71,7 @@ debian/changelog
 debian/debian.tar.gz
 debian/mpdev.dsc
 debian/mpdev.install
+debian/preinst
 debian/postinst
 debian/prerm
 debian/rules
