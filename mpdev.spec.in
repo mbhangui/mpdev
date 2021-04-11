@@ -111,6 +111,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_update.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_cleanup.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdplaylist.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/transfer_play.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/lastfm-scrobbler.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/librefm-scrobbler.1.gz
 
@@ -151,7 +152,12 @@ if [ $argv1 -eq 2 ] ; then # upgrade
   else
     rundir=/service
   fi
-  # refresh indimail services
+  # refresh mpdev services
+  if [ ! -f /service/mpdev/variables/.options ] ; then
+    %{__mkdir_p} /service/mpdev/variables
+      echo "/usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service" \
+        > /service/mpdev/variables/.options
+  fi
   %{_prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev"
   %{_prefix}/bin/svok /service/mpdev >/dev/null 2>&1
   if [ $? -eq 0 -a -f ${rundir}/mpdev/.down ] ; then
