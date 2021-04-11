@@ -108,3 +108,6 @@ Release 0.1 Start 02/03/2020
 70. mpdplaylist - use $HOME/.mpdplaylist.options for default options when no
     arguments are provided
 71. package install/upgrade - refresh service
+- 11/04/2021
+72. added transfer_play, romprhist man page
+73. refactored romprhist
