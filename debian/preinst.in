@@ -1,5 +1,5 @@
 #!/bin/sh
-# preinst script for indimail
+# preinst script for mpdev
 #
 # see: dh_installdeb(1)
 
@@ -18,7 +18,7 @@ case "$1" in
     install)
 	;;
 	upgrade)
-	# stop indimail services before upgrade
+	# stop mpdev services before upgrade
 	if [ -d /run ] ; then
 		rundir=/run/svscan
 	elif [ -d /var/run ] ; then
