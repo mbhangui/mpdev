@@ -1,0 +1,54 @@
+.TH romprhist 1
+.SH NAME
+romprhist \- update ratings in stats,, sticker db or both from RompR player
+
+.SH SYNOPSYS
+.B romprhist \fIoptions\fR
+
+.SH DESCRIPTION
+romprhist displays history of songs plays since the last checkpoint. You can
+create a checkpoing by using the --update-chkpoint option. With the
+--update-stats or the --update-sticker option, romprhist will obtain the rating
+from RompR MySQL database and update the value in stats.db or sticker.db database
+used my mpdev(1), mpdplaylist(1).
+
+\fBromprhist\fR is no longer needed for updating stats.db or sticker.db if you are
+running mpdev(1).
+
+.SH OPTIONS
+.TP 3
+.B --verbose
+Set verbose output. You can increase verbosity by specifying it multiple times
+.RS
+.RE
+
+.TP 3
+.B --sql
+generate sql statements in /tmp/stats.sql, /tmp/sticker.sql
+.RS
+.RE
+
+.TP 3
+.B --update-chkpoint
+reset checkpoint
+.RS
+.RE
+
+.TP 3
+.B --update-stats
+updates stats sqlite db
+.RS
+.RE
+
+.TP 3
+.B --update-sticker
+updates sticker sqlite db
+.RS
+.RE
+
+
+.SH SEE ALSO
+mpdev(1),
+mpdplaylist(1),
+mpd(1),
+mpd.conf(5)
