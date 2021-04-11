@@ -42,9 +42,14 @@ esac
 
 #DEBHELPER#
 if [ $upgrade -eq 1 ] ; then # upgrade
-	# refresh indimail services
+	# refresh mpdev services
+	if [ ! -f /service/mpdev/variables/.options ] ; then
+	mkdir -p /service/mpdev/variables
+	echo "/usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service" \
+		> /service/mpdev/variables/.options
+	fi
 	${prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev"
-	# start indimail services after upgrade
+	# start mpdev services after upgrade
 	if [ -d /run ] ; then
 		rundir=/run/svscan
 	elif [ -d /var/run ] ; then
