@@ -64,6 +64,14 @@ Known values for OPTION are:
   Order playlist in decreasing order of Rating field
   (Songs with high rating come at top)
 
+--playcount=exp
+  Find songs with playcounts as per expression. e.g.
+  --playcount<5  means songs with play counts less than 5
+  --playcount<=5 means songs with play counts less than or equal to5
+  --playcount=5  means songs with play counts equal to 5
+  --playcount>=5 means songs with play counts greater than or equal to 5
+  --playcount>5  means songs with play counts greater than 5
+
 --playlist=playlist
   save the playlist in the filename $playlist_dir/playlist.
   If the playlist is named now, new playlist will be added to the

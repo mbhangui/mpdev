@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.13  2021-04-14 13:11:29+05:30  Cprogrammer
+# added --playcount option to get songs that match play counts
+#
 # Revision 1.12  2021-04-10 13:05:38+05:30  Cprogrammer
 # set default options (command line arguments) from .mpdplaylist.options
 #
@@ -38,7 +41,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.12 2021-04-10 13:05:38+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.13 2021-04-14 13:11:29+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -98,6 +101,14 @@ Known values for OPTION are:
   Order playlist in decreasing order of Rating field
   (Songs with high rating come at top)
 
+--playcount=exp
+  Find songs with playcounts as per expression. e.g.
+  --playcount<5  means songs with play counts less than 5
+  --playcount<=5 means songs with play counts less than or equal to5
+  --playcount=5  means songs with play counts equal to 5
+  --playcount>=5 means songs with play counts greater than or equal to 5
+  --playcount>5  means songs with play counts greater than 5
+
 --playlist=playlist
   save the playlist in the filename $playlist_dir/playlist.
   If the playlist is named now, new playlist will be added to the
@@ -144,6 +155,7 @@ dummy=0
 shuffle=0
 do_clear=0
 limit=0
+play_counts=""
 playlist=""
 daysadded=""
 daysheard=""
@@ -160,6 +172,18 @@ while test $# -gt 0; do
 	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
 	optval=`echo "$1" | cut -d'=' -f1`
 	prog_args="$prog_args $optval=\"$optarg\""
+	;;
+	-*\>*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*>//'`
+	optarg=">$optarg"
+	optval=`echo "$1" | cut -d'>' -f1`
+	prog_args="$prog_args $optval>\"$optarg\""
+	;;
+	-*\<*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*<//'`
+	optarg="<$optarg"
+	optval=`echo "$1" | cut -d'<' -f1`
+	prog_args="$prog_args $optval<\"$optarg\""
 	;;
 	*)
 	optarg=
@@ -198,6 +222,14 @@ while test $# -gt 0; do
 	--artistany=*)
 	exact=0
 	artist=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--playcount=*|--playcount\>*|--playcount\<*)
+	first_char=$(echo $optarg | cut -c1)
+	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
+		play_counts="play_count=$optarg"
+	else
+		play_counts="play_count$optarg"
+	fi
 	;;
 	--new=*)
 	daysadded=$optarg
@@ -372,6 +404,15 @@ if [ -n "$daysadded" ] ; then
 	tmval=`expr $tmval - $daysadded \* 86400`
 	sql_query="$sql_query date_added >= $tmval"
 fi
+if [ -n "$play_counts" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	sql_query="$sql_query $play_counts"
+fi
 if [ -n "$daysheard" ] ; then
 	if [ -z "$first_condition" ] ; then
 		sql_query="$sql_query WHERE"
@@ -427,7 +468,7 @@ if [ $limit -gt 0 ] ; then
 		sql_query="$sql_query limit $limit"
 fi
 if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \
-	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" ] ; then
+	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" -a -z "$play_counts" ] ; then
 	echo "No options given and no default usage configuration found" 1>&2
 	usage 1
 	exit 1
