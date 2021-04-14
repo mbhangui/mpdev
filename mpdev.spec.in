@@ -168,6 +168,8 @@ if [ $argv1 -eq 2 ] ; then # upgrade
   exit 0
 fi
 /usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
+%{_prefix}/sbin/minisvc --servicedir=/service --service-name=mpdev \
+  --export-variables=/service/mpdev/variables/.variables --force
 
 %preun
 argv1=$1

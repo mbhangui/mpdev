@@ -64,7 +64,11 @@ if [ $upgrade -eq 1 ] ; then # upgrade
 		${prefix}/bin/svc -u /service/mpdev
 	fi
 	set -e
+	${prefix}/sbin/minisvc --servicedir=/service --service-name=mpdev \
+		--export-variables=/service/mpdev/variables/.variables --force
 	exit 0
 fi
 ${prefix}/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
+${prefix}/sbin/minisvc --servicedir=/service --service-name=mpdev \
+	--export-variables=/service/mpdev/variables/.variables --force
 exit 0
