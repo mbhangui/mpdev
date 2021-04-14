@@ -114,3 +114,4 @@ Release 0.1 Start 02/03/2020
 - 14/04/2021
 74. update variables only if changed
 75. save variables using minisvc --export-variables
+76. mpdplaylist: added --playcount option to get songs that match play counts
