@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.12  2021-04-14 09:45:58+05:30  Cprogrammer
+# update variables only if changed
+#
 # Revision 1.11  2021-04-10 19:13:30+05:30  Cprogrammer
 # create variables/.options file
 #
@@ -35,8 +38,16 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.11 2021-04-10 19:13:30+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.12 2021-04-14 09:45:58+05:30 Cprogrammer Exp mbhangui $
 #
+
+check_update_if_diff()
+{
+	val=`cat $1 2>/dev/null`
+	if [ ! " $val" = " $2" ] ; then
+		echo $2 > $1
+	fi
+}
 
 add_service()
 {
@@ -63,21 +74,21 @@ add_service()
 	fi
 	mkdir -p $servicedir/$service_name/log
 	mkdir -p $servicedir/$service_name/variables
-	echo "$prog_args" > $servicedir/$service_name/variables/.options
-	echo "0"         > $servicedir/$service_name/variables/AUTO_RATING
-	echo "127.0.0.1" > $servicedir/$service_name/variables/MPD_HOST
-	echo "6600"      > $servicedir/$service_name/variables/MPD_PORT
+	check_update_if_diff $servicedir/$service_name/variables/.options    $prog_args
+	check_update_if_diff $servicedir/$service_name/variables/AUTO_RATING 0
+	check_update_if_diff $servicedir/$service_name/variables/MPD_HOST    127.0.0.1
+	check_update_if_diff $servicedir/$service_name/variables/MPD_PORT    6600
 	sock=$(grep "^bind_to_address" /etc/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
 	if [ -n "$sock" ] ; then
-		echo "$sock" > $servicedir/$service_name/variables/MPD_SOCKET
+		check_update_if_diff $servicedir/$service_name/variables/MPD_SOCKET $sock
 	elif [ -S /run/mpd/mpd.sock ] ; then
-		echo "/run/mpd/mpd.sock" > $servicedir/$service_name/variables/MPD_SOCKET
+		check_update_if_diff $servicedir/$service_name/variables/MPD_SOCKET "/run/mpd/mpd.sock"
 	fi
 	home=$(getent passwd $userid|cut -d: -f6)
 	if [ -n "$home" ] ; then
-		echo $home > $servicedir/$service_name/variables/HOME
-		echo $home > $servicedir/$service_name/variables/XDG_RUNTIME_DIR
-		echo "/bin:/usr/bin:$home/.mpdev" > $servicedir/$service_name/variables/PATH
+		check_update_if_diff $servicedir/$service_name/variables/HOME "$home"
+		check_update_if_diff $servicedir/$service_name/variables/XDG_RUNTIME_DIR "$home"
+		check_update_if_diff $servicedir/$service_name/variables/PATH "/bin:/usr/bin:$home/.mpdev"
 	fi
 	mkdir -p $home/.mpdev
 	cp /usr/libexec/$service_name/player \
