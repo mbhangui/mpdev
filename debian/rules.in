@@ -53,7 +53,7 @@ clean:
 	dh_testdir
 	dh_testroot
 	dh_clean
-	$(MAKE) clean || true; $(MAKE) distclean || true
+	$(MAKE) clean >/dev/null 2>&1 || true; $(MAKE) distclean >/dev/null 2>&1 || true
 	${rm} -f build-stamp
 
 install: build
