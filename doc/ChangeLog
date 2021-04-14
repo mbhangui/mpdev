@@ -111,3 +111,6 @@ Release 0.1 Start 02/03/2020
 - 11/04/2021
 72. added transfer_play, romprhist man page
 73. refactored romprhist
+- 14/04/2021
+74. update variables only if changed
+75. save variables using minisvc --export-variables
