@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.20  2021-04-15 11:55:19+05:30  Cprogrammer
+# downgrade karma of a song if skipped
+#
 # Revision 1.19  2021-04-14 21:50:55+05:30  Cprogrammer
 # display song played duration
 #
@@ -62,7 +65,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.19 2021-04-14 21:50:55+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.20 2021-04-15 11:55:19+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -220,6 +223,18 @@ stats_db_update()
 		else
 			echo  "ERROR: UPDATE song set last_played=$last_played, rating=$tmprate where uri='$turi';" 1>&2
 		fi
+		return 1
+	fi
+	return 0
+}
+
+downgrade_karma()
+{
+	turi=`echo "$1" | sed -e "s{'{''{g"`
+	sqlite3 -batch $stats_file \
+		"UPDATE song set karma=karma-1 where uri='$turi' and karma>0;"
+	if [ $? -ne 0 ] ; then
+		"ERROR: UPDATE song set karma=karma-1 where uri='$turi' and karma>0;" 1>&2
 		return 1
 	fi
 	return 0
@@ -413,12 +428,12 @@ update_song()
 	uri="$1"
 	state="$2"
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
-	already_played=0
+	t=0
 	if [ " $state" = " now-playing" ] ; then
 		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
 			t=$(date +'%s')
-			already_played=$(expr $t - $START_TIME)
+			t=$(expr $t - $START_TIME)
 		fi
 		if [ -n "$ELAPSED_TIME" ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
@@ -709,34 +724,46 @@ update_song()
 			fi
 		fi
 		if [ " $state" = " end-song" ] ; then
+			if [ -z "$MIN_PLAY_PERCENT" ] ; then
+				MIN_PLAY_PERCENT=75
+			fi
+			t=$(expr $SONG_PLAYED + $t)
+			percent=$(awk "BEGIN { pc=100*${t}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+			if [ " $percent" = " 0.0" ] ; then
+				percent=0
+			fi
+			var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
+			if [ $var -eq 0 ] ; then
+				downgrade_karma "$uri"
+			fi
+			if [ $VERBOSE -gt 0 ] ; then
+				if [ $var -eq 0 ] ; then
+					echo "SONG "$percent"% played total time=$t secs (partial)"
+				else
+					echo "SONG "$percent"% played total time=$t secs (full)"
+				fi
+				if [ -n "$END_TIME" ] ; then
+					echo -n "EndSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+					echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
+					echo
+				fi
+			fi
 			/bin/rm -f $MPDEV_TMPDIR/stats.$csum $MPDEV_TMPDIR/scrobble.$csum \
 				$MPDEV_TMPDIR/rompr.$csum $MPDEV_TMPDIR/sticker.$csum \
 				$MPDEV_TMPDIR/start_time.$csum $MPDEV_TMPDIR/rating.$csum \
 				$MPDEV_TMPDIR/stats_playcount.$csum $MPDEV_TMPDIR/rompr_playcount.$csum \
 				$MPDEV_TMPDIR/percent_played
+		elif [ " $state" = " pause-song" ] ; then
+			if [ $VERBOSE -gt 0 ] ; then
+				if [ -n "$END_TIME" ] ; then
+					echo -n "PauseSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
+					echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
+					echo
+				fi
+			fi
 		fi
-		;;
+		;; # end-song|pause-song
 	esac
-	if [ $VERBOSE -gt 0 ] ; then
-		case "$state" in
-			"end-song")
-			if [ -n "$END_TIME" ] ; then
-				t=$(expr $SONG_PLAYED + $already_played)
-				echo    "SONG Played total time=$t secs"
-				echo -n "EndSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
-				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
-				echo
-			fi
-			;;
-			"pause-song")
-			if [ -n "$END_TIME" ] ; then
-				echo -n "PauseSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
-				echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
-				echo
-			fi
-			;;
-		esac
-	fi
 }
 
 if [ -z "$VERBOSE" ] ; then
