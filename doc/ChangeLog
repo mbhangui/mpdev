@@ -117,3 +117,6 @@ Release 0.1 Start 02/03/2020
 76. mpdplaylist: added --playcount option to get songs that match play counts
 77. mpdplaylist: added --play option
 78. mpdev.c, player: added song played duration in SONG_PLAYED env variable
+- 15/04/2021
+79. mpdplaylist: downgrade karma if song is partially played
+80. mpdev.c: fixed initialization of song played duration
