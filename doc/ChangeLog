@@ -1,6 +1,6 @@
 *
 Release 1.0 Start 02/03/2020
-15/04/2021
+- 15/04/2021
 01. Bump Release
 02. player: skip db update if NO_DB_UPDATE is defined and non-zero
 03. mpdplaylist: added --karma option
