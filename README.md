@@ -7,11 +7,11 @@
 
 mpdev helps in bulding a database of your played tracks. Along with a script `mpdplaylist`, it can generate a playlist for mpd as per your taste and mood.
 
-You can create scripts in $HOME/.mpdev directory. The default installation installs a script named $HOME/.mpdev/player for the uid 1000. The script does the following
+You can create scripts in $HOME/.mpdev directory. The default installation installs a script named $HOME/.mpdev/player for the uid 1000. The script is adequate for most use cases. It additionally updates RompR database. The script does the following
 
 1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
 2. updates play counts in the sqlite stats.db. You can write your own script and update any external database. An example of this is in the player script which updates the Playcounttable for [RompR](https://fatg3erman.github.io/RompR/).
-3. Synchronizes the ratings in the sticker (sqlite). You an write your own script and update any external database. An exampe of this is in the player script which updates the Ratingtable for [RompR](https://fatg3erman.github.io/RompR/) (MySQL). You can also do automatic rating to some default value by setting an environment variable AUTO\_RATING.
+3. Synchronizes the ratings in the sticker (sqlite). You can write your own script and update any external database. An exampe of this is in the player script which updates the Ratingtable for [RompR](https://fatg3erman.github.io/RompR/) (MySQL). You can also do automatic rating to some default value by setting an environment variable AUTO\_RATING. If you are using supervise from deamontools (more on that below), creating an environment variable is very easy. e.g. To have an environment variable AUTO\_RATING with vvalue 6, you just need to have a file name AUTO\_RATING in /service/mpdev/variables. The file should just have 6 as the content.
 
 The above three are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song playing, available to it. Below is a list of of events and corresponding hooks that will be executed if available.
 
@@ -102,7 +102,7 @@ One can use [supervise](https://en.wikipedia.org/wiki/Daemontools) from the indi
 ```
 $ sudo /bin/bash
 # echo rompr         > /service/mpdev/variables/ROMPR
-# echo 192.168.1.100 > /service/mpdev/variables/MYSQL_HOST
+# echo 192.168.1.100 > /service/mpdev/variables/MYSQL_HOST # assuming you have MySQL database installed on 191.168.1.100
 # echo 3306          > /service/mpdev/variables/MYSQL_PORT
 # echo rompr         > /service/mpdev/variables/MYSQL_USER
 # echo romprdbpas    > /service/mpdev/variables/MYSQL_PASS
@@ -119,7 +119,7 @@ $ sudo svc -d /service/mpdev # this stops  the mpdev daemon
 $ sudo svc -u /service/mpdev # this starts the mpdev daemon
 ```
 
-If you want to do a source install and not have the supervise to run mpdev daemon, you could write a simple script and call it in a rc script during boot.
+If you want to do a source install and not have the supervise to run mpdev daemon, you could write a simple script and call it in a rc script during boot. If you don't use supervise, you need some knowledge of shell scripting. A very simple example of such a script is below. Another problem of not using supervise will be that you will have to enable your script to be called in some rc or systemd script whenever your machine is started.
 
 ```
 #!/bin/sh
@@ -136,6 +136,7 @@ do
         PATH=\$PATH:/usr/bin:/bin \
         AUTO_RATING=6 \
     /usr/bin/mpdev -v
+	sleep 1
 done
 ```
 
