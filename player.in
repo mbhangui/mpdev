@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.21  2021-04-15 20:06:06+05:30  Cprogrammer
+# skip db update if NO_DB_UPDATE is defined and non-zero
+#
 # Revision 1.20  2021-04-15 11:55:19+05:30  Cprogrammer
 # downgrade karma of a song if skipped
 #
@@ -65,7 +68,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.20 2021-04-15 11:55:19+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.21 2021-04-15 20:06:06+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -149,6 +152,11 @@ get_stat_rating()
 
 sticker_db_insert()
 {
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi=`echo $1|sed -e "s{'{''{g"`
 	tmprate=$2
 	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker values('song', '$turi', 'rating', $tmprate);"
@@ -161,6 +169,11 @@ sticker_db_insert()
 
 sticker_db_update()
 {
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi=`echo $1|sed -e "s{'{''{g"`
 	tmprate=$2
 	sqlite3 -batch $sticker_file "UPDATE sticker set value=$tmprate where type='song' and uri='$turi';"
@@ -181,6 +194,11 @@ stats_db_insert()
 	# SONG_TRACK: track
 	# SONG_DURATION: duration
 
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi=`echo "$1" | sed -e "s{'{''{g"`
 	ARTIST=`echo "$SONG_ARTIST" | sed -e "s{'{''{g"`
 	ALBUM=`echo "$SONG_ALBUM" | sed -e "s{'{''{g"`
@@ -206,6 +224,11 @@ stats_db_insert()
 
 stats_db_update()
 {
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi=`echo "$1" | sed -e "s{'{''{g"`
 	tmprate=$2
 	last_played=$3
@@ -230,6 +253,11 @@ stats_db_update()
 
 downgrade_karma()
 {
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi=`echo "$1" | sed -e "s{'{''{g"`
 	sqlite3 -batch $stats_file \
 		"UPDATE song set karma=karma-1 where uri='$turi' and karma>0;"
@@ -242,6 +270,11 @@ downgrade_karma()
 
 rompr_update_playcount()
 {
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi="$1"
 	tm="$2"
 	if [ $# -eq 3 ] ; then
@@ -291,6 +324,11 @@ rompr_update_playcount()
 
 rompr_rating_update()
 {
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
 	turi=$(echo "$1" | sed s/"'"/"\\\'"/g)
 	tstamp="$2"
 	rompr_rating=`expr "$3" / 2`
