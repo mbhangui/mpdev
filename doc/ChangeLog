@@ -120,3 +120,4 @@ Release 0.1 Start 02/03/2020
 - 15/04/2021
 79. mpdplaylist: downgrade karma if song is partially played
 80. mpdev.c: fixed initialization of song played duration
+81. create_service: fixed cleanup of /tmp/mpdev
