@@ -50,28 +50,28 @@ The **mpdev** package also comes with `mpdev_update` and `mpdev_cleanup` program
 
 ## Environment Variables available to hooks
 
-```
-SONG_ID
-SONG_URI
-SONG_TITLE
-SONG_ARTIST
-SONG_ALBUM
-SONG_DATE
-SONG_GENRE
-SONG_TRACK
-SONG_DURATION
-SONG_PLAYED
-SONG_POSITION
-SONG_LAST_MODIFIED
-START_TIME
-END_TIME
-SCROBBLER_LASTFM
-SCROBBLER_LIBREFM
-VERBOSE
-ELAPSED_TIME
-PLAYER_STATE
-DURATION
-```
+Environment variable|Description
+--------------------|-----------
+SONG_ID|Set to the ID of song in mpd database
+SONG_URI|Set to the full path of the music file
+SONG_TITLE|Set to the title of the song
+SONG_ARTIST|Set to the song artist
+SONG_ALBUM|Set to the song album
+SONG_DATE|Set to the Date tag of the song
+SONG_GENRE|Set to the Genre tag of the song
+SONG_TRACK|Set to the track number of the song
+SONG_DURATION|Set to the song duration
+SONG_PLAYED|Set to the duration for which the song was played
+SONG_POSITION|Set to position of the current song
+SONG_LAST_MODIFIED|Set to the last modified time of the song
+START_TIME|Time at which the song play started
+END_TIME|Time at which the song ended
+ELAPSED_TIME|Set to time since player was paused
+PLAYER_STATE|Set when you pause/resume player
+DURATION|Set to song duration as a floating point number
+SCROBBLER_LASTFM|Set to 1 if tracks are getting scrobbled to [lastfm](https://www.last.fm/)
+SCROBBLER_LIBREFM|Set to 1 if tracks are getting scrobbled to [librefm](https://libre.fm/)
+VERBOSE|Verbose level of mpdev
 
 If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX. mpdev can also update [RompR](https://fatg3erman.github.io/RompR/) ratings and play counts and synchronize the ratings between [RompR](https://fatg3erman.github.io/RompR/) MySQL and sticker sqlite databases. Since mpdev runs in the background, it can keep updating [RompR](https://fatg3erman.github.io/RompR/), stats db play counts and history without you having to keep [RompR Web Frontend](https://fatg3erman.github.io/RompR/) running.
 
