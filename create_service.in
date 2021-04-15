@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.15  2021-04-15 12:26:20+05:30  Cprogrammer
+# fixed cleanup of /tmp/mpdev
+#
 # Revision 1.14  2021-04-14 21:49:57+05:30  Cprogrammer
 # do cleanup only once
 #
@@ -44,7 +47,7 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.14 2021-04-14 21:49:57+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.15 2021-04-15 12:26:20+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -123,7 +126,7 @@ add_service()
 		echo "home=\$(getent passwd $userid|cut -d: -f6)"
 		echo "user=\$(getent passwd $userid|cut -d: -f1)"
 		echo
-		echo "if [ -f /tmp/mpdev/.cleanup ] ; then"
+		echo "if [ ! -f /tmp/mpdev/.cleanup ] ; then"
 		echo "  find /tmp/mpdev -type f -exec /bin/rm -f {} \;"
 		echo "  touch /tmp/mpdev/.cleanup"
 		echo "fi"
