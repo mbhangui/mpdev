@@ -100,7 +100,6 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_update
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_cleanup
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_rename
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_maintenance
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/playpause
