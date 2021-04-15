@@ -84,8 +84,8 @@ if [ $copy_src -eq 1 ] ; then
 	# /usr/local/src/stage/mpdev-$version
 	cd stage/mpdev-$version
 	echo "Cleaning mpdev-"$version""
-	make -s clean
-	make -s distclean
+	make -s clean >/dev/null 2>&1
+	make -s distclean >/dev/null 2>&1
 	/bin/rm -rf autom4te.cache .deps src/config.log
 	# /usr/local/src/stage/
 	cd ..
