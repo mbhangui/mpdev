@@ -4,6 +4,7 @@ Release 1.0 Start 02/03/2020
 01. Bump Release
 02. player: skip db update if NO_DB_UPDATE is defined and non-zero
 03. mpdplaylist: added --karma option
+04. removed mpdev_maintenaance
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
