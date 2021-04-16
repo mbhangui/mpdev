@@ -9,6 +9,7 @@ Release 1.0 Start 02/03/2020
 05. added --options-file feature to take command line arguments from an
     options file
 06. player: upgrade karma as per last_played logic
+07. added license, README, changelogs to doc directory
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
