@@ -19,11 +19,12 @@ mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
 				   transfer_play
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
 libexec_SCRIPTS = player playpause mpdev_rename create_service
-noinst_DATA = mpdev.spec mpdev.changes PKGBUILD
+noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1
 SYSCONFDIR=@sysconfdir@
 sysconf_DATA=mpdev-release
+doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \

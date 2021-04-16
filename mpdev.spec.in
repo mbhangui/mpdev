@@ -117,6 +117,17 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 
 %license LICENSE
 
+%docdir %{_prefix}/share/doc/%{name}
+%if %build_on_obs == 0
+%license %attr(644,root,root)           %{_prefix}/share/doc/%{name}/LICENSE
+%license %attr(644,root,root)           %{_prefix}/share/doc/%{name}/moc-scrobbler-license
+%else
+%attr(644,root,root)                    %{_prefix}/share/doc/%{name}/LICENSE
+%attr(644,root,root)                    %{_prefix}/share/doc/%{name}/moc-scrobbler-license
+%endif
+%attr(644,root,root)                    %{_prefix}/share/doc/%{name}/README.md
+%attr(644,root,root)                    %{_prefix}/share/doc/%{name}/mpdev.changes
+
 %pretrans
 # stop mpdev services before upgrade
 if [ -d /run ] ; then
