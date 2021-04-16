@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.16  2021-04-16 12:56:50+05:30  Cprogrammer
+# added --options-file feature to take command line arguments from an options file
+#
 # Revision 1.15  2021-04-15 22:06:27+05:30  Cprogrammer
 # added --karma option
 #
@@ -47,7 +50,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.15 2021-04-15 22:06:27+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.16 2021-04-16 12:56:50+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -69,6 +72,9 @@ $MORE 1>&2 <<EOF
 Usage: mpdplaylist [OPTION]
 
 Known values for OPTION are:
+
+--options-file=filename
+  Take extra command line options from filename
 
 --fromyear=From Year
   Year in YYYY format
@@ -160,31 +166,8 @@ EOF
 exit $1
 }
 
-fromyear=""
-toyear=""
-incgenre=""
-exlgenre=""
-artist=""
-minrate=""
-oldfirst=0
-sort_popular=0
-dummy=0
-shuffle=0
-do_clear=0
-limit=0
-do_play=0
-play_counts=""
-karma=""
-playlist=""
-daysadded=""
-daysheard=""
-daysnotheard=""
-mpd_host=""
-prog_args="$0"
-if [ $# -eq 0 -a -f $HOME/.mpdplaylist.options ] ; then
-	options=$(grep -v '^#' -h $HOME/.mpdplaylist.options)
-	set -- $options
-fi
+process_cmdline()
+{
 while test $# -gt 0; do
 	case "$1" in
 	-*=*)
@@ -211,6 +194,9 @@ while test $# -gt 0; do
 	esac
 
 	case "$1" in
+	--options-file=*)
+	options_file=$optarg
+	;;
 	--fromyear=*)
 	fromyear=$optarg
 	;;
@@ -307,6 +293,41 @@ while test $# -gt 0; do
 	esac
 	shift
 done
+}
+
+fromyear=""
+toyear=""
+incgenre=""
+exlgenre=""
+artist=""
+minrate=""
+oldfirst=0
+sort_popular=0
+dummy=0
+shuffle=0
+do_clear=0
+limit=0
+do_play=0
+play_counts=""
+karma=""
+playlist=""
+daysadded=""
+daysheard=""
+daysnotheard=""
+mpd_host=""
+options_file=""
+prog_args="$0"
+
+if [ $# -eq 0 -a -f $HOME/.mpdplaylist.options ] ; then
+	options=$(grep -v '^#' -h $HOME/.mpdplaylist.options)
+	set -- $options
+fi
+process_cmdline $@
+if [ -n "$options_file" ] ; then
+	options=$(grep -v '^#' -h $options_file)
+	set -- $options
+	process_cmdline $@
+fi
 
 music_dir=`get_mpd_conf_value music_directory`
 if [ $? -ne 0 ] ; then
