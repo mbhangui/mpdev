@@ -29,13 +29,13 @@ Examples
 .EX
 # Use mpd database as reference
 
-$ mpdev_cleanup -c -d /var/lib/mpd/Music/.mpd/stats.db
-$ mpdev_cleanup -C -d /var/lib/mpd/Music/.mpd/sticker.db
+$ mpdev_cleanup -c -d /var/lib/mpd/MDrive/data/stats.db
+$ mpdev_cleanup -C -d /var/lib/mpd/MDrive/data/sticker.db
 
 # Use the filesystem as reference
 
-$ mpdev_cleanup -c -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/stats.db
-$ mpdev_cleanup -C -m /var/lib/mpd/Music -d /var/lib/mpd/Music/.mpd/sticker.db
+$ mpdev_cleanup -c -m /var/lib/mpd/Music -d /var/lib/mpd/MDrive/data/stats.db
+$ mpdev_cleanup -C -m /var/lib/mpd/Music -d /var/lib/mpd/MDrive/data/sticker.db
 .EE
 
 .SH OPTIONS
