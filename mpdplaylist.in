@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.17  2021-04-18 16:39:41+05:30  Cprogrammer
+# fix for space in command line argument values
+#
 # Revision 1.16  2021-04-16 12:56:50+05:30  Cprogrammer
 # added --options-file feature to take command line arguments from an options file
 #
@@ -50,7 +53,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.16 2021-04-16 12:56:50+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.17 2021-04-18 16:39:41+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -222,7 +225,7 @@ while test $# -gt 0; do
 	;;
 	--artist=*)
 	exact=1
-	artist=`echo $optarg| sed "s/ /_/g"`
+	artist=`echo "$optarg"| sed "s/ /_/g"`
 	;;
 	--artistany=*)
 	exact=0
@@ -322,11 +325,11 @@ if [ $# -eq 0 -a -f $HOME/.mpdplaylist.options ] ; then
 	options=$(grep -v '^#' -h $HOME/.mpdplaylist.options)
 	set -- $options
 fi
-process_cmdline $@
+process_cmdline "$@"
 if [ -n "$options_file" ] ; then
 	options=$(grep -v '^#' -h $options_file)
 	set -- $options
-	process_cmdline $@
+	process_cmdline "$@"
 fi
 
 music_dir=`get_mpd_conf_value music_directory`
