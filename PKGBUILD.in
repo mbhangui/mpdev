@@ -4,7 +4,7 @@ pkgver=@version@
 pkgrel=@release@
 pkgdesc="MPD Event Watcher"
 arch=('i686' 'x86_64')
-url="https://github.com/mbhangui/mpdev"
+url="https://github.com/mbhangui/${pkgname}"
 license=('GPL3')
 groups=('base-devel')
 depends=('coreutils' 'findutils' 'sed' 'sqlite' 'libqmail')
@@ -12,16 +12,16 @@ source=("$pkgname-${pkgver}.tar.gz")
 sha256sums=('SKIP')
 provides=("pkgname")
 options=('strip' '!libtool' 'docs' 'staticlibs' 'zipman' 'debug')
-backup=(etc/mpdev/mpdev-release)
+backup=(etc/${pkgname}/${pkgname}-release)
 install=archpkg.install
 changelog=$pkgname.changes
 _prefix=@prefix@
-_shareddir=@prefix@/share/doc/mpdev
+_shareddir=@prefix@/share
 
 build() {
   cd $srcdir/$pkgname-${pkgver}
-  ./configure --prefix=${_prefix} --sysconfdir=/etc/mpdev \
-    --libexecdir=${_prefix}/libexec/mpdev
+  ./configure --prefix=${_prefix} --sysconfdir=/etc/${pkgname} \
+    --libexecdir=${_prefix}/libexec/${pkgname}
   make -s
 }
 
@@ -29,7 +29,7 @@ package() {
   depends=('shadow' 'daemontools' 'mpd')
   cd $srcdir/$pkgname-${pkgver}
   make DESTDIR=${pkgdir} install
-  install -D -m 0644 ${pkgname}.changes "$pkgdir"${_shareddir}/${pkgname}.changes
+  install -D -m 0644 ${pkgname}.changes "$pkgdir"${_shareddir}/doc/${pkgname}/${pkgname}.changes
   cd $srcdir
 }
 #### INSTALL SCRIPTS ####
@@ -37,23 +37,23 @@ _prefix=@prefix@
 _logdir=/var/log/svc
 
 post_install() {
-  /usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
+  /usr/libexec/${pkgname}/create_service --servicedir=/service --user=1000 --add-service
 }
 
 pre_upgrade() {
-  svc -d /service/mpdev
+  svc -d /service/${pkgname}
 }
 
 post_upgrade() {
-  svc -d /service/mpdev
+  svc -d /service/${pkgname}
 }
 
 pre_remove() {
-  svc -d /service/mpdev
-  /usr/libexec/mpdev/create_service --servicedir=/service --del-service
+  svc -d /service/${pkgname}
+  /usr/libexec/${pkgname}/create_service --servicedir=/service --del-service
 }
 
 post_remove() {
-  log_dir=${_logdir}/mpdev
+  log_dir=${_logdir}/${pkgname}
   [ "$log_dir" != "/" ] && %{__rm} -fr $log_dir
 }
