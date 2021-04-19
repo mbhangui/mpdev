@@ -1,0 +1,32 @@
+name: mpdev obs trigger
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: prepare obs
+      run: |
+        # create ssh environment
+        mkdir ~/.ssh
+        echo "${{secrets.sf_private_key}}"       > ~/.private_key
+        echo "${{secrets.software_key}}"         > ~/.software_key
+        echo "${{secrets.sf_known_hosts}}"       > ~/.known_hosts
+        echo "${{secrets.software_passphrase}}"  > ~/.phrase
+        echo "${{secrets.sf_user}}"              > ~/.user
+        echo "${{secrets.sf_upload_path}}"       > ~/.path
+        cd ~
+        cat .private_key
+        echo "--------"
+        cat .software_key
+        echo "--------"
+        cat .known_hosts
+        echo "--------"
+        cat .phrase
+        echo "--------"
+        cat .user
+        echo "--------"
+        cat .path
+        echo "--------"
