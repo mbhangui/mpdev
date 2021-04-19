@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_service.in,v $
+# Revision 1.16  2021-04-19 21:16:09+05:30  Cprogrammer
+# added MPDEV_TMPDIR variable
+#
 # Revision 1.15  2021-04-15 12:26:20+05:30  Cprogrammer
 # fixed cleanup of /tmp/mpdev
 #
@@ -47,7 +50,7 @@
 # Initial revision
 #
 #
-# $Id: create_service.in,v 1.15 2021-04-15 12:26:20+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.16 2021-04-19 21:16:09+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -84,9 +87,10 @@ add_service()
 	mkdir -p $servicedir/$service_name/log
 	mkdir -p $servicedir/$service_name/variables
 	echo "$prog_args" > $servicedir/$service_name/variables/.options
-	check_update_if_diff $servicedir/$service_name/variables/AUTO_RATING 0
-	check_update_if_diff $servicedir/$service_name/variables/MPD_HOST    127.0.0.1
-	check_update_if_diff $servicedir/$service_name/variables/MPD_PORT    6600
+	check_update_if_diff $servicedir/$service_name/variables/AUTO_RATING  0
+	check_update_if_diff $servicedir/$service_name/variables/MPD_HOST     127.0.0.1
+	check_update_if_diff $servicedir/$service_name/variables/MPD_PORT     6600
+	check_update_if_diff $servicedir/$service_name/variables/MPDEV_TMPDIR "/tmp/mpdev"
 	sock=$(grep "^bind_to_address" /etc/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
 	if [ -n "$sock" ] ; then
 		check_update_if_diff $servicedir/$service_name/variables/MPD_SOCKET $sock
@@ -126,9 +130,14 @@ add_service()
 		echo "home=\$(getent passwd $userid|cut -d: -f6)"
 		echo "user=\$(getent passwd $userid|cut -d: -f1)"
 		echo
-		echo "if [ ! -f /tmp/mpdev/.cleanup ] ; then"
-		echo "  find /tmp/mpdev -type f -exec /bin/rm -f {} \;"
-		echo "  touch /tmp/mpdev/.cleanup"
+		echo "if [ -f $service_name/variables/MPDEV_TMPDIR ] ; then"
+		echo "  MPDEV_TMPDIR=\$(cat $service_name/variables/MPDEV_TMPDIR)"
+		echo "else"
+		echo "  MPDEV_TMPDIR=/tmp/mpdev"
+		echo "fi"
+		echo "if [ -d \$MPDEV_TMPDIR -a ! -f \$MPDEV_TMPDIR/.cleanup ] ; then"
+		echo "  find \$MPDEV_TMPDIR -type f -exec /bin/rm -f {} \;"
+		echo "  touch \$MPDEV_TMPDIR/.cleanup"
 		echo "fi"
 		echo "find \$home/.config/lastfm-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
 		echo "find \$home/.config/librefm-scrobbler -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
