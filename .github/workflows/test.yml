@@ -1,4 +1,4 @@
-name: mpdev obs trigger
+name: mpdev test 
 
 on:
   workflow_dispatch:
