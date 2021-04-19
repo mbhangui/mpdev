@@ -68,7 +68,7 @@ binary-indep: build install
 	dh_testroot
 	find $(DESTDIR)$(mandir) -name '*'.? -type f -exec gzip -q {} \;
 	dh_install --sourcedir=$(DESTDIR) -p${package_name}
-	dh_installchangelogs
+	dh_installchangelogs --exclude ChangeLog
 	dh_installcron
 	dh_installdocs
 	dh_link
