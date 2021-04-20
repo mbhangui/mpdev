@@ -48,7 +48,7 @@ if [ $upgrade -eq 1 ] ; then # upgrade
 	echo "/usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service" \
 		> /service/mpdev/variables/.options
 	fi
-	${prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev"
+	${prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev" --silent
 	# start mpdev services after upgrade
 	if [ -d /run ] ; then
 		rundir=/run/svscan
@@ -65,10 +65,10 @@ if [ $upgrade -eq 1 ] ; then # upgrade
 	fi
 	set -e
 	${prefix}/sbin/minisvc --servicedir=/service --service-name=mpdev \
-		--export-variables=/service/mpdev/variables/.variables --force
+		--export-variables=/service/mpdev/variables/.variables --force --silent
 	exit 0
 fi
 ${prefix}/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
 ${prefix}/sbin/minisvc --servicedir=/service --service-name=mpdev \
-	--export-variables=/service/mpdev/variables/.variables --force
+	--export-variables=/service/mpdev/variables/.variables --force --silent
 exit 0

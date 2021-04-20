@@ -169,7 +169,7 @@ if [ $argv1 -eq 2 ] ; then # upgrade
       echo "/usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service" \
         > /service/mpdev/variables/.options
   fi
-  %{_prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev"
+  %{_prefix}/sbin/minisvc --servicedir=/service --refreshsvc="/service/mpdev" --silent
   %{_prefix}/bin/svok /service/mpdev >/dev/null 2>&1
   if [ $? -eq 0 -a -f ${rundir}/mpdev/.down ] ; then
     %{__rm} -f ${rundir}/mpdev/.down
@@ -179,7 +179,7 @@ if [ $argv1 -eq 2 ] ; then # upgrade
 fi
 /usr/libexec/mpdev/create_service --servicedir=/service --user=1000 --add-service
 %{_prefix}/sbin/minisvc --servicedir=/service --service-name=mpdev \
-  --export-variables=/service/mpdev/variables/.variables --force
+  --export-variables=/service/mpdev/variables/.variables --force --silent
 
 %preun
 argv1=$1

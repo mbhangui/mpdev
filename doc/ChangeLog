@@ -12,6 +12,8 @@ Release 1.0 Start 02/03/2020
 07. added license, README, changelogs to doc directory
 - 17/04/2021
 08. mpdplaylist: Fix for space in command line argument values
+- 20/04/2021
+09. added --silent parmeter to minisvc invocation
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

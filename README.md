@@ -7,14 +7,14 @@
 
 mpdev helps in bulding a database of your played tracks. Along with a script `mpdplaylist`, it can generate a playlist for mpd as per your taste and mood.
 
-You can create scripts in $HOME/.mpdev directory. The default installation installs a script named $HOME/.mpdev/player for the uid 1000. The script is adequate for most use cases. It additionally updates [RompЯ](https://fatg3erman.github.io/RompR/) database. The script does the following
+You can create scripts in $HOME/.mpdev directory. The default installation installs two scripts player and playpause in $HOME/.mpdev directory for uid 1000. The scripts are adequate for most use cases. The player script can additionally be configured to update [RompЯ](https://fatg3erman.github.io/RompR/) database. The player script does the following
 
 1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
-2. updates play counts in the sqlite stats.db. You can write your own script and update any external database. An example of this is in the player script which updates the Playcounttable for [RompЯ](https://fatg3erman.github.io/RompR/).
-3. Synchronizes the ratings in the sticker (sqlite). You can write your own script and update any external database. An exampe of this is in the player script which updates the Ratingtable for [RompЯ](https://fatg3erman.github.io/RompR/) (MySQL). You can also do automatic rating to some default value by setting an environment variable AUTO\_RATING. If you are using supervise from deamontools (more on that below), creating an environment variable is very easy. e.g. To have an environment variable AUTO\_RATING with vvalue 6, you just need to have a file name AUTO\_RATING in /service/mpdev/variables. The file should just have 6 as the content.
+2. updates play counts in the sqlite stats.db. You could write your own script and update any external database. The player script can also update the Playcounttable for [RompЯ](https://fatg3erman.github.io/RompR/) if few environment variables MYSQL\_HOST, MYSQL\_USER, MYSQL\_PASS and MYSQL\_DATABASE are configured in $HOME/.mpdev/rompr.conf
+3. Synchronizes the ratings in the sticker (sqlite). You could write your own script and update any external database. The player script can also update the Ratingtable for [RompЯ](https://fatg3erman.github.io/RompR/) (MySQL) by setting $HOME/.mpdev/rompr.conf. You can also do automatic rating to some default value by setting an environment variable AUTO\_RATING by creating a file $HOME/.mpdev/AUTO\_RATING. If you are using supervise from deamontools (more on that below), creating an environment variable is very easy. e.g. To have an environment variable AUTO\_RATING with value 6, you just need to have a file name AUTO\_RATING in /service/mpdev/variables. The file should just have 6 as the content.
 4. Update the song's karma. If a song is skipped, it's karma is downgraded by 1. If a song is played twice within a day, it's karma is upgraded by 4. If a song is played twice within a week, it's karma is upgraded by 3. If a song is played twice within 14 days, its karma is upgraded by 2. If a song is played twice within a month, it's karma is upgraded by 1. All songs start with a default karma of 50.
 
-The above three are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song being played, available to it. Below is a list of of events and corresponding hooks that will be executed if available.
+The above four are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song being played, available to it. Below is a list of of events and corresponding hooks that will be executed if available.
 
 MPD EVENT|Hook script
 ---------|-----------
@@ -38,14 +38,36 @@ CUSTOM_EVENT|~/.mpdev/custom
 The hooks are passed the following arguments
 
 ```
-mpd-event      - Passed when the above events listed, apart from SONG_CHANGE happen.
-player-event   - Passed when you play/pause player
+mpd-event      - Passed when the above events listed (apart from SONG_CHANGE) happen.
+player-event   - Passed when you play or pause song
 playlist-event - Passed when the playlist changes
 now-playing    - Passed when a song starts playing
 end-song       - Passed when a song finishes playing
 ```
 
-The default installation makes a copy of `/usr/libexec/mpdev/player` in `$HOME/.mpdev` for the user with uid `1000`. The player script inserts or updates songs in the stat.db, sticker.db sqlite database when a song gets played. For bulk inserts, updates, deletion, the **mpdev** package also comes with `mpdev_update` and `mpdev_cleanup` programs that help in maintaining the sqlite databases `stats.db` and `sticker.db`. This two programs use SQL Transactions and are extremely fast and takes just a few seconds to create/update the stats.db, sticker.db sqlite databases.
+The default installation makes a copy of `/usr/libexec/mpdev/player` and `/usr/libexec/mpdev/playpause` in `$HOME/.mpdev` for the user with uid `1000`. The player script inserts or updates songs in the stat.db, sticker.db sqlite database when a song gets played. For bulk inserts, updates, deletion, the **mpdev** package also comes with `mpdev_update(1)` and `mpdev_cleanup(1)` programs that help in maintaining `stats.db`, `sticker.db` sqlite databases. This two programs use SQL Transactions and are extremely fast and takes just a few seconds to create/update the stats.db, sticker.db sqlite databases.
+
+Example 1. create stats.db in the current directory
+
+```
+$ time mpdev_update -S -j -t -D 0 -d stats.db
+Processed 42630 rows, Failures 0 rows, Updated 42636 rows
+
+real    0m0.830s
+user    0m0.405s
+sys     0m0.096s
+```
+
+Example 2. Update stats.db in the current directory to add new songs
+
+```
+$ time mpdev_update -S -j -t -D 0 -d stats.db
+Processed 42636 rows, Failures 0 rows, Updated 6 rows
+
+real    0m0.725s
+user    0m0.353s
+sys     0m0.067s
+```
 
 ## Environment Variables available to hooks
 
