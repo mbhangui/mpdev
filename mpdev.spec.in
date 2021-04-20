@@ -109,6 +109,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_update.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_cleanup.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_rename.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdplaylist.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/transfer_play.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/romprhist.1.gz

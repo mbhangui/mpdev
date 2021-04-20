@@ -1,0 +1,82 @@
+.TH mpdev_rename 1 "Apr 20, 2021" "manual"
+.SH NAME
+.PP
+mpdev_rename - rename records in mpdev stats/sicker database
+.SH SYNOPSIS
+.PP
+mpdev_rename --stats-db=path_to_stats.db --query --pattern=\fIpatt\fR
+
+or
+
+mpdev_rename --stats-db=path_to_stats.db --pattern=\fIpatt\fR --string=\fIstr\fR --replacement=\fIrepl\fR
+
+.SH DESCRIPTION
+.PP
+\fBmpdev_rename\fR(1) helps in rename records in sticker or stats db
+when you physically rename a music file. It allows you to retain the
+playcounts and ratings for a song, which would otherwise be lost by song rename.
+
+It can operate in query mode (--query option) or replacement mode
+(--string and --replacement options)
+
+.SH OPTIONS
+.TP 3
+\fB--query\fR
+query the database for the records matching \fIpatt\fR
+.RS
+.RE
+
+.TP 3
+\fB--pattern\fR=\fIpatt\fR
+Use \fIpatt\fR for matching records
+.RS
+.RE
+
+.TP 3
+\fB--string\fR \fIstr\fR
+String to replace
+.RS
+.RE
+
+.TP 3
+\fB--replacement\fR \fIrepl\fR
+Each record found will have \fIstr\fR replaced by \fIrepl\fR
+.RS
+.RE
+
+.SH EXAMPLES
+.EX
+1 Find all records in the folder \fIMusic\fR/Jethro Tull/Misc/1978*
+# mpdev_rename --stats-db=./stats.db --query  --pattern='Jethro Tull/1978%'
+
+2 Move all the above files to Music/Jethro Tull/Misc
+# cd \fIMusic\fR/Jethro Tull/1978* \fIMusic\fR/Jethro Tull/Misc
+# mpdev_rename --stats-db=./stats.db --pattern='Jethro Tull/1978%'
+    --string="Jethro Tull" --replacement="Jethro Tull/Misc"
+
+Here \fIMusic\fR refers to value of \fImusic_directory\fR in mpd.conf(5)
+.EE
+
+.SH REPORTING BUGS
+.PP
+If you find a bug, please report it at https://github.com/mbhangui/mpdev/issues
+
+.SH COPYRIGHT
+.PP
+Copyright (c) 2020 Manvendra Bhangui <mpdev@indimail.org>
+.PD 0
+.P
+.PD
+Free
+use of this software is granted under the terms of the GNU General
+Public License (GPLv2).
+.SH AUTHOR
+Manvendra Bhangui <manvendra@indimail.org>
+
+.SH SEE ALSO
+mpd(1),
+mpd.conf(5),
+sqlite3(1),
+mpdev(1)
+mpdev_update(1),
+mpdev_cleanup(1)
