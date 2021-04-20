@@ -66,7 +66,6 @@ pathexec_env.o
 pathexec_run.o
 player
 tcpopen.o
-debian/source
 debian/changelog
 debian/debian.tar.gz
 debian/mpdev.dsc
