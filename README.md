@@ -251,3 +251,7 @@ Prebuilt binaries using openSUSE Build Service are available for mpdev for
 Use the below url for installation
 
 https://software.opensuse.org//download.html?project=home%3Ambhangui%3Adietpi&package=mpdev
+
+# Building your own mpd music server
+
+Take a look at [pistop](https://github.com/mbhangui/pistop) and this [README](https://github.com/mbhangui/pistop/blob/master/example_config/README.md).
