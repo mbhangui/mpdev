@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.24  2021-04-22 20:15:53+05:30  Cprogrammer
+# display correct playcount in rompr table
+#
 # Revision 1.23  2021-04-22 19:18:44+05:30  Cprogrammer
 # skip update of play_count when song is skipped
 #
@@ -74,7 +77,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.23 2021-04-22 19:18:44+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.24 2021-04-22 20:15:53+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -818,14 +821,14 @@ update_song()
 					if [ $VERBOSE -gt 0 ] ; then
 						line=`get_rompr_playcount_ts "$TTindex"`
 						if [ -z "$line" ] ; then
-							pcount="0" #hopefully update will be successfull
+							pcount="1" #hopefully update will be successfull
 							ts=$START_TIME
 						else
 							set $line
 							pcount=$1
 							ts=$2
 						fi
-						echo -n "UPDATE RompR Playcount TTindex=$TTindex, Playcount=`expr $pcount + 1` "
+						echo -n "UPDATE RompR Playcount TTindex=$TTindex, Playcount=$pcount "
 						if [ -n "$ts" ] && [ $ts -gt $START_TIME ] && [ $ts -lt $END_TIME ] ; then
 							echo "[`date +"%Y-%m-%d %H:%M:%S" --date=@"$ts"`] updated by RompR"
 						else
