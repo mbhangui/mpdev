@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.23  2021-04-22 19:18:44+05:30  Cprogrammer
+# skip update of play_count when song is skipped
+#
 # Revision 1.22  2021-04-16 21:11:02+05:30  Cprogrammer
 # added upgrade karma logic
 #
@@ -71,7 +74,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.22 2021-04-16 21:11:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.23 2021-04-22 19:18:44+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -775,9 +778,34 @@ update_song()
 					echo "UPDATE stats Start=$START_TIME End=$END_TIME rating=[$rating]"
 				fi
 			else
-				stats_db_update "$uri" "$rating" "$START_TIME" 1
+				if [ -z "$MIN_PLAY_PERCENT" ] ; then
+					MIN_PLAY_PERCENT=75
+				fi
+				t=$(expr $SONG_PLAYED + $t)
+				percent=$(awk "BEGIN { pc=100*${t}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+				if [ " $percent" = " 0.0" ] ; then
+					percent=0
+				fi
+				var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
+				if [ $var -eq 0 ] ; then
+					downgrade_karma "$uri"
+				fi
+				if [ $var -eq 0 ] ; then
+					echo "SONG "$percent"% played total time=$t secs (partial)"
+				else
+					echo "SONG "$percent"% played total time=$t secs (full)"
+				fi
 				if [ $VERBOSE -gt 0 ] ; then
-					echo "UPDATE stats Playcount Start=$START_TIME End=$END_TIME rating=[$rating]"
+					if [ $var -eq 0 ] ; then
+						echo "UPDATE stats Start=$START_TIME End=$END_TIME rating=[$rating]"
+					else
+						echo "UPDATE stats Playcount Start=$START_TIME End=$END_TIME rating=[$rating]"
+					fi
+				fi
+				if [ $var -eq 0 ] ; then
+					stats_db_update "$uri" "$rating" "$START_TIME" 0
+				else
+					stats_db_update "$uri" "$rating" "$START_TIME" 1
 				fi
 				touch $MPDEV_TMPDIR/stats_playcount.$csum
 			fi
@@ -809,24 +837,7 @@ update_song()
 			fi
 		fi
 		if [ " $state" = " end-song" ] ; then
-			if [ -z "$MIN_PLAY_PERCENT" ] ; then
-				MIN_PLAY_PERCENT=75
-			fi
-			t=$(expr $SONG_PLAYED + $t)
-			percent=$(awk "BEGIN { pc=100*${t}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-			if [ " $percent" = " 0.0" ] ; then
-				percent=0
-			fi
-			var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
-			if [ $var -eq 0 ] ; then
-				downgrade_karma "$uri"
-			fi
 			if [ $VERBOSE -gt 0 ] ; then
-				if [ $var -eq 0 ] ; then
-					echo "SONG "$percent"% played total time=$t secs (partial)"
-				else
-					echo "SONG "$percent"% played total time=$t secs (full)"
-				fi
 				if [ -n "$END_TIME" ] ; then
 					echo -n "EndSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 					echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"

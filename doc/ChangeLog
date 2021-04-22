@@ -16,6 +16,8 @@ Release 1.0 Start 02/03/2020
 09. added --silent parmeter to minisvc invocation
 10. added debian/source/format
 11. added mpdev_rename man page
+- 22/04/2021
+12. player: skip update of play_count when song is skipped
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
