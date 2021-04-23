@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.12  2021-04-23 18:34:20+05:30  Cprogrammer
+ * reset song_played_duration when stopped
+ *
  * Revision 1.11  2021-04-23 16:45:55+05:30  Cprogrammer
  * renamed SONG_PLAYED to SONG_PLAYED_DURATION
  *
@@ -73,7 +76,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.11 2021-04-23 16:45:55+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.12 2021-04-23 18:34:20+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -531,6 +534,7 @@ run_command(int status, char *arg)
 			switch (i)
 			{
 			case STOP_STATE:
+				t1 = song_played_duration = 0;
 				if (!env_put2("PLAYER_STATE", "stop"))
 					die_nomem();
 				break;
@@ -1055,7 +1059,9 @@ main(int argc, char **argv)
 					strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
 					if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
 						die_nomem();
-				}
+				} else
+				if (!env_unset("SONG_PLAYED_DURATION"))
+					die_nomem();
 				submit_song(verbose, "end-song");
 				break;
 			}
@@ -1072,7 +1078,9 @@ main(int argc, char **argv)
 					strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
 					if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
 						die_nomem();
-				}
+				} else
+				if (!env_unset("SONG_PLAYED_DURATION"))
+					die_nomem();
 				submit_song(verbose, "end-song");
 				prev_id1 = id;
 			}
@@ -1112,7 +1120,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.11 2021-04-23 16:45:55+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.12 2021-04-23 18:34:20+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
