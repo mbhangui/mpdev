@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: playpause.in,v $
+# Revision 1.5  2021-04-23 10:16:17+05:30  Cprogrammer
+# fixed end-song, pause-song getting skipped
+#
 # Revision 1.4  2021-04-19 22:07:08+05:30  Cprogrammer
 # create /tmp/mpdev directory
 #
@@ -14,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.4 2021-04-19 22:07:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.5 2021-04-23 10:16:17+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -65,15 +68,16 @@ else
 fi
 var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
 
-if [ $var -eq 1 ] ; then
-	if [ " $PLAYER_STATE" = " pause" ] ; then
-		END_TIME=$(date +'%s')
-		export END_TIME=$END_TIME
-		exec $HOME/.mpdev/player pause-song
-	fi
-	if [ " $PLAYER_STATE" = " stop" ] ; then
-		END_TIME=$(date +'%s')
-		export END_TIME=$END_TIME
-		exec $HOME/.mpdev/player end-song
-	fi
+if [ $var -ne 1 ] ; then
+	echo "SONG $SONG_URI stop/paused at $percent_played"
+fi
+if [ " $PLAYER_STATE" = " pause" ] ; then
+	END_TIME=$(date +'%s')
+	export END_TIME=$END_TIME
+	exec $HOME/.mpdev/player pause-song
+fi
+if [ " $PLAYER_STATE" = " stop" ] ; then
+	END_TIME=$(date +'%s')
+	export END_TIME=$END_TIME
+	exec $HOME/.mpdev/player end-song
 fi
