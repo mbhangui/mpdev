@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: playpause.in,v $
+# Revision 1.8  2021-04-23 18:43:42+05:30  Cprogrammer
+# display date in %Y-%m-%d %H:%M%S during play/pause
+#
 # Revision 1.7  2021-04-23 16:46:18+05:30  Cprogrammer
 # renamed SONG_PLAYED to SONG_PLAYED_DURATION
 #
@@ -23,7 +26,7 @@
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.7 2021-04-23 16:46:18+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.8 2021-04-23 18:43:42+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -41,7 +44,7 @@ mkdir -p $MPDEV_TMPDIR
 csum=`echo "$SONG_URI"| cksum | awk '{print $1}'`
 if [ $VERBOSE -gt 0 ] ; then
 	t=$(date +'%s')
-	echo "$0: PLAYER_STATE=$PLAYER_STATE [$t]"
+	echo "$0: PLAYER_STATE=$PLAYER_STATE [$t] [`date +"%Y-%m-%d %H:%M:%S" --date=@"$t"`]"
 fi
 if [ " $PLAYER_STATE" = " play" ] ; then
 	if [ ! -f $MPDEV_TMPDIR/start_time.$csum ] ; then
