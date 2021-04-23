@@ -1,6 +1,12 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.26  2021-04-23 16:46:08+05:30  Cprogrammer
+# renamed SONG_PLAYED to SONG_PLAYED_DURATION
+#
+# Revision 1.25  2021-04-23 16:44:05+05:30  Cprogrammer
+# fixed song played duration
+#
 # Revision 1.24  2021-04-22 20:15:53+05:30  Cprogrammer
 # display correct playcount in rompr table
 #
@@ -77,7 +83,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.24 2021-04-22 20:15:53+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.26 2021-04-23 16:46:08+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -514,12 +520,9 @@ update_song()
 	uri="$1"
 	state="$2"
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
-	t=0
 	if [ " $state" = " now-playing" ] ; then
 		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
-			t=$(date +'%s')
-			t=$(expr $t - $START_TIME)
 		fi
 		if [ -n "$ELAPSED_TIME" ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
@@ -784,8 +787,7 @@ update_song()
 				if [ -z "$MIN_PLAY_PERCENT" ] ; then
 					MIN_PLAY_PERCENT=75
 				fi
-				t=$(expr $SONG_PLAYED + $t)
-				percent=$(awk "BEGIN { pc=100*${t}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+				percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
 				if [ " $percent" = " 0.0" ] ; then
 					percent=0
 				fi
@@ -794,9 +796,9 @@ update_song()
 					downgrade_karma "$uri"
 				fi
 				if [ $var -eq 0 ] ; then
-					echo "SONG "$percent"% played total time=$t secs (partial)"
+					echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (partial)"
 				else
-					echo "SONG "$percent"% played total time=$t secs (full)"
+					echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (full)"
 				fi
 				if [ $VERBOSE -gt 0 ] ; then
 					if [ $var -eq 0 ] ; then

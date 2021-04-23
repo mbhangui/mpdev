@@ -21,6 +21,7 @@ Release 1.0 Start 02/03/2020
 13. player: display correct playcount in rompr table
 23/04/2021
 14. playpause: fixed end-song, pause-song getting skipped
+15. playpause: use SONG_PLAYED instead of ELAPSED_TIME
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

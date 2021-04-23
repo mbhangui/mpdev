@@ -82,7 +82,7 @@ SONG_DATE|Set to the Date tag of the song
 SONG_GENRE|Set to the Genre tag of the song
 SONG_TRACK|Set to the track number of the song
 SONG_DURATION|Set to the song duration
-SONG_PLAYED|Set to the duration for which the song was played
+SONG_PLAYED_DURATION|Set to the duration for which the song was played
 SONG_POSITION|Set to position of the current song
 SONG_LAST_MODIFIED|Set to the last modified time of the song
 START_TIME|Time at which the song play started
