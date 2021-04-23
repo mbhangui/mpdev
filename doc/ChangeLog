@@ -24,7 +24,7 @@ Release 1.0 Start 02/03/2020
 15. playpause: use SONG_PLAYED instead of ELAPSED_TIME
 16. renamed SONG_PLAYED to SONG_PLAYED_DURATION
 17. mpdev.c: reset song_played_duration when stopped
-18. playpause: display date in %Y-%m-%d %H:%M%S during play/pause
+18. playpause: display date in yyyy-mm-dd HH:MM:SS during play/pause
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
