@@ -1,0 +1,79 @@
+.TH karma 1
+.SH NAME
+karma \- Set song's karma
+
+.SH SYNOPSYS
+.B karma
+[
+.I options
+]
+
+.SH DESCRIPTION
+\fBkarma\fR sets the value of karma for a song or songs. \fIkarma\fR is a
+number from 0 to 100 representing a how desirable a song needs to be played.
+When you skip a song when playing, it's karma reduces by 1. If a song is
+skipped, it's karma is downgraded by 1. If a song is played twice within a
+day, it's karma is upgraded by 4. If a song is played twice within a week,
+it's karma is upgraded by 3. If a song is played twice within 14 days, its
+karma is upgraded by 2. If a song is played twice within a month, it's karma
+is upgraded by 1. All songs start with a default karma of 50.
+
+\fBkarma\fR utility helps you to play god. You can increase or decrease a
+song's karma by any value as per your whims and fancy.
+
+.SH OPTIONS
+
+Known values for OPTION are:
+
+.EX
+--uri=path
+  Finds song with uri matching path
+
+--id=songID
+  Finds song with id matching songID
+
+--karma
+  Find songs with karma as per expression. e.g.
+  --karma<50  means songs with karma < 50
+  --karma<=50 means songs with karma < or = 50
+  --karma=50  means songs with karma = 50
+  --karma>=50 means songs with karma > or = 50
+  --karma>50  means songs with karma > 50
+
+--playcount=exp
+  Find songs with playcounts as per expression. e.g.
+  --playcount<5  means songs with play counts < 5
+  --playcount<=5 means songs with play counts < or = 5
+  --playcount=5  means songs with play counts = 5
+  --playcount>=5 means songs with play counts > or = 5
+  --playcount>5  means songs with play counts > 5
+
+--rating
+  Find songs with karma as per expression. e.g.
+  --rating<6  means gons with ratings < 6
+  --rating<=6 means gons with ratings < or = 6
+  --rating=6  means gons with ratings = 6
+  --rating>=6 means gons with ratings > or = 6
+  --rating>6  means gons with ratings > 6
+
+--artist=Artist
+  Find songs with Artist exactly matching 'Artist'
+
+--artistany=keyword
+  Find songs with Artist having 'keyword' anywhere in the Artist field
+
+--query
+  Display SQL query, results and exit
+
+--help
+
+  display this help and exit
+
+--version
+
+  output version information
+.EE
+
+.SH "SEE ALSO"
+mpdplaylist(1),
+mpdev(1)

@@ -93,6 +93,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
 %attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
+%attr(755,root,root)                    %{_prefix}/bin/karma
 %attr(755,root,root)                    %{_prefix}/bin/romprhist
 %attr(755,root,root)                    %{_prefix}/bin/transfer_play
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
@@ -111,6 +112,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_cleanup.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_rename.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdplaylist.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/karma.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/transfer_play.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/romprhist.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/lastfm-scrobbler.1.gz

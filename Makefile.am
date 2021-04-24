@@ -16,20 +16,20 @@ mpdevsbindir=@prefix@/sbin
 
 mpdevbin_PROGRAMS = mpdev
 mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
-				   transfer_play
+				   transfer_play karma
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
 libexec_SCRIPTS = player playpause mpdev_rename create_service
 noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1 \
-		 mpdev_rename.1
+		 mpdev_rename.1 karma.1
 SYSCONFDIR=@sysconfdir@
 sysconf_DATA=mpdev-release
 doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \
-				   create_service romprhost
+				   create_service romprhost karma
 
 mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
 mpdev_LDADD = $(LIB_QMAIL)
@@ -86,6 +86,10 @@ lastfm-scrobbler: moc-scrobbler.in
 	chmod +x $@
 
 mpdplaylist: mpdplaylist.in
+	$(edit) $@.in > $@
+	chmod +x $@
+
+karma: karma.in
 	$(edit) $@.in > $@
 	chmod +x $@
 

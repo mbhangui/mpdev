@@ -1,0 +1,293 @@
+#!/bin/sh
+#
+# $Log: karma.in,v $
+# Revision 1.1  2021-04-24 11:46:17+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: karma.in,v 1.1 2021-04-24 11:46:17+05:30 Cprogrammer Exp mbhangui $
+
+get_mpd_conf_value()
+{
+  grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+  sed -e 's{"{{g'
+}
+
+usage()
+{
+if [ -f /usr/bin/less ] ; then
+	MORE=/usr/bin/less
+else
+	MORE=/usr/bin/more
+fi
+echo "Press ENTER for options, Cntrl C to quit" 1>&2
+read key
+$MORE 1>&2 <<EOF
+Usage: mpdplaylist [OPTION]
+
+Known values for OPTION are:
+
+--uri=path
+  Finds song with uri matching path
+
+--id=songID
+  Finds song with id matching songID
+
+--karma
+  Find songs with karma as per expression. e.g.
+  --karma<50  means songs with karma less than 50
+  --karma<=50 means songs with karma less than or equal to 50
+  --karma=50  means songs with karma equal to 50
+  --karma>=50 means songs with karma greater than or equal to 50
+  --karma>50  means songs with karma greater than 50
+
+--playcount=exp
+  Find songs with playcounts as per expression. e.g.
+  --playcount<5  means songs with play counts less than 5
+  --playcount<=5 means songs with play counts less than or equal to 5
+  --playcount=5  means songs with play counts equal to 5
+  --playcount>=5 means songs with play counts greater than or equal to 5
+  --playcount>5  means songs with play counts greater than 5
+
+--rating
+  Find songs with karma as per expression. e.g.
+  --rating<6  means gons with ratings less than 6
+  --rating<=6 means gons with ratings less than or equal to 6
+  --rating=6  means gons with ratings equal to 6
+  --rating>=6 means gons with ratings greater than or equal to 6
+  --rating>6  means gons with ratings greater than 6
+
+--artist=Artist
+  Find songs with Artist exactly matching 'Artist'
+
+--artistany=keyword
+  Find songs with Artist having 'keyword' anywhere in the Artist field
+
+--query
+  Display SQL query, results and exit
+
+--help
+
+  display this help and exit
+
+--version
+
+  output version information
+EOF
+exit $1
+}
+
+process_cmdline()
+{
+while test $# -gt 0; do
+	case "$1" in
+	-*=*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
+	optval=`echo "$1" | cut -d'=' -f1`
+	prog_args="$prog_args $optval=\"$optarg\""
+	;;
+	-*\>*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*>//'`
+	optarg=">$optarg"
+	optval=`echo "$1" | cut -d'>' -f1`
+	prog_args="$prog_args $optval\"$optarg\""
+	;;
+	-*\<*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*<//'`
+	optarg="<$optarg"
+	optval=`echo "$1" | cut -d'<' -f1`
+	prog_args="$prog_args $optval\"$optarg\""
+	;;
+	*)
+	optarg=
+	prog_args="$prog_args $1"
+	;;
+	esac
+
+	case "$1" in
+	--value=*)
+	karma_value=$optarg
+	;;
+	--uri=*)
+	song_uri=$optarg
+	;;
+	--id=*)
+	song_id=$optarg
+	;;
+	--karma=*|--karma\>*|--karma\<*)
+	first_char=$(echo $optarg | cut -c1)
+	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
+		karma="karma=$optarg"
+	else
+		karma="karma$optarg"
+	fi
+	;;
+	--artist=*)
+	exact=1
+	artist=`echo "$optarg"| sed "s/ /_/g"`
+	;;
+	--artistany=*)
+	exact=0
+	artist=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--playcount=*|--playcount\>*|--playcount\<*)
+	first_char=$(echo $optarg | cut -c1)
+	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
+		play_counts="play_count=$optarg"
+	else
+		play_counts="play_count$optarg"
+	fi
+	;;
+	--rating=*|--rating\>*|--rating\<*)
+	first_char=$(echo $optarg | cut -c1)
+	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
+		rating="rating=$optarg"
+	else
+		rating="rating$optarg"
+	fi
+	;;
+	--query)
+	dummy=1
+	;;
+	--verbose)
+	verbose="-v"
+	;;
+	--help)
+	usage 0
+	;;
+	*)
+	echo "invalid option [$1]" 1>&2
+	usage 1
+	;;
+	esac
+	shift
+done
+}
+
+verbose=""
+song_id=""
+karma=""
+karma_val=50
+artist=""
+rating=""
+play_counts=""
+dummy=0
+process_cmdline "$@"
+
+if [ -z "$karma" -a -z "$artist" -a -z "$rating" -a -z "$play_counts" ] ; then
+	echo "No options given" 1>&2
+	usage 1
+fi
+
+music_dir=`get_mpd_conf_value music_directory`
+if [ $? -ne 0 ] ; then
+  echo "could not get music directory from mpd.conf" 1>&2
+  exit 1
+fi
+sticker_file=`get_mpd_conf_value sticker_file`
+if [ $? -ne 0 ] ; then
+  echo "could not get sticker database from mpd.conf" 1>&2
+  exit 1
+fi
+stats_dir=$(dirname $sticker_file)
+stats_file=$stats_dir/stats.db
+if [ -z "$stats_file" ] ; then
+  echo "Unable to find value of stats.db location" 1>&2
+  exit 1
+fi
+if [ ! -f "$stats_file" ] ; then
+  echo "$stats_file: No such file or directory" 1>&2
+  exit 1
+fi
+
+sql_query_select="SELECT karma, id, uri FROM song "
+sql_query_update="UPDATE song set karma=$karma_val "
+first_condition=""
+
+if [ -n "$song_uri" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query_s="$sql_query_select WHERE"
+		sql_query_u="$sql_query_update WHERE"
+		first_condition=1
+	else
+		sql_query_s="$sql_query_s AND"
+		sql_query_u="$sql_query_u AND"
+	fi
+	sql_query_s="$sql_query_s uri = '$song_uri'"
+	sql_query_u="$sql_query_u uri = '$song_uri'"
+fi
+if [ -n "$song_id" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query_s="$sql_query_select WHERE"
+		sql_query_u="$sql_query_update WHERE"
+		first_condition=1
+	else
+		sql_query_s="$sql_query_s AND"
+		sql_query_u="$sql_query_u AND"
+	fi
+	sql_query_s="$sql_query_s id = '$song_id'"
+	sql_query_u="$sql_query_u id = '$song_id'"
+fi
+if [ -n "$artist" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query_s="$sql_query_select WHERE"
+		sql_query_u="$sql_query_update WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query_s="$sql_query_s AND"
+		sql_query_u="$sql_query_u AND"
+	fi
+	f=`echo $artist|sed "s/_/ /g"`
+	if [ $exact -eq 1 ] ; then
+		sql_query_s="$sql_query_s artist = '$f'"
+		sql_query_u="$sql_query_u artist = '$f'"
+	else
+		sql_query_s="$sql_query_s artist like '%$f%'"
+		sql_query_u="$sql_query_u artist like '%$f%'"
+	fi
+fi
+if [ -n "$rating" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query_s="$sql_query_select WHERE"
+		sql_query_u="$sql_query_update WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query_s="$sql_query_s AND"
+		sql_query_u="$sql_query_u AND"
+	fi
+	sql_query_s="$sql_query_s $rating"
+	sql_query_u="$sql_query_u $rating"
+fi
+if [ -n "$play_counts" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query_s="$sql_query_select WHERE"
+		sql_query_u="$sql_query_update WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query_s="$sql_query_s AND"
+		sql_query_u="$sql_query_u AND"
+	fi
+	sql_query_s="$sql_query_s $play_counts"
+	sql_query_u="$sql_query_u $play_counts"
+fi
+if [ -n "$karma" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query_s="$sql_query_select WHERE"
+		sql_query_u="$sql_query_update WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query_s="$sql_query_s AND"
+		sql_query_u="$sql_query_u AND"
+	fi
+	sql_query_s="$sql_query_s $karma"
+	sql_query_u="$sql_query_u $karma"
+fi
+echo "# $0 $prog_args"
+if [ $dummy -eq 0 ] ; then
+	echo /usr/bin/sqlite3 "$stats_file" "$sql_query_u";
+	/usr/bin/sqlite3 "$stats_file" "$sql_query_u";
+else
+	echo /usr/bin/sqlite3 "$stats_file" "$sql_query_s";
+	/usr/bin/sqlite3 "$stats_file" "$sql_query_s";
+fi
+exit 0
