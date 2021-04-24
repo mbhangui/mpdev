@@ -11,12 +11,22 @@ karma \- Set song's karma
 .SH DESCRIPTION
 \fBkarma\fR sets the value of karma for a song or songs. \fIkarma\fR is a
 number from 0 to 100 representing a how desirable a song needs to be played.
-When you skip a song when playing, it's karma reduces by 1. If a song is
-skipped, it's karma is downgraded by 1. If a song is played twice within a
-day, it's karma is upgraded by 4. If a song is played twice within a week,
-it's karma is upgraded by 3. If a song is played twice within 14 days, its
-karma is upgraded by 2. If a song is played twice within a month, it's karma
-is upgraded by 1. All songs start with a default karma of 50.
+
+If a song is skipped, it's karma is downgraded by 1. If a song is played
+twice within a day, it's karma is upgraded by 4. If a song is played twice
+within a week, it's karma is upgraded by 3. If a song is played twice within
+14 days, its karma is upgraded by 2. If a song is played twice within a
+month, it's karma is upgraded by 1. All songs start with a default karma of
+50.
+
+If a song is skipped, it's karma is downgraded by 1. Karma can be downgraded
+only for songs rated less than 6 and played 5 times or less and whose karma
+is 50 or less. In short a song can earn a permanent karma under following
+conditions
+
+  * it's karma becomes 60 or more.
+  * has been rated 6 or greater.
+  * has been played from beginning to end more than 5 times.
 
 \fBkarma\fR utility helps you to play god. You can increase or decrease a
 song's karma by any value as per your whims and fancy.

@@ -19,14 +19,15 @@ Release 1.0 Start 02/03/2020
 - 22/04/2021
 12. player: skip update of play_count when song is skipped
 13. player: display correct playcount in rompr table
-23/04/2021
+- 23/04/2021
 14. playpause: fixed end-song, pause-song getting skipped
 15. playpause: use SONG_PLAYED instead of ELAPSED_TIME
 16. renamed SONG_PLAYED to SONG_PLAYED_DURATION
 17. mpdev.c: reset song_played_duration when stopped
 18. playpause: display date in yyyy-mm-dd HH:MM:SS during play/pause
-24/04/2021
+- 24/04/2021
 19. added new script karma for manipulating song's karma value
+20. added more conditions for downgrade karma
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

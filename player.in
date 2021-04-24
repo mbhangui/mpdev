@@ -111,10 +111,10 @@ get_TTindex()
 get_rompr_rating()
 {
 	if [ -n "$MYSQL_SOCKET" ] ; then
-		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
 	else
-		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 	fi
 	if [ $? -ne 0 ] ; then
@@ -124,7 +124,7 @@ get_rompr_rating()
 			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
-			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
 				| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
 		else
 			(
@@ -132,11 +132,11 @@ get_rompr_rating()
 			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" \
+			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
 				| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 		fi
 		if [ $? -ne 0 ] ; then
-			echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable where TTindex=$1;" 1>&2
+			echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" 1>&2
 			return 1
 		fi
 	fi
@@ -146,9 +146,9 @@ get_rompr_rating()
 get_mpd_rating()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $sticker_file "SELECT value from sticker where type='song' and uri='$turi';"
+	sqlite3 -batch $sticker_file "SELECT value from sticker WHERE type='song' AND uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT value from sticker where type='song' and uri=\"$turi\";" 1>&2
+		echo "error: SELECT value from sticker WHERE type='song' AND uri=\"$turi\";" 1>&2
 		return 1
 	fi
 	return 0
@@ -157,9 +157,9 @@ get_mpd_rating()
 get_stat_rating()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT rating from song where uri='$turi';"
+	sqlite3 -batch $stats_file "SELECT rating from song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT rating from song where uri='$turi';" 1>&2
+		echo "error: SELECT rating from song WHERE uri='$turi';" 1>&2
 		return 1
 	fi
 	return 0
@@ -168,9 +168,9 @@ get_stat_rating()
 get_stat_last_played()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT last_played from song where uri='$turi';"
+	sqlite3 -batch $stats_file "SELECT last_played from song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT last_played from song where uri='$turi';" 1>&2
+		echo "error: SELECT last_played from song WHERE uri='$turi';" 1>&2
 		return 1
 	fi
 	return 0
@@ -202,9 +202,9 @@ sticker_db_update()
 	fi
 	turi=`echo $1|sed -e "s{'{''{g"`
 	tmprate=$2
-	sqlite3 -batch $sticker_file "UPDATE sticker set value=$tmprate where type='song' and uri='$turi';"
+	sqlite3 -batch $sticker_file "UPDATE sticker SET value=$tmprate WHERE type='song' AND uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: UPDATE sticker set value=$tmprate where type='song' and uri='$turi';" 1>&2
+		echo "error: UPDATE sticker SET value=$tmprate WHERE type='song' AND uri='$turi';" 1>&2
 		return 1
 	fi
 }
@@ -281,24 +281,24 @@ stats_db_update()
 				echo "UPDATE stats upgrade KARMA += $kval"
 			fi
 			sqlite3 -batch $stats_file \
-				"UPDATE song set last_played=$last_played, play_count=play_count+1, rating=$tmprate, karma=karma+$kval where uri='$turi';"
+				"UPDATE song SET last_played=$last_played, play_count=play_count+1, rating=$tmprate, karma=karma+$kval WHERE uri='$turi';"
 		else
 			sqlite3 -batch $stats_file \
-				"UPDATE song set last_played=$last_played, play_count=play_count+1, rating=$tmprate where uri='$turi';"
+				"UPDATE song SET last_played=$last_played, play_count=play_count+1, rating=$tmprate WHERE uri='$turi';"
 		fi
 	else
 		sqlite3 -batch $stats_file \
-			"UPDATE song set last_played=$last_played, rating=$tmprate where uri='$turi';"
+			"UPDATE song SET last_played=$last_played, rating=$tmprate WHERE uri='$turi';"
 	fi
 	if [ $? -ne 0 ] ; then
 		if [ $update_playcount -eq 1 ] ; then
 			if [ $kval -gt 0 ] ; then
-				echo "ERROR: UPDATE song set last_played=$last_played, play_count=play_count+1, rating=$tmprate, karma=karma+$kval where uri='$turi';"
+				echo "ERROR: UPDATE song SET last_played=$last_played, play_count=play_count+1, rating=$tmprate, karma=karma+$kval WHERE uri='$turi';"
 			else
-				echo "ERROR: UPDATE song set last_played=$last_played, play_count=play_count+1, rating=$tmprate where uri='$turi';" 1>&2
+				echo "ERROR: UPDATE song SET last_played=$last_played, play_count=play_count+1, rating=$tmprate WHERE uri='$turi';" 1>&2
 			fi
 		else
-			echo "ERROR: UPDATE song set last_played=$last_played, rating=$tmprate where uri='$turi';" 1>&2
+			echo "ERROR: UPDATE song SET last_played=$last_played, rating=$tmprate WHERE uri='$turi';" 1>&2
 		fi
 		return 1
 	fi
@@ -314,9 +314,9 @@ downgrade_karma()
 	fi
 	turi=`echo "$1" | sed -e "s{'{''{g"`
 	sqlite3 -batch $stats_file \
-		"UPDATE song set karma=karma-1 where uri='$turi' and karma>0;"
+		"UPDATE song SET karma=karma-1 WHERE uri='$turi' AND karma>0 AND karma<60 AND rating<6 AND play_count<=5;"
 	if [ $? -ne 0 ] ; then
-		"ERROR: UPDATE song set karma=karma-1 where uri='$turi' and karma>0;" 1>&2
+		"ERROR: UPDATE song SET karma=karma-1 WHERE uri='$turi' AND karma>0 AND karma<60 AND rating<6 AND play_count<=5;" 1>&2
 		return 1
 	fi
 	return 0
@@ -340,8 +340,8 @@ rompr_update_playcount()
 		if [ -n "$MYSQL_SOCKET" ] ; then
 			(
 			# update Playcount only when it is not being updated by RompR
-			echo -n "UPDATE Playcounttable set Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
-			echo -n "WHERE TTindex=$TTidx and UNIX_TIMESTAMP(LastPlayed) < $tm;"
+			echo -n "UPDATE Playcounttable SET Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
+			echo -n "WHERE TTindex=$TTidx AND UNIX_TIMESTAMP(LastPlayed) < $tm;"
 			echo 
 			# insert when the above update returns 0 rows
 			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
@@ -351,8 +351,8 @@ rompr_update_playcount()
 		else
 			(
 			# update Playcount only when it is not being updated by RompR
-			echo -n "UPDATE Playcounttable set Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
-			echo -n "WHERE TTindex=$TTidx and UNIX_TIMESTAMP(LastPlayed) < $tm;"
+			echo -n "UPDATE Playcounttable SET Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
+			echo -n "WHERE TTindex=$TTidx AND UNIX_TIMESTAMP(LastPlayed) < $tm;"
 			echo 
 			# insert when the above update returns 0 rows
 			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
@@ -363,8 +363,8 @@ rompr_update_playcount()
 		if [ $? -ne 0 ] ; then
 			(
 			echo "ERROR: "
-			echo -n "UPDATE Playcounttable set Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
-			echo -n "WHERE TTindex=$TTidx and UNIX_TIMESTAMP(LastPlayed) < $tm;"
+			echo -n "UPDATE Playcounttable SET Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
+			echo -n "WHERE TTindex=$TTidx AND UNIX_TIMESTAMP(LastPlayed) < $tm;"
 			echo 
 			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
 			echo -n "VALUES ($TTidx, 1, FROM_UNIXTIME($tm));"
@@ -470,14 +470,14 @@ get_rompr_playcount_ts()
 {
 	ts=$1
 	if [ -n "$MYSQL_SOCKET" ] ; then
-		echo "select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" \
+		echo "SELECT Playcount,UNIX_TIMESTAMP(LastPlayed) FROM Playcounttable WHERE TTindex=$ts;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
 	else
-		echo "select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" \
+		echo "SELECT Playcount,UNIX_TIMESTAMP(LastPlayed) FROM Playcounttable WHERE TTindex=$ts;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 	fi
 	if [ $? -ne 0 ] ; then
-		echo "ERROR: select Playcount,UNIX_TIMESTAMP(LastPlayed) from Playcounttable where TTindex=$ts;" 1>&2
+		echo "ERROR: select Playcount,UNIX_TIMESTAMP(LastPlayed) FROM Playcounttable WHERE TTindex=$ts;" 1>&2
 		return 1
 	fi
 	return 0
