@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.18  2021-04-24 11:56:20+05:30  Cprogrammer
+# minor fixes for display and error messages
+#
 # Revision 1.17  2021-04-18 16:39:41+05:30  Cprogrammer
 # fix for space in command line argument values
 #
@@ -53,7 +56,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.17 2021-04-18 16:39:41+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.18 2021-04-24 11:56:20+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -182,13 +185,13 @@ while test $# -gt 0; do
 	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*>//'`
 	optarg=">$optarg"
 	optval=`echo "$1" | cut -d'>' -f1`
-	prog_args="$prog_args $optval>\"$optarg\""
+	prog_args="$prog_args $optval\"$optarg\""
 	;;
 	-*\<*)
 	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*<//'`
 	optarg="<$optarg"
 	optval=`echo "$1" | cut -d'<' -f1`
-	prog_args="$prog_args $optval<\"$optarg\""
+	prog_args="$prog_args $optval\"$optarg\""
 	;;
 	*)
 	optarg=
@@ -298,6 +301,7 @@ while test $# -gt 0; do
 done
 }
 
+verbose=""
 fromyear=""
 toyear=""
 incgenre=""
@@ -348,11 +352,9 @@ if [ $? -ne 0 ] ; then
   exit 1
 fi
 stats_dir=$(dirname $sticker_file)
-stats_dir=$stats_dir
 stats_file=$stats_dir/stats.db
-stats_file=$stats_file
 if [ -z "$stats_file" ] ; then
-  echo "$stats_file: No such file for directory" 1>&2
+  echo "Unable to get stats.db location" 1>&2
   exit 1
 fi
 if [ ! -f "$stats_file" ] ; then
