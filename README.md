@@ -87,11 +87,11 @@ SONG_GENRE|Set to the Genre tag of the song
 SONG_TRACK|Set to the track number of the song
 SONG_DURATION|Set to the song duration
 SONG_PLAYED_DURATION|Set to the duration for which the song was played
+ELAPSED_TIME|Total time elapsed within the current song in seconds, but with higher resolution
 SONG_POSITION|Set to position of the current song
 SONG_LAST_MODIFIED|Set to the last modified time of the song
 START_TIME|Time at which the song play started
 END_TIME|Time at which the song ended
-ELAPSED_TIME|Set to time since player was paused
 PLAYER_STATE|Set when you pause/resume player
 DURATION|Set to song duration as a floating point number
 SCROBBLER_LASTFM|Set to 1 if tracks are getting scrobbled to [lastfm](https://www.last.fm/)
