@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.28  2021-04-24 20:48:30+05:30  Cprogrammer
+# prevent end-song getting executed twice when playlist ends
+#
 # Revision 1.27  2021-04-24 14:51:52+05:30  Cprogrammer
 # skip percentage calculation when SONG_PLAYED_DURATION is not set
 #
@@ -86,7 +89,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.27 2021-04-24 14:51:52+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.28 2021-04-24 20:48:30+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -717,8 +720,16 @@ update_song()
 		fi
 		;;
 		"end-song"|"pause-song")
-		if [ " $state" = " end-song" -a -z "$END_TIME" ] ; then
-			exit 0
+		if [ " $state" = " end-song" ] ; then
+			if [ -z "$END_TIME" ] ; then
+				exit 0
+			fi
+			if [ -f $MPDEV_TMPDIR/end.$csum ] ; then
+				/bin/rm -f $MPDEV_TMPDIR/end.$csum
+				exit 0
+			else
+				touch $MPDEV_TMPDIR/end.$csum
+			fi
 		fi
 		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
@@ -800,9 +811,9 @@ update_song()
 						downgrade_karma "$uri"
 					fi
 					if [ $var -eq 0 ] ; then
-						echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (partial)"
+						echo "SONG [$csum] "$percent"% played duration=$SONG_PLAYED_DURATION secs (partial)"
 					else
-						echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (full)"
+						echo "SONG [$csum] "$percent"% played duration=$SONG_PLAYED_DURATION secs (full)"
 					fi
 				else
 					var=0
@@ -818,8 +829,8 @@ update_song()
 					stats_db_update "$uri" "$rating" "$START_TIME" 0
 				else
 					stats_db_update "$uri" "$rating" "$START_TIME" 1
+					touch $MPDEV_TMPDIR/stats_playcount.$csum
 				fi
-				touch $MPDEV_TMPDIR/stats_playcount.$csum
 			fi
 		fi
 		# Update Play Counts in rompr Playcounttable
@@ -866,7 +877,6 @@ update_song()
 				if [ -n "$END_TIME" ] ; then
 					echo -n "PauseSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 					echo    "End=$END_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`]"
-					echo
 				fi
 			fi
 		fi

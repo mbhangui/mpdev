@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: playpause.in,v $
+# Revision 1.10  2021-04-24 20:48:53+05:30  Cprogrammer
+# prevent end-song getting executed twice when playlist ends
+#
 # Revision 1.9  2021-04-24 14:52:15+05:30  Cprogrammer
 # skip percentage calculation when SONG_PLAYED_DURATION is not set
 #
@@ -29,7 +32,7 @@
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.9 2021-04-24 14:52:15+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.10 2021-04-24 20:48:53+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -61,21 +64,6 @@ fi
 if [ -z "$MIN_PLAY_PERCENT" ] ; then
 	MIN_PLAY_PERCENT=75
 fi
-if [ -n $SONG_PLAYED_DURATION ] ; then
-	percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-	if [ " $percent" = " 0.0" ] ; then
-		percent=0
-	fi
-	if [ ! "$percent" = "0" ] ; then
-		echo $percent > $MPDEV_TMPDIR/percent_played
-	elif [ -f $MPDEV_TMPDIR/percent_played ] ; then
-		percent=$(cat $MPDEV_TMPDIR/percent_played)
-	fi
-	var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
-	if [ $var -ne 1 ] ; then
-		echo "SONG $SONG_URI stop/paused at $percent"
-	fi
-fi
 if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 	START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
 else
@@ -94,5 +82,7 @@ fi
 if [ " $PLAYER_STATE" = " stop" ] ; then
 	END_TIME=$(date +'%s')
 	export END_TIME=$END_TIME
-	exec $HOME/.mpdev/player end-song
+	if [ ! -f $MPDEV_TMPDIR/end.$csum ] ; then
+		exec $HOME/.mpdev/player end-song
+	fi
 fi
