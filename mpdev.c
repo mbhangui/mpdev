@@ -1,5 +1,9 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.15  2021-04-24 20:47:24+05:30  Cprogrammer
+ * add elapsed time to song_played_duration if song is already playing during startup
+ * fixes for song_played_duration
+ *
  * Revision 1.14  2021-04-24 16:20:43+05:30  Cprogrammer
  * removed unset SONG_PLAYED_DURATION
  *
@@ -82,7 +86,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.14 2021-04-24 16:20:43+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.15 2021-04-24 20:47:24+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -474,11 +478,11 @@ get_status(double *elapsed, double *duration)
 		if (!str_diffn(line.s, "OK\n", 3))
 			break;
 		else
-		if (!str_diffn(line.s, "elapsed: ", 9)) {
+		if (elapsed && !str_diffn(line.s, "elapsed: ", 9)) {
 			scan_double(line.s + 9, elapsed);
 			continue;
 		} else
-		if (!str_diffn(line.s, "duration: ", 10)) {
+		if (duration && !str_diffn(line.s, "duration: ", 10)) {
 			scan_double(line.s + 10, duration);
 			continue;
 		} else
@@ -515,6 +519,7 @@ run_command(int status, char *arg)
 {
 	int             i, wstat, childrc, fd;
 	double          elapsed = 0.001, duration = 0.001;
+	static int      prev_state;
 	pid_t           child;
 
 	if (!status) {
@@ -540,18 +545,20 @@ run_command(int status, char *arg)
 			switch (i)
 			{
 			case STOP_STATE:
+				prev_state = STOP_STATE;
+				song_played_duration += (time(0) - t1);
+				t1 = time(0);
 				strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
 				if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
 					die_nomem();
-				t1 = song_played_duration = 0;
+				song_played_duration = 0;
 				if (!env_put2("PLAYER_STATE", "stop"))
 					die_nomem();
 				break;
 			case PAUSE_STATE:
-				if (t1) {
-					song_played_duration += (time(0) - t1);
-					t1 = 0;
-				}
+				prev_state = PAUSE_STATE;
+				song_played_duration += (time(0) - t1);
+				t1 = time(0);
 				strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
 				if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
 					die_nomem();
@@ -559,10 +566,16 @@ run_command(int status, char *arg)
 					die_nomem();
 				break;
 			case PLAY_STATE:
+				if (prev_state == STOP_STATE)
+					song_played_duration = 0;
+				else
+				if (prev_state == PLAY_STATE)
+					song_played_duration += (time(0) - t1);
+				prev_state = PLAY_STATE;
+				t1 = time(0);
 				strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
 				if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
 					die_nomem();
-				t1 = time(0);
 				if (!env_put2("PLAYER_STATE", "play"))
 					die_nomem();
 				break;
@@ -956,6 +969,7 @@ main(int argc, char **argv)
 				   *date, *genre, *title, *track, *duration, *response, *mpd_host, *ptr;
 	char            port[FMT_ULONG], mpdinbuf[1024], mpdoutbuf[512], ssoutbuf[512], sserrbuf[512];
 	unsigned long   id, prev_id1 = 0, prev_id2 = 0;
+	double          elapsed;
 	time_t          duration_i, t;
 
 	substdio_fdbuf(&ssout, write, 1, ssoutbuf, sizeof(sserrbuf));
@@ -1054,6 +1068,13 @@ main(int argc, char **argv)
 
 		initial_state = get_play_state();
 		prev_id1 = prev_id2 = 0;
+		if (initial_state == PLAY_STATE) {
+			i = get_status(&elapsed, 0);
+			if (elapsed) {
+				song_played_duration = (long) elapsed;
+				t1 = time(0);
+			}
+		}
 		for (;;) {
 			if ((i = get_current_song(&uri, &last_modified, &album, &artist, &date, &genre,
 				&title, &track, &duration, &duration_i, &pos, &id, &response)) == 1) {
@@ -1091,6 +1112,8 @@ main(int argc, char **argv)
 					if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
 						die_nomem();
 				}
+				song_played_duration = 0;
+				t1 = time(0);
 				submit_song(verbose, "end-song");
 				prev_id1 = id;
 			}
@@ -1098,8 +1121,6 @@ main(int argc, char **argv)
 				set_environ();
 				prev_id1 = id;
 				if (prev_id2 != id) { /*- new song */
-					t1 = time(0);
-					song_played_duration = 0;
 					if (verbose == 3) {
 						print_song_details(uri, last_modified, album, artist,
 							date, genre, title, track, duration, duration_i,
@@ -1130,7 +1151,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.14 2021-04-24 16:20:43+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.15 2021-04-24 20:47:24+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

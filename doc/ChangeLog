@@ -31,6 +31,10 @@ Release 1.0 Start 02/03/2020
 21. player, playpause: skip percentage calculation when SONG_PLAYED_DURATION
     is not set
 22. mpdev.c: removed unset of SONG_PLAYED_DURATION
+23. mpdev.c: fixes for SONG_PLAYED_DURATION
+24. mpdev.c: add elapsed time to SONG_PLAYED_DURATION if started when a song
+    was already playing
+25.
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
