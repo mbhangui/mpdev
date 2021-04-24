@@ -28,6 +28,8 @@ Release 1.0 Start 02/03/2020
 - 24/04/2021
 19. added new script karma for manipulating song's karma value
 20. added more conditions for downgrade karma
+21. player, playpause: skip percentage calculation when SONG_PLAYED_DURATION
+    is not set
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

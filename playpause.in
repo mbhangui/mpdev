@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: playpause.in,v $
+# Revision 1.9  2021-04-24 14:52:15+05:30  Cprogrammer
+# skip percentage calculation when SONG_PLAYED_DURATION is not set
+#
 # Revision 1.8  2021-04-23 18:43:42+05:30  Cprogrammer
 # display date in %Y-%m-%d %H:%M%S during play/pause
 #
@@ -26,7 +29,7 @@
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.8 2021-04-23 18:43:42+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.9 2021-04-24 14:52:15+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -58,14 +61,20 @@ fi
 if [ -z "$MIN_PLAY_PERCENT" ] ; then
 	MIN_PLAY_PERCENT=75
 fi
-percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-if [ " $percent" = " 0.0" ] ; then
-	percent=0
-fi
-if [ ! "$percent" = "0" ] ; then
-	echo $percent > $MPDEV_TMPDIR/percent_played
-elif [ -f $MPDEV_TMPDIR/percent_played ] ; then
-	percent=$(cat $MPDEV_TMPDIR/percent_played)
+if [ -n $SONG_PLAYED_DURATION ] ; then
+	percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+	if [ " $percent" = " 0.0" ] ; then
+		percent=0
+	fi
+	if [ ! "$percent" = "0" ] ; then
+		echo $percent > $MPDEV_TMPDIR/percent_played
+	elif [ -f $MPDEV_TMPDIR/percent_played ] ; then
+		percent=$(cat $MPDEV_TMPDIR/percent_played)
+	fi
+	var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
+	if [ $var -ne 1 ] ; then
+		echo "SONG $SONG_URI stop/paused at $percent"
+	fi
 fi
 if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 	START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
@@ -76,11 +85,7 @@ else
 	echo $START_TIME > $MPDEV_TMPDIR/start_time.$csum
 	touch -r $MPDEV_TMPDIR/stats.$csum $MPDEV_TMPDIR/start_time.$csum
 fi
-var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
 
-if [ $var -ne 1 ] ; then
-	echo "SONG $SONG_URI stop/paused at $percent"
-fi
 if [ " $PLAYER_STATE" = " pause" ] ; then
 	END_TIME=$(date +'%s')
 	export END_TIME=$END_TIME

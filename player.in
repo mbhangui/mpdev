@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.27  2021-04-24 14:51:52+05:30  Cprogrammer
+# skip percentage calculation when SONG_PLAYED_DURATION is not set
+#
 # Revision 1.26  2021-04-23 16:46:08+05:30  Cprogrammer
 # renamed SONG_PLAYED to SONG_PLAYED_DURATION
 #
@@ -83,7 +86,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.26 2021-04-23 16:46:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.27 2021-04-24 14:51:52+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -111,10 +114,10 @@ get_TTindex()
 get_rompr_rating()
 {
 	if [ -n "$MYSQL_SOCKET" ] ; then
-		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
+		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) FROM Ratingtable WHERE TTindex=$1;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
 	else
-		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
+		echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) FROM Ratingtable WHERE TTindex=$1;" \
 			| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 	fi
 	if [ $? -ne 0 ] ; then
@@ -124,7 +127,7 @@ get_rompr_rating()
 			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
-			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
+			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) FROM Ratingtable WHERE TTindex=$1;" \
 				| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
 		else
 			(
@@ -132,11 +135,11 @@ get_rompr_rating()
 			echo -n "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP not null;"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
-			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" \
+			echo "SELECT Rating, UNIX_TIMESTAMP(zztimestamp) FROM Ratingtable WHERE TTindex=$1;" \
 				| mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 		fi
 		if [ $? -ne 0 ] ; then
-			echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) from Ratingtable WHERE TTindex=$1;" 1>&2
+			echo "error: SELECT Rating, UNIX_TIMESTAMP(zztimestamp) FROM Ratingtable WHERE TTindex=$1;" 1>&2
 			return 1
 		fi
 	fi
@@ -146,9 +149,9 @@ get_rompr_rating()
 get_mpd_rating()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $sticker_file "SELECT value from sticker WHERE type='song' AND uri='$turi';"
+	sqlite3 -batch $sticker_file "SELECT value FROM sticker WHERE type='song' AND uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT value from sticker WHERE type='song' AND uri=\"$turi\";" 1>&2
+		echo "error: SELECT value FROM sticker WHERE type='song' AND uri=\"$turi\";" 1>&2
 		return 1
 	fi
 	return 0
@@ -157,9 +160,9 @@ get_mpd_rating()
 get_stat_rating()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT rating from song WHERE uri='$turi';"
+	sqlite3 -batch $stats_file "SELECT rating FROM song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT rating from song WHERE uri='$turi';" 1>&2
+		echo "error: SELECT rating FROM song WHERE uri='$turi';" 1>&2
 		return 1
 	fi
 	return 0
@@ -168,9 +171,9 @@ get_stat_rating()
 get_stat_last_played()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT last_played from song WHERE uri='$turi';"
+	sqlite3 -batch $stats_file "SELECT last_played FROM song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
-		echo "error: SELECT last_played from song WHERE uri='$turi';" 1>&2
+		echo "error: SELECT last_played FROM song WHERE uri='$turi';" 1>&2
 		return 1
 	fi
 	return 0
@@ -787,18 +790,22 @@ update_song()
 				if [ -z "$MIN_PLAY_PERCENT" ] ; then
 					MIN_PLAY_PERCENT=75
 				fi
-				percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-				if [ " $percent" = " 0.0" ] ; then
-					percent=0
-				fi
-				var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
-				if [ $var -eq 0 ] ; then
-					downgrade_karma "$uri"
-				fi
-				if [ $var -eq 0 ] ; then
-					echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (partial)"
+				if [ -n "$SONG_PLAYED_DURATION" ] ; then
+					percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+					if [ " $percent" = " 0.0" ] ; then
+						percent=0
+					fi
+					var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
+					if [ $var -eq 0 ] ; then
+						downgrade_karma "$uri"
+					fi
+					if [ $var -eq 0 ] ; then
+						echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (partial)"
+					else
+						echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (full)"
+					fi
 				else
-					echo "SONG "$percent"% played total time=$SONG_PLAYED_DURATION secs (full)"
+					var=0
 				fi
 				if [ $VERBOSE -gt 0 ] ; then
 					if [ $var -eq 0 ] ; then
