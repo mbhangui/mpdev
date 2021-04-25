@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.30  2021-04-25 10:10:07+05:30  Cprogrammer
+# added code comments
+#
 # Revision 1.29  2021-04-24 22:13:54+05:30  Cprogrammer
 # removed redundant code
 #
@@ -92,7 +95,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.29 2021-04-24 22:13:54+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.30 2021-04-25 10:10:07+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -533,6 +536,12 @@ update_song()
 		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
 		fi
+		# This is set by mpdev when setting initial_state
+		# With the help pf PLAYER_STATE we know the state that
+		# the player was in when mpdev was started
+		# If the song was already playing, we should create
+		# files related to the song in MPDEV_TMPDIR. If not,
+		# we should delete files related to the song.
 		if [ -n "$PLAYER_STATE" ] ; then
 			if [ "$PLAYER_STATE" = "pause" ] ; then
 				if [ ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
@@ -552,10 +561,12 @@ update_song()
 				for i in sticker rompr stats scrobble
 				do
 					if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
-						if [ $VERBOSE -gt 0 ] ; then
-							echo "creating $MPDEV_TMPDIR/$i.$csum"
+						if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
+							if [ $VERBOSE -gt 0 ] ; then
+								echo "creating $MPDEV_TMPDIR/$i.$csum"
+							fi
+							touch $MPDEV_TMPDIR/$i.$csum
 						fi
-						touch $MPDEV_TMPDIR/$i.$csum
 					fi
 				done
 				return 0
