@@ -41,6 +41,8 @@ Release 1.0 Start 02/03/2020
 27. mdev.c: get elapsed time in a single call to get the intial player state
 28. mpdev.c: use DISABLE_SCROBBLE env variable to disable scrobbling
 29. mpdev.c, player: adde code comments
+30. create_service: remove cleanup of /tmp/mpdev as purpose is solved by
+    having it as TMPFS
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
