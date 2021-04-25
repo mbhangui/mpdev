@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.16  2021-04-25 10:22:49+05:30  Cprogrammer
+ * added code comments
+ *
  * Revision 1.15  2021-04-24 20:47:24+05:30  Cprogrammer
  * add elapsed time to song_played_duration if song is already playing during startup
  * fixes for song_played_duration
@@ -86,7 +89,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.15 2021-04-24 20:47:24+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.16 2021-04-25 10:22:49+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -1149,7 +1152,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.15 2021-04-24 20:47:24+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.16 2021-04-25 10:22:49+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
