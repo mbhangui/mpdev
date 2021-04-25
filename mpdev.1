@@ -47,17 +47,23 @@ Retry interval in seconds in case \fBmpd\fR(1) is done
 .RE
 
 .SH HOOKS
-You can create scripts in $HOME/.mpdev directory. The default installation installs
-a script named $HOME/.mpdev/player for the uid 1000. The script does the following
+You can create scripts in $HOME/.mpdev directory. The default installation
+installs a script named $HOME/.mpdev/player for the uid 1000. The script does
+the following
 
 .IP \[bu] 4
-scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time
+scrobbles titles to last.fm and libre.fm. You have to create API keys by running
+lastfm-scrobbler and librefm-scrobbler one time. You can disable scrobbling by
+setting DISABLE_SCROBBLE environment variable
 .sp -1
 .IP \[bu]
-updates play counts in the sqlite stats.db and [RompR](https://fatg3erman.github.io/RompR/) db
+updates play counts in the sqlite stats.db and
+[RompR](https://fatg3erman.github.io/RompR/) db
 .sp -1
 .IP \[bu]
-Synchronizes the ratings in the sticker (sqlite), [RompR](https://fatg3erman.github.io/RompR/) (MySQL) and the stats (sqlite) databases. It also initializes the rating to 3 when you play an unrated song.
+Synchronizes the ratings in the sticker (sqlite),
+[RompR](https://fatg3erman.github.io/RompR/) (MySQL) and the stats (sqlite)
+databases. It also initializes the rating to 3 when you play an unrated song.
 .PP
 
 The above three are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song playing, available to it. Below is a list of of events and corresping hooks that will be executed if available.

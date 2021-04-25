@@ -236,10 +236,52 @@ safewrite(int fd, char *buf, int len)
 	return r;
 }
 
+/*
+ * OK MPD 0.21.11
+ * command_list_ok_begin
+ * status
+ * currentsong
+ * command_list_end
+ * volume: 100
+ * repeat: 0
+ * random: 0
+ * single: 0
+ * consume: 1
+ * playlist: 14
+ * playlistlength: 336
+ * mixrampdb: 0.000000
+ * state: play
+ * song: 0
+ * songid: 13
+ * time: 28:289
+ * elapsed: 27.729
+ * bitrate: 192
+ * duration: 289.071
+ * audio: 44100:24:2
+ * nextsong: 1
+ * nextsongid: 14
+ * list_OK
+ * file: Hindi Soundtrack/Talat Mahmood/The Silken/CD 5/12 - Mohabbat Ki Kahaniyan (with Lata) - Woh Din Yaad Karo - 1971.mp3
+ * Last-Modified: 2019-11-14T11:26:37Z
+ * Artist: Talat Mahmood; Lata Mangeshkar
+ * Title: Mohabbat Ki Kahaniyan
+ * Album: Woh Din Yaad Karo
+ * Track: 12
+ * Date: 1971
+ * Genre: Hindi
+ * Disc: 1
+ * Time: 289
+ * duration: 289.071
+ * Pos: 0
+ * Id: 13
+ * list_OK
+ * OK
+ */
+
 int
-get_play_state()
+get_status(char *prefix, double *elapsed, double *duration)
 {
-	int             match, state;
+	int             match, state = -1;
 
 	mpd_out("status");
 	for (state = 0;;) {
@@ -262,6 +304,14 @@ get_play_state()
 			break;
 		line.len--;
 		line.s[line.len] = 0;
+		if (elapsed && !str_diffn(line.s, "elapsed: ", 9)) {
+			scan_double(line.s + 9, elapsed);
+			continue;
+		} else
+		if (duration && !str_diffn(line.s, "duration: ", 10)) {
+			scan_double(line.s + 10, duration);
+			continue;
+		} else
 		if (!str_diffn(line.s, "state: ", 7)) {
 			if (!str_diffn(line.s + 7, "stop", 4))
 				state=STOP_STATE;
@@ -274,6 +324,10 @@ get_play_state()
 			if (!env_put2("PLAYER_STATE", line.s + 7))
 				die_nomem();
 			if (verbose) {
+				if (prefix) {
+					out(prefix);
+					out(" ");
+				}
 				out("MPD status: ");
 				if (substdio_put(&ssout, line.s + 7, line.len - 7) == -1)
 					die_write();
@@ -412,92 +466,6 @@ get_current_song(char **uri, char **last_modified, char **album, char **artist,
 	return (flag);
 }
 
-/*
- * OK MPD 0.21.11
- * command_list_ok_begin
- * status
- * currentsong
- * command_list_end
- * volume: 100
- * repeat: 0
- * random: 0
- * single: 0
- * consume: 1
- * playlist: 14
- * playlistlength: 336
- * mixrampdb: 0.000000
- * state: play
- * song: 0
- * songid: 13
- * time: 28:289
- * elapsed: 27.729
- * bitrate: 192
- * duration: 289.071
- * audio: 44100:24:2
- * nextsong: 1
- * nextsongid: 14
- * list_OK
- * file: Hindi Soundtrack/Talat Mahmood/The Silken/CD 5/12 - Mohabbat Ki Kahaniyan (with Lata) - Woh Din Yaad Karo - 1971.mp3
- * Last-Modified: 2019-11-14T11:26:37Z
- * Artist: Talat Mahmood; Lata Mangeshkar
- * Title: Mohabbat Ki Kahaniyan
- * Album: Woh Din Yaad Karo
- * Track: 12
- * Date: 1971
- * Genre: Hindi
- * Disc: 1
- * Time: 289
- * duration: 289.071
- * Pos: 0
- * Id: 13
- * list_OK
- * OK
- */
-
-int
-get_status(double *elapsed, double *duration)
-{
-	int             match, status = -1;
-
-	mpd_out("command_list_ok_begin\nstatus\ncurrentsong\ncommand_list_end");
-	for (;;) {
-		if (getln(&mpdin, &line, &match, '\n') == -1)
-			die_read("status");
-		if (!match && line.len == 0) {
-			if (verbose) {
-				out("EOF status\n");
-				flush();
-			}
-			return (0);
-		}
-		if (verbose > 1) {
-			if (substdio_put(&ssout, line.s, line.len) == -1)
-				die_write();
-			flush();
-		}
-		if (!str_diffn(line.s, "OK\n", 3))
-			break;
-		else
-		if (elapsed && !str_diffn(line.s, "elapsed: ", 9)) {
-			scan_double(line.s + 9, elapsed);
-			continue;
-		} else
-		if (duration && !str_diffn(line.s, "duration: ", 10)) {
-			scan_double(line.s + 10, duration);
-			continue;
-		} else
-		if (!str_diffn(line.s, "state: play\n", 12))
-			status = PLAY_STATE;
-		else
-		if (!str_diffn(line.s, "state: stop\n", 12))
-			status = STOP_STATE;
-		else
-		if (!str_diffn(line.s, "state: pause\n", 13))
-			status = PAUSE_STATE;
-	}
-	return status;
-}
-
 #define DATABASE_EVENT        1
 #define UPDATE_EVENT          2
 #define STORED_PLAYLIST_EVENT 3
@@ -531,7 +499,7 @@ run_command(int status, char *arg)
 			player_cmd[0] = ".mpdev/sticker";
 			break;
 		case PLAYER_EVENT:
-			i = get_status(&elapsed, &duration);
+			i = get_status(0, &elapsed, &duration);
 			if (elapsed) {
 				strnum[fmt_double(strnum, elapsed, 1)] = 0;
 				if (!env_put2("ELAPSED_TIME", strnum))
@@ -1011,10 +979,12 @@ main(int argc, char **argv)
 		strerr_die1x(100, "HOME not set");
 	if (chdir(ptr))
 		strerr_die3sys(111, "unable to chdir to ", ptr, ": ");
-	if (!access(".config/lastfm-scrobbler", F_OK) && !env_put2("SCROBBLE_LASTFM", "1"))
-		die_nomem();
-	if (!access(".config/librefm-scrobbler", F_OK) && !env_put2("SCROBBLE_LIBREFM", "1"))
-		die_nomem();
+	if (!env_get("DISABLE_SCROBBLE")) {
+		if (!access(".config/lastfm-scrobbler/lastfm-scrobbler.conf", F_OK) && !env_put2("SCROBBLE_LASTFM", "1"))
+			die_nomem();
+		if (!access(".config/librefm-scrobbler/librefm-scrobbler.conf", F_OK) && !env_put2("SCROBBLE_LIBREFM", "1"))
+			die_nomem();
+	}
 	for (connection_num = 1;;connection_num++) {
 		if (verbose == 3) {
 			print_time(&ssout);
@@ -1066,15 +1036,24 @@ main(int argc, char **argv)
 		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
 		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 
-		initial_state = get_play_state();
-		prev_id1 = prev_id2 = 0;
-		if (initial_state == PLAY_STATE) {
-			i = get_status(&elapsed, 0);
+		/*-
+		 * initial state is when mpdev is invoked
+		 * the first time. In this state a player
+		 * may be in pause, stop or play mode.
+		 *
+		 * first we get the state the player was in
+		 * when we first got invoked. If a song
+		 * was already running, we need to know the
+		 * elaapsed time and initialize song_played_duration
+		 * to the elapsed time.
+		 */
+		if ((initial_state = get_status("Initial", &elapsed, 0)) == PLAY_STATE) {
 			if (elapsed) {
 				song_played_duration = (long) elapsed;
 				t1 = time(0);
 			}
 		}
+		prev_id1 = prev_id2 = 0;
 		for (;;) {
 			if ((i = get_current_song(&uri, &last_modified, &album, &artist, &date, &genre,
 				&title, &track, &duration, &duration_i, &pos, &id, &response)) == 1) {
@@ -1098,6 +1077,20 @@ main(int argc, char **argv)
 				submit_song(verbose, "end-song");
 				break;
 			}
+			/*-
+			 * a song was playing and now
+			 * the current id of the song doesn't
+			 * match with it. It means that we
+			 * have a new song. Now do the following
+			 * 1. Set END_TIME
+			 * 2. set SONG_PLAYED_DURATION
+			 * and call the script player with "end-song"
+			 * as argument
+			 * We use prev_id1 to figure out that song has ended
+			 * we then reset prev_id1.
+			 * Similarly we use prev_id2 to figure out that we
+			 * have a new song and then reset prev_id2
+			 */
 			if (prev_id1 && prev_id1 != id) {
 				t = time(0);
 				if (initial_state && !env_unset("PLAYER_STATE"))
@@ -1117,7 +1110,7 @@ main(int argc, char **argv)
 				submit_song(verbose, "end-song");
 				prev_id1 = id;
 			}
-			if (id) {
+			if (id) { /*- we have a song, a song to sing */
 				set_environ();
 				prev_id1 = id;
 				if (prev_id2 != id) { /*- new song */
@@ -1128,16 +1121,21 @@ main(int argc, char **argv)
 						flush();
 					}
 					submit_song(verbose, "now-playing");
-					/*- we are not in pause/stop state */
+					/*- we are not in initial state and not in  pause/stop state */
 					if (!initial_state || initial_state == PLAY_STATE)
 						prev_id2 = id;
 					initial_state = 0; /*-reset state */
 				}
+				/*- reset all variables */
 				uri_s.len = last_modified_s.len = album_s.len = artist_s.len = 0;
 				date_s.len = genre_s.len = title_s.len = track_s.len =  0;
 				duration_s.len = position_s.len = id_s.len = 0;
 			} else
 				run_command(CUSTOM_EVENT, "mpd-event");
+			/*-
+			 * use the mpd idle command. This
+			 * will come out only when an MPD event occurs
+			 */
 			if (!do_idle()) {
 				close(sock);
 				submit_song(verbose, "end-song");
