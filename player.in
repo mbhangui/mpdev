@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.32  2021-04-25 13:35:56+05:30  Cprogrammer
+# sync RompR playcounts from stats.db
+#
 # Revision 1.31  2021-04-25 10:32:07+05:30  Cprogrammer
 # added log output for scrobbling
 #
@@ -98,7 +101,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.31 2021-04-25 10:32:07+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.32 2021-04-25 13:35:56+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -186,6 +189,22 @@ get_stat_last_played()
 	sqlite3 -batch $stats_file "SELECT last_played FROM song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
 		echo "error: SELECT last_played FROM song WHERE uri='$turi';" 1>&2
+		return 1
+	fi
+	return 0
+}
+
+get_stat_playcount()
+{
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			return 0
+		fi
+	fi
+	turi=`echo "$1" | sed -e "s{'{''{g"`
+	sqlite3 -batch $stats_file "SELECT play_count from song WHERE uri='$turi';"
+	if [ $? -ne 0 ] ; then
+		echo "error: SELECT play_count from song WHERE uri='$turi';" 1>&2
 		return 1
 	fi
 	return 0
@@ -346,8 +365,9 @@ rompr_update_playcount()
 	fi
 	turi="$1"
 	tm="$2"
-	if [ $# -eq 3 ] ; then
-		TTidx=$3
+	pcount=$3
+	if [ $# -eq 4 ] ; then
+		TTidx=$4
 	else
 		TTidx=`get_TTindex "$turi"`
 	fi
@@ -355,34 +375,34 @@ rompr_update_playcount()
 		if [ -n "$MYSQL_SOCKET" ] ; then
 			(
 			# update Playcount only when it is not being updated by RompR
-			echo -n "UPDATE Playcounttable SET Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
+			echo -n "UPDATE Playcounttable SET Playcount=$pcount, LastPlayed=FROM_UNIXTIME($tm) "
 			echo -n "WHERE TTindex=$TTidx AND UNIX_TIMESTAMP(LastPlayed) < $tm;"
 			echo 
 			# insert when the above update returns 0 rows
 			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
-			echo -n "VALUES ($TTidx, 1, FROM_UNIXTIME($tm));"
+			echo -n "VALUES ($TTidx, $pcount, FROM_UNIXTIME($tm));"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" "$MYSQL_DATABASE" 2>/dev/null
 		else
 			(
 			# update Playcount only when it is not being updated by RompR
-			echo -n "UPDATE Playcounttable SET Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
+			echo -n "UPDATE Playcounttable SET Playcount=$pcount, LastPlayed=FROM_UNIXTIME($tm) "
 			echo -n "WHERE TTindex=$TTidx AND UNIX_TIMESTAMP(LastPlayed) < $tm;"
 			echo 
 			# insert when the above update returns 0 rows
 			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
-			echo -n "VALUES ($TTidx, 1, FROM_UNIXTIME($tm));"
+			echo -n "VALUES ($TTidx, $pcount, FROM_UNIXTIME($tm));"
 			echo
 			) | mysql -s -u "$MYSQL_USER" -p"$MYSQL_PASS" -h $MYSQL_HOST "$MYSQL_DATABASE" 2>/dev/null
 		fi
 		if [ $? -ne 0 ] ; then
 			(
 			echo "ERROR: "
-			echo -n "UPDATE Playcounttable SET Playcount=Playcount+1, LastPlayed=FROM_UNIXTIME($tm) "
+			echo -n "UPDATE Playcounttable SET Playcount=$pcount, LastPlayed=FROM_UNIXTIME($tm) "
 			echo -n "WHERE TTindex=$TTidx AND UNIX_TIMESTAMP(LastPlayed) < $tm;"
 			echo 
 			echo -n "INSERT IGNORE into Playcounttable (TTindex,Playcount,Lastplayed) "
-			echo -n "VALUES ($TTidx, 1, FROM_UNIXTIME($tm));"
+			echo -n "VALUES ($TTidx, $pcount, FROM_UNIXTIME($tm));"
 			echo
 			) 1>&2
 			return 1
@@ -839,7 +859,12 @@ update_song()
 					if [ $var -eq 0 ] ; then
 						echo "UPDATE stats Start=$START_TIME End=$END_TIME rating=[$rating]"
 					else
-						echo "UPDATE stats Playcount Start=$START_TIME End=$END_TIME rating=[$rating]"
+						pcount_s=$(get_stat_playcount "$uri")
+						if [ -z "$pcount_s" ] ; then
+							echo "UPDATE stats Playcount rating=[$rating] Start=$START_TIME End=$END_TIME"
+						else
+							echo "UPDATE stats Playcount Playcount=$pcount_s, rating=[$rating] Start=$START_TIME End=$END_TIME"
+						fi
 					fi
 				fi
 				if [ $var -eq 0 ] ; then
@@ -853,23 +878,23 @@ update_song()
 		# Update Play Counts in rompr Playcounttable
 		if [ -n "$ROMPR" ] ; then
 			if [ -n "$TTindex" ] ; then
-				if [ ! -f $MPDEV_TMPDIR/rompr_playcount.$csum ] ; then
-					rompr_update_playcount "$rompr_uri" "$START_TIME" "$TTindex"
+				if [ -n "$pcount_s" -a ! -f $MPDEV_TMPDIR/rompr_playcount.$csum ] ; then
+					rompr_update_playcount "$rompr_uri" "$START_TIME" "$pcount_s" "$TTindex"
 					if [ $VERBOSE -gt 0 ] ; then
 						line=`get_rompr_playcount_ts "$TTindex"`
 						if [ -z "$line" ] ; then
-							pcount="1" #hopefully update will be successfull
+							pcount_r="1" #hopefully update will be successfull
 							ts=$START_TIME
 						else
 							set $line
-							pcount=$1
+							pcount_r=$1
 							ts=$2
 						fi
-						echo -n "UPDATE RompR Playcount TTindex=$TTindex, Playcount=$pcount "
+						echo -n "UPDATE RompR Playcount Playcount=$pcount_r, TTindex=$TTindex "
 						if [ -n "$ts" ] && [ $ts -gt $START_TIME ] && [ $ts -lt $END_TIME ] ; then
-							echo "[`date +"%Y-%m-%d %H:%M:%S" --date=@"$ts"`] updated by RompR"
+							echo "[ts=$ts][`date +"%Y-%m-%d %H:%M:%S" --date=@"$ts"`] RompR"
 						else
-							echo "[`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] updated by mpdev"
+							echo "[ts=$END_TIME][`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] mpdev"
 						fi
 					fi
 					touch $MPDEV_TMPDIR/rompr_playcount.$csum
