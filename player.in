@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.31  2021-04-25 10:32:07+05:30  Cprogrammer
+# added log output for scrobbling
+#
 # Revision 1.30  2021-04-25 10:10:07+05:30  Cprogrammer
 # added code comments
 #
@@ -95,7 +98,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.30 2021-04-25 10:10:07+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.31 2021-04-25 10:32:07+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -501,6 +504,9 @@ scrobble()
 		if [ $VERBOSE -eq 2 ] ; then
 			echo lastfm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
 		fi
+		if [ $VERBOSE -eq 1 ] ; then
+			echo "Scrobbling [lastfm]"
+		fi
 		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
 			lastfm-scrobbler --update --artist="$SONG_ARTIST" \
 				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
@@ -514,6 +520,9 @@ scrobble()
 	if [ -n "$SCROBBLE_LIBREFM" ] ; then
 		if [ $VERBOSE -eq 2 ] ; then
 			echo librefm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
+		fi
+		if [ $VERBOSE -eq 1 ] ; then
+			echo "Scrobbling [librefm]"
 		fi
 		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
 			librefm-scrobbler --update --artist="$SONG_ARTIST" \

@@ -43,6 +43,7 @@ Release 1.0 Start 02/03/2020
 29. mpdev.c, player: adde code comments
 30. create_service: remove cleanup of /tmp/mpdev as purpose is solved by
     having it as TMPFS
+31. player: added log output for scrobbling 
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
