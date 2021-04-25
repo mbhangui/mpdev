@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.34  2021-04-25 18:07:03+05:30  Cprogrammer
+# refactored update of rompr playcounts
+#
 # Revision 1.33  2021-04-25 15:50:05+05:30  Cprogrammer
 # skip update of last_played when paused to avoid karma getting increased
 #
@@ -104,7 +107,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.33 2021-04-25 15:50:05+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.34 2021-04-25 18:07:03+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -900,31 +903,31 @@ update_song()
 		fi
 		# Update Play Counts in rompr Playcounttable
 		if [ -n "$ROMPR" -a -n "$TTindex" -a ! -f $MPDEV_TMPDIR/rompr_playcount.$csum ] ; then
-			if [ $VERBOSE -gt 0 ] ; then
-				if [ -n "$pcount_s" ] ; then
+			if [ -n "$pcount_s" ] ; then
+				if [ $VERBOSE -gt 0 ] ; then
 					echo -n "UPDATE RompR Playcount Playcount=$pcount_s, TTindex=$TTindex "
 					echo "[ts=$END_TIME][`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] mpdev"
+				fi
+				rompr_update_playcount "$rompr_uri" "$START_TIME" "$pcount_s" "$TTindex"
+			else
+				#hopefully update will be successfull
+				line=`get_rompr_playcount_ts "$TTindex"`
+				if [ -z "$line" ] ; then
+					pcount_r="1"
+					ts=$START_TIME
 				else
-					line=`get_rompr_playcount_ts "$TTindex"`
-					if [ -z "$line" ] ; then
-						pcount_r="1" #hopefully update will be successfull
-						ts=$START_TIME
-					else
-						set $line
-						pcount_r=$(expr $1 + 1)
-						ts=$2
-					fi
+					set $line
+					pcount_r=$(expr $1 + 1)
+					ts=$2
+				fi
+				if [ $VERBOSE -gt 0 ] ; then
 					echo -n "UPDATE RompR Playcount Playcount=$pcount_r, TTindex=$TTindex "
 					if [ -n "$ts" ] && [ $ts -gt $START_TIME ] && [ $ts -lt $END_TIME ] ; then
 						echo "[ts=$ts][`date +"%Y-%m-%d %H:%M:%S" --date=@"$ts"`] RompR"
 					else
-						echo "[ts=$END_TIME][`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] mpdev"
+						echo "[ts=$END_TIME][`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] mpdev/RompR"
 					fi
 				fi
-			fi
-			if [ -n "$pcount_s" ] ; then
-				rompr_update_playcount "$rompr_uri" "$START_TIME" "$pcount_s" "$TTindex"
-			else
 				rompr_update_playcount "$rompr_uri" "$START_TIME" "$pcount_r" "$TTindex"
 			fi
 			touch $MPDEV_TMPDIR/rompr_playcount.$csum

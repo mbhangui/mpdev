@@ -47,6 +47,7 @@ Release 1.0 Start 02/03/2020
 32. player: sync RompR playcounts with stats.db
 33. player: skip update of last_played when paused to avoid karma getting
     increased
+34. player: refactored update of RompR playcounts
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
