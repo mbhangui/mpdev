@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.37  2021-04-26 20:56:27+05:30  Cprogrammer
+# skip RompR playcount update when song is not fully heard
+#
 # Revision 1.36  2021-04-26 09:24:13+05:30  Cprogrammer
 # display initial song position in NewSong
 #
@@ -113,7 +116,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.36 2021-04-26 09:24:13+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.37 2021-04-26 20:56:27+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -208,11 +211,6 @@ get_stat_last_played()
 
 get_stat_playcount()
 {
-	if [ -n "$NO_DB_UPDATE" ] ; then
-		if [ $NO_DB_UPDATE -ne 0 ] ; then
-			return 0
-		fi
-	fi
 	turi=`echo "$1" | sed -e "s{'{''{g"`
 	sqlite3 -batch $stats_file "SELECT play_count from song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
@@ -876,6 +874,18 @@ update_song()
 			fi
 		fi
 		# Update Rating / Play Counts
+		if [ -z "$MIN_PLAY_PERCENT" ] ; then
+			MIN_PLAY_PERCENT=75
+		fi
+		if [ -n "$SONG_PLAYED_DURATION" ] ; then
+			percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
+			if [ " $percent" = " 0.0" ] ; then
+				percent=0
+			fi
+			var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
+		else
+			var=0
+		fi
 		if [ $stats_enabled -eq 1 ] ; then
 			# update rating + playcount
 			if [ -f $MPDEV_TMPDIR/stats_playcount.$csum ] ; then
@@ -884,15 +894,7 @@ update_song()
 					echo "UPDATE stats Start=$START_TIME End=$END_TIME rating=[$rating]"
 				fi
 			else
-				if [ -z "$MIN_PLAY_PERCENT" ] ; then
-					MIN_PLAY_PERCENT=75
-				fi
 				if [ -n "$SONG_PLAYED_DURATION" ] ; then
-					percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-					if [ " $percent" = " 0.0" ] ; then
-						percent=0
-					fi
-					var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
 					if [ $var -eq 0 ] ; then
 						downgrade_karma "$uri"
 					fi
@@ -901,10 +903,8 @@ update_song()
 					else
 						echo "SONG [$csum] "$percent"% played duration=$SONG_PLAYED_DURATION secs (full)"
 					fi
-				else
-					var=0
 				fi
-				if [ $var -ne 0 ] ; then
+				if [ $var -eq 1 ] ; then
 					if [ -f $MPDEV_TMPDIR/pcount.$csum ] ; then
 						pcount_s=$(cat $MPDEV_TMPDIR/pcount.$csum)
 					else
@@ -928,7 +928,7 @@ update_song()
 			fi
 		fi
 		# Update Play Counts in rompr Playcounttable
-		if [ -n "$ROMPR" -a -n "$TTindex" -a ! -f $MPDEV_TMPDIR/rompr_playcount.$csum ] ; then
+		if [ -n "$ROMPR" -a $var -eq 1 -a -n "$TTindex" -a ! -f $MPDEV_TMPDIR/rompr_playcount.$csum ] ; then
 			if [ -n "$pcount_s" ] ; then
 				if [ $VERBOSE -gt 0 ] ; then
 					echo -n "UPDATE RompR Playcount Playcount=$pcount_s, TTindex=$TTindex "
