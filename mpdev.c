@@ -1,7 +1,7 @@
 /*
  * $Log: mpdev.c,v $
- * Revision 1.18  2021-04-26 10:01:22+05:30  Cprogrammer
- * reset prev_state for all cases
+ * Revision 1.18  2021-04-26 10:41:46+05:30  Cprogrammer
+ * increment song_played_duration when prev state is not in pause
  *
  * Revision 1.17  2021-04-26 09:21:50+05:30  Cprogrammer
  * set song_played_duration when calling script for now-playing
@@ -95,7 +95,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.18 2021-04-26 10:01:22+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.18 2021-04-26 10:41:46+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -522,6 +522,7 @@ run_command(int status, char *arg)
 			switch (i)
 			{
 			case STOP_STATE:
+				prev_state = STOP_STATE;
 				song_played_duration += (time(0) - t1);
 				t1 = time(0);
 				strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
@@ -532,6 +533,7 @@ run_command(int status, char *arg)
 					die_nomem();
 				break;
 			case PAUSE_STATE:
+				prev_state = PAUSE_STATE;
 				song_played_duration += (time(0) - t1);
 				t1 = time(0);
 				strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
@@ -544,8 +546,9 @@ run_command(int status, char *arg)
 				if (prev_state == STOP_STATE)
 					song_played_duration = 0;
 				else
-				if (prev_state == PLAY_STATE) /*- value of played duration for previous song */
+				if (prev_state != PAUSE_STATE)
 					song_played_duration += (time(0) - t1);
+				prev_state = PLAY_STATE;
 				t1 = time(0);
 				strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
 				if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
@@ -554,7 +557,6 @@ run_command(int status, char *arg)
 					die_nomem();
 				break;
 			}
-			prev_state = i; /*- reset prev_state */
 			player_cmd[0] = ".mpdev/playpause";
 			break;
 		case MIXER_EVENT:
@@ -1159,7 +1161,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.18 2021-04-26 10:01:22+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.18 2021-04-26 10:41:46+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
