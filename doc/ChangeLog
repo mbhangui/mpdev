@@ -49,6 +49,9 @@ Release 1.0 Start 02/03/2020
     increased
 34. player: refactored update of RompR playcounts
 37. player: fixed value of play counts in logs and RompR update
+- 26/04/2021
+38. mpdev.c: set song_played_duration when calling script for now-playing
+39. player: display initial song position in NewSong
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

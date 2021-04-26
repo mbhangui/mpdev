@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.36  2021-04-26 09:24:13+05:30  Cprogrammer
+# display initial song position in NewSong
+#
 # Revision 1.35  2021-04-25 20:27:54+05:30  Cprogrammer
 # fixed value of play counts in logs and RompR update
 #
@@ -110,7 +113,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.35 2021-04-25 20:27:54+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.36 2021-04-26 09:24:13+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -737,9 +740,15 @@ update_song()
 				if [ -z "$pcount_s" ] ; then
 					pcount_s="0"
 				fi
-				echo    "  LAST PLAYED=$days_back days back [`date +"%Y-%m-%d %H:%M:%S" --date=@"$prev_last_played"`] Plays: $pcount_s"
+				echo -n "  LAST PLAYED=$days_back days back [`date +"%Y-%m-%d %H:%M:%S" --date=@"$prev_last_played"`] Plays: $pcount_s"
 			else
 				pcount_s=0
+				echo -n "  LAST PLAYED=never Plays: $pcount_s"
+			fi
+ 			if [ -n "$SONG_PLAYED_DURATION" ] ; then
+ 				echo ", song pos=$SONG_PLAYED_DURATION"
+ 			else
+ 				echo ""
 			fi
 			echo $pcount_s > $MPDEV_TMPDIR/pcount.$csum
 			echo    "uri=[$uri]"
@@ -961,7 +970,7 @@ update_song()
 				$MPDEV_TMPDIR/rompr.$csum $MPDEV_TMPDIR/sticker.$csum \
 				$MPDEV_TMPDIR/start_time.$csum $MPDEV_TMPDIR/rating.$csum \
 				$MPDEV_TMPDIR/stats_playcount.$csum $MPDEV_TMPDIR/rompr_playcount.$csum \
-				$MPDEV_TMPDIR/percent_played $MPDEV_TMPDIR/pcount.$csum
+				$MPDEV_TMPDIR/percent_played $MPDEV_TMPDIR/pcount.$csum $MPDEV_TMPDIR/end.$csum
 		elif [ " $state" = " pause-song" ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
 				if [ -n "$END_TIME" ] ; then

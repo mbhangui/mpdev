@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.17  2021-04-26 09:21:50+05:30  Cprogrammer
+ * set song_played_duration when calling script for now-playing
+ *
  * Revision 1.16  2021-04-25 10:22:49+05:30  Cprogrammer
  * added code comments
  *
@@ -89,7 +92,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.16 2021-04-25 10:22:49+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.17 2021-04-26 09:21:50+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -1050,7 +1053,7 @@ main(int argc, char **argv)
 		 * elaapsed time and initialize song_played_duration
 		 * to the elapsed time.
 		 */
-		if ((initial_state = get_status("Initial", &elapsed, 0)) == PLAY_STATE) {
+		if ((initial_state = get_status("Initial", &elapsed, 0)) == PLAY_STATE || initial_state == PAUSE_STATE) {
 			if (elapsed) {
 				song_played_duration = (long) elapsed;
 				t1 = time(0);
@@ -1123,6 +1126,9 @@ main(int argc, char **argv)
 							pos, id, response);
 						flush();
 					}
+					strnum[i = fmt_ulong(strnum, song_played_duration)] = 0;
+					if (i && !env_put2("SONG_PLAYED_DURATION", strnum))
+						die_nomem();
 					submit_song(verbose, "now-playing");
 					/*- we are not in initial state and not in  pause/stop state */
 					if (!initial_state || initial_state == PLAY_STATE)
@@ -1152,7 +1158,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.16 2021-04-25 10:22:49+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.17 2021-04-26 09:21:50+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
