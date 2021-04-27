@@ -56,6 +56,8 @@ Release 1.0 Start 02/03/2020
 41. mpdev.c: increment song_played_duration when prev state is not in pause
     state
 42. player: skip RompR playcount update when song is not fully heard
+- 27/04/2021
+43. mpdev.c: initialize elapsed variable
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

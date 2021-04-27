@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.19  2021-04-27 21:23:44+05:30  Cprogrammer
+ * initialized elapsed variable
+ *
  * Revision 1.18  2021-04-26 10:41:46+05:30  Cprogrammer
  * increment song_played_duration when prev state is not in pause
  *
@@ -95,7 +98,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.18 2021-04-26 10:41:46+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.19 2021-04-27 21:23:44+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -495,7 +498,7 @@ int
 run_command(int status, char *arg)
 {
 	int             i, wstat, childrc, fd;
-	double          elapsed = 0.001, duration = 0.001;
+	double          elapsed = 0.00, duration = 0.00;
 	static int      prev_state;
 	pid_t           child;
 
@@ -1056,6 +1059,7 @@ main(int argc, char **argv)
 		 * elaapsed time and initialize song_played_duration
 		 * to the elapsed time.
 		 */
+		elapsed = 0.0;
 		if ((initial_state = get_status("Initial", &elapsed, 0)) == PLAY_STATE || initial_state == PAUSE_STATE) {
 			if (elapsed) {
 				song_played_duration = (long) elapsed;
@@ -1161,7 +1165,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.18 2021-04-26 10:41:46+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.19 2021-04-27 21:23:44+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
