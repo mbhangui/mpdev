@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.21  2021-09-08 19:25:47+05:30  Cprogrammer
+ * added output event
+ *
  * Revision 1.20  2021-09-08 15:06:07+05:30  Cprogrammer
  * fixed usage string
  * fixed idle handling
@@ -68,6 +71,7 @@
  *
  * Full documentation of mpd commands at https://www.musicpd.org/doc/html/protocol.html
  */
+#include <stdio.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -102,7 +106,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.20 2021-09-08 15:06:07+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.21 2021-09-08 19:25:47+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -114,7 +118,7 @@ ssize_t         safewrite(int, char *, int);
 unsigned int    scan_double(const char *, double *);
 
 substdio        mpdin, mpdout, ssout, sserr;
-stralloc        line = {0}, status_line = {0};
+stralloc        line = {0}, status_line = {0}, output = {0};
 time_t          t1;
 unsigned long   song_played_duration;
 char            strnum[FMT_ULONG];
@@ -345,6 +349,61 @@ get_status(char *prefix, double *elapsed, double *duration, stralloc *status_lin
 		}
 	}
 	return (state);
+}
+
+int
+get_outputs()
+{
+	int             match, i, j, count, line_no;
+	char            strnum1[FMT_ULONG], strnum2[FMT_ULONG];
+
+	mpd_out("outputs");
+	output.len = 0;
+	for (count = 0, line_no = 0;;) {
+		if (getln(&mpdin, &line, &match, '\n') == -1)
+			die_read("status");
+		if (!match && line.len == 0) {
+			if (verbose) {
+				out("EOF outputs\n");
+				flush();
+			}
+			return 0;
+		}
+		if (verbose > 1) {
+			if (substdio_put(&ssout, line.s, line.len) == -1)
+				die_write();
+		}
+		if (!str_diffn(line.s, "OK MPD ", 7))
+			continue;
+		if (!str_diffn(line.s, "OK\n", 3))
+			break;
+		if (!stralloc_0(&line))
+			die_nomem();
+		line.len--;
+		if (!str_diffn(line.s, "outputid: ", 10)) {
+			line_no = 1;
+			count++;
+		} else
+			line_no++;
+		strnum1[i = fmt_int(strnum1, count)] = 0;
+		strnum2[j = fmt_int(strnum2, line_no)] = 0;
+		if (!stralloc_copyb(&output, "OUTPUT_", 7) ||
+				!stralloc_catb(&output, strnum1, i) ||
+				!stralloc_append(&output, "_") ||
+				!stralloc_catb(&output, "LINE_", 5) ||
+				!stralloc_catb(&output, strnum2, j) ||
+				!stralloc_append(&output, "=") ||
+				!stralloc_catb(&output, line.s, line.len) ||
+				!stralloc_0(&output))
+			die_nomem();
+		if (!env_put(output.s))
+			die_nomem();
+	}
+	if (!stralloc_0(&output))
+		die_nomem();
+	if (!env_put(output.s))
+		die_nomem();
+	return 1;
 }
 
 static stralloc uri_s = {0}, last_modified_s = {0}, album_s = {0},
@@ -582,14 +641,18 @@ run_command(int status, char *arg, int *state)
 			}
 			player_cmd[0] = ".mpdev/playpause";
 			break;
-		case MIXER_EVENT:
-			player_cmd[0] = ".mpdev/mixer";
-			break;
 		case OPTIONS_EVENT:
 			player_cmd[0] = ".mpdev/options";
 			break;
+		case MIXER_EVENT:
+			player_cmd[0] = ".mpdev/mixer";
+			break;
 		case OUTPUT_EVENT:
 			player_cmd[0] = ".mpdev/output";
+			if (verbose) {
+				out("MPD status: output changed\n");
+				flush();
+			}
 			break;
 		case UPDATE_EVENT:
 			player_cmd[0] = ".mpdev/update";
@@ -733,12 +796,12 @@ do_idle(int *p_state)
 			status = MIXER_EVENT;
 			continue;
 		} else
-		if (!str_diffn(line.s, "changed: options\n", 17)) {
-			status = OPTIONS_EVENT;
-			continue;
-		} else
 		if (!str_diffn(line.s, "changed: output\n", 16)) {
 			status = OUTPUT_EVENT;
+			continue;
+		} else
+		if (!str_diffn(line.s, "changed: options\n", 17)) {
+			status = OPTIONS_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: update\n", 16)) {
@@ -774,18 +837,27 @@ do_idle(int *p_state)
 			continue;
 		}
 		if (!str_diffn(line.s, "OK\n", 3)) {
-			if (count == 2) {
-				mpd_out("idle");
-				count = 0;
-				continue;
-			}
 			switch(status)
 			{
 			case PLAYER_EVENT:
+				if (count == 2) {
+					mpd_out("idle");
+					count = 0;
+					continue;
+				}
 				run_command(status, "player-event", p_state);
 				break;
 			case PLAYLIST_EVENT:
 				run_command(status, "playlist-event", 0);
+				break;
+			case OUTPUT_EVENT:
+				if (count == 3) {
+					mpd_out("idle");
+					count = 0;
+					continue;
+				}
+				get_outputs();
+				run_command(status, "output-event", 0);
 				break;
 			default:
 				run_command(status, "mpd-event", 0);
@@ -1072,7 +1144,7 @@ main(int argc, char **argv)
 			flush();
 		}
 		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
-		substdio_fdbuf(&mpdout, write, sock, mpdoutbuf, sizeof mpdoutbuf);
+		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 
 		/*-
 		 * initial state is when mpdev is invoked
@@ -1209,7 +1281,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.20 2021-09-08 15:06:07+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.21 2021-09-08 19:25:47+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
