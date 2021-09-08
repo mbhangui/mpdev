@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.38  2021-09-08 15:06:28+05:30  Cprogrammer
+# rating shouldn't be created on end-song
+#
 # Revision 1.37  2021-04-26 20:56:27+05:30  Cprogrammer
 # skip RompR playcount update when song is not fully heard
 #
@@ -116,7 +119,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.37 2021-04-26 20:56:27+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.38 2021-09-08 15:06:28+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -769,7 +772,7 @@ update_song()
 			fi
 		fi
 	fi
-	if [ ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
+	if [ ! "$state" = "end-song" -a ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
 		echo $rating > $MPDEV_TMPDIR/rating.$csum
 	fi
 	case "$state" in

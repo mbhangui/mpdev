@@ -1,5 +1,9 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.20  2021-09-08 15:06:07+05:30  Cprogrammer
+ * fixed usage string
+ * fixed idle handling
+ *
  * Revision 1.19  2021-04-27 21:23:44+05:30  Cprogrammer
  * initialized elapsed variable
  *
@@ -98,7 +102,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.19 2021-04-27 21:23:44+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.20 2021-09-08 15:06:07+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -110,7 +114,7 @@ ssize_t         safewrite(int, char *, int);
 unsigned int    scan_double(const char *, double *);
 
 substdio        mpdin, mpdout, ssout, sserr;
-stralloc        line = {0};
+stralloc        line = {0}, status_line = {0};
 time_t          t1;
 unsigned long   song_played_duration;
 char            strnum[FMT_ULONG];
@@ -124,10 +128,10 @@ int             timeout = 60, verbose;
 char           *player_cmd[3] = {0, 0, 0};
 
 char           *usage =
-				"usage: mpdev [-i IP/Host | -s unix_socket] [-p port] [-r retry_interval]\n"
-				" -i IP    - IP address of MPD host. default 127.0.0.1\n"
+				"usage: mpdev [-h Host/IP | -s unix_socket] [-p port] [-r retry_interval]\n"
+				" -h host  - Host / IP address of MPD host. default is localhsot (127.0.0.1)\n"
 				" -p port  - MPD listening port. default 6600\n"
-				" -s unix  - domain socket path\n"
+				" -s unix  - UNIX domain socket path\n"
 				" -r retry - retry interval if mpd host is down\n"
 				" -v       - output from executed scripts\n"
 				" -vv      - output from mpd events\n"
@@ -291,10 +295,11 @@ safewrite(int fd, char *buf, int len)
  */
 
 int
-get_status(char *prefix, double *elapsed, double *duration)
+get_status(char *prefix, double *elapsed, double *duration, stralloc *status_line)
 {
 	int             match, state = -1;
 
+	status_line->len = 0;
 	mpd_out("status");
 	for (state = 0;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
@@ -325,27 +330,18 @@ get_status(char *prefix, double *elapsed, double *duration)
 			continue;
 		} else
 		if (!str_diffn(line.s, "state: ", 7)) {
+			if (!stralloc_copyb(status_line, line.s + 7, line.len - 7))
+				die_nomem();
 			if (!str_diffn(line.s + 7, "stop", 4))
-				state=STOP_STATE;
+				state = STOP_STATE;
 			else
 			if (!str_diffn(line.s + 7, "pause", 5))
-				state=PAUSE_STATE;
+				state = PAUSE_STATE;
 			else
 			if (!str_diffn(line.s + 7, "play", 4))
-				state=PLAY_STATE;
+				state = PLAY_STATE;
 			if (!env_put2("PLAYER_STATE", line.s + 7))
 				die_nomem();
-			if (verbose) {
-				if (prefix) {
-					out(prefix);
-					out(" ");
-				}
-				out("MPD status: ");
-				if (substdio_put(&ssout, line.s + 7, line.len - 7) == -1)
-					die_write();
-				out("\n");
-				flush();
-			}
 		}
 	}
 	return (state);
@@ -495,23 +491,25 @@ get_current_song(char **uri, char **last_modified, char **album, char **artist,
 #define CUSTOM_EVENT          15
 
 int
-run_command(int status, char *arg)
+run_command(int status, char *arg, int *state)
 {
 	int             i, wstat, childrc, fd;
 	double          elapsed = 0.00, duration = 0.00;
 	static int      prev_state;
 	pid_t           child;
 
-	if (!status) {
+	if (state)
+		*state = 0;
+	if (!status)
 		player_cmd[0] = ".mpdev/player";
-	} else
+	else
 	switch (status)
 	{
 		case STICKER_EVENT:
 			player_cmd[0] = ".mpdev/sticker";
 			break;
 		case PLAYER_EVENT:
-			i = get_status(0, &elapsed, &duration);
+			i = get_status(0, &elapsed, &duration, &status_line);
 			if (elapsed) {
 				strnum[fmt_double(strnum, elapsed, 1)] = 0;
 				if (!env_put2("ELAPSED_TIME", strnum))
@@ -522,9 +520,18 @@ run_command(int status, char *arg)
 				if (!env_put2("DURATION", strnum))
 					die_nomem();
 			}
+			if (verbose && status_line.len && (i == STOP_STATE || i == PAUSE_STATE)) {
+				out("MPD status: ");
+				if (substdio_put(&ssout, status_line.s, status_line.len) == -1)
+					die_write();
+				out("\n");
+				flush();
+			}
 			switch (i)
 			{
 			case STOP_STATE:
+				if (state)
+					*state = STOP_STATE;
 				prev_state = STOP_STATE;
 				song_played_duration += (time(0) - t1);
 				t1 = time(0);
@@ -536,6 +543,8 @@ run_command(int status, char *arg)
 					die_nomem();
 				break;
 			case PAUSE_STATE:
+				if (state)
+					*state = PAUSE_STATE;
 				prev_state = PAUSE_STATE;
 				song_played_duration += (time(0) - t1);
 				t1 = time(0);
@@ -546,6 +555,17 @@ run_command(int status, char *arg)
 					die_nomem();
 				break;
 			case PLAY_STATE:
+				if (prev_state == PLAY_STATE)
+					return 0;
+				if (state)
+					*state = PLAY_STATE;
+				if (verbose && status_line.len) {
+					out("MPD status: ");
+					if (substdio_put(&ssout, status_line.s, status_line.len) == -1)
+						die_write();
+					out("\n");
+					flush();
+				}
 				if (prev_state == STOP_STATE)
 					song_played_duration = 0;
 				else
@@ -676,13 +696,13 @@ run_command(int status, char *arg)
  */
 
 int
-do_idle()
+do_idle(int *p_state)
 {
-	int             match, status;
+	int             match, status, count;
 
 	mpd_out("idle");
 	status = 0;
-	for (;;) {
+	for (count = 0;;count++) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("idle");
 		if (!match && line.len == 0) {
@@ -754,16 +774,21 @@ do_idle()
 			continue;
 		}
 		if (!str_diffn(line.s, "OK\n", 3)) {
+			if (count == 2) {
+				mpd_out("idle");
+				count = 0;
+				continue;
+			}
 			switch(status)
 			{
 			case PLAYER_EVENT:
-				run_command(status, "player-event");
+				run_command(status, "player-event", p_state);
 				break;
 			case PLAYLIST_EVENT:
-				run_command(status, "playlist-event");
+				run_command(status, "playlist-event", 0);
 				break;
 			default:
-				run_command(status, "mpd-event");
+				run_command(status, "mpd-event", 0);
 				status = 0;
 				mpd_out("idle");
 				continue;
@@ -886,7 +911,7 @@ submit_song(int verbose, char *cmmd)
 	strnum[i = fmt_int(strnum, verbose)] = 0;
 	if (!env_put2("VERBOSE", strnum))
 		die_nomem();
-	run_command(0, cmmd);
+	run_command(0, cmmd, 0);
 	return;
 }
 
@@ -944,7 +969,8 @@ set_environ()
 int
 main(int argc, char **argv)
 {
-	int             i, opt, pos, sock, port_num = 6600, retry_interval = 60, connection_num, initial_state;
+	int             i, opt, pos, sock, port_num = 6600, retry_interval = 60, connection_num,
+					initial_state, p_state;
 	char           *mpd_socket, *uri, *last_modified, *album, *artist,
 				   *date, *genre, *title, *track, *duration, *response, *mpd_host, *ptr;
 	char            port[FMT_ULONG], mpdinbuf[1024], mpdoutbuf[512], ssoutbuf[512], sserrbuf[512];
@@ -1046,7 +1072,7 @@ main(int argc, char **argv)
 			flush();
 		}
 		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
-		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
+		substdio_fdbuf(&mpdout, write, sock, mpdoutbuf, sizeof mpdoutbuf);
 
 		/*-
 		 * initial state is when mpdev is invoked
@@ -1060,11 +1086,18 @@ main(int argc, char **argv)
 		 * to the elapsed time.
 		 */
 		elapsed = 0.0;
-		if ((initial_state = get_status("Initial", &elapsed, 0)) == PLAY_STATE || initial_state == PAUSE_STATE) {
+		if ((initial_state = get_status("Initial", &elapsed, 0, &status_line)) == PLAY_STATE || initial_state == PAUSE_STATE) {
 			if (elapsed) {
 				song_played_duration = (long) elapsed;
 				t1 = time(0);
 			}
+		}
+		if (verbose && status_line.len && initial_state > 0) {
+			out("Initial MPD status: ");
+			if (substdio_put(&ssout, status_line.s, status_line.len) == -1)
+				die_write();
+			out("\n");
+			flush();
 		}
 		prev_id1 = prev_id2 = 0;
 		for (;;) {
@@ -1147,17 +1180,28 @@ main(int argc, char **argv)
 				date_s.len = genre_s.len = title_s.len = track_s.len =  0;
 				duration_s.len = position_s.len = id_s.len = 0;
 			} else
-				run_command(CUSTOM_EVENT, "mpd-event");
+				run_command(CUSTOM_EVENT, "mpd-event", 0);
 			/*-
 			 * use the mpd idle command. This
 			 * will come out only when an MPD event occurs
 			 */
-			if (!do_idle()) {
-				close(sock);
-				submit_song(verbose, "end-song");
-				break;
+			for (;;) {
+				if (!(i = do_idle(&p_state))) {
+					close(sock);
+					submit_song(verbose, "end-song");
+					break;
+				}
+				if (p_state == PLAY_STATE)
+					break;
+				if (p_state == STOP_STATE) {
+					submit_song(verbose, "end-song");
+					prev_id1 = prev_id2 = 0;
+					continue;
+				}
 			}
-		} /*- for (;;) - get)song_details */
+			if (!i)
+				break;
+		} /*- for (;;) - get_current_song */
 	} /*- for (connection_num = 1;;connection_num++) { */
 	_exit(0);
 }
@@ -1165,7 +1209,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.19 2021-04-27 21:23:44+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.20 2021-09-08 15:06:07+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
