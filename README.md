@@ -214,6 +214,16 @@ By default mpdev will get the host name and port for mpd from MPD\_HOST and MPD\
 
 Take a look at BuildRequires field in mpdev.spec and Build-Depends field in debian/mpdev.dsc
 
+mpdev uses library from [libqmail](https://github.com/mbhangui/libqmail). If you are building mpdev from source, you need to install libqmail.
+
+```
+$ cd /usr/local/src
+$ git clone --no-tags --no-recurse-submodules --depth=1 https://github.com/mbhangui/libqmail
+$ cd libqmail
+$ ./default.configure
+$ make && sudo make install-strip
+```
+
 ```
 $ ./configure --prefix=$prefix --libexecdir=$prefix/libexec/mpdev
 $ make
