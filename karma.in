@@ -1,11 +1,14 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
+# Revision 1.2  2021-09-09 20:41:02+05:30  Cprogrammer
+# added missing help display for --value
+#
 # Revision 1.1  2021-04-24 11:46:17+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.1 2021-04-24 11:46:17+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.2 2021-09-09 20:41:02+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -26,6 +29,9 @@ $MORE 1>&2 <<EOF
 Usage: mpdplaylist [OPTION]
 
 Known values for OPTION are:
+
+--value=karma_value
+  Set karma to karma_value. If not set, karma_value is set as 50
 
 --uri=path
   Finds song with uri matching path
