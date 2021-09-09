@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.23  2021-09-09 16:59:12+05:30  Cprogrammer
+ * set env variable VOLUME on startup and on mixer level change
+ *
  * Revision 1.22  2021-09-09 12:18:09+05:30  Cprogrammer
  * added feature to report changes in state of OUTPUT devices
  *
@@ -108,7 +111,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.22 2021-09-09 12:18:09+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.23 2021-09-09 16:59:12+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -303,9 +306,10 @@ safewrite(int fd, char *buf, int len)
 int
 get_status(char *prefix, double *elapsed, double *duration, stralloc *status_line)
 {
-	int             match, state = -1;
+	int             match, state = -1, volume;
 
-	status_line->len = 0;
+	if (status_line)
+		status_line->len = 0;
 	mpd_out("status");
 	for (state = 0;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
@@ -336,7 +340,7 @@ get_status(char *prefix, double *elapsed, double *duration, stralloc *status_lin
 			continue;
 		} else
 		if (!str_diffn(line.s, "state: ", 7)) {
-			if (!stralloc_copyb(status_line, line.s + 7, line.len - 7))
+			if (status_line && !stralloc_copyb(status_line, line.s + 7, line.len - 7))
 				die_nomem();
 			if (!str_diffn(line.s + 7, "stop", 4))
 				state = STOP_STATE;
@@ -347,6 +351,12 @@ get_status(char *prefix, double *elapsed, double *duration, stralloc *status_lin
 			if (!str_diffn(line.s + 7, "play", 4))
 				state = PLAY_STATE;
 			if (!env_put2("PLAYER_STATE", line.s + 7))
+				die_nomem();
+		} else
+		if (!str_diffn(line.s, "volume: ", 8)) {
+			scan_int(line.s + 8, &volume);
+			strnum[fmt_int(strnum, volume)] = 0;
+			if (!env_put2("VOLUME", strnum))
 				die_nomem();
 		}
 	}
@@ -696,6 +706,7 @@ run_command(int status, char *arg, int *state)
 			player_cmd[0] = ".mpdev/options";
 			break;
 		case MIXER_EVENT:
+			i = get_status(0, 0, 0, 0);
 			player_cmd[0] = ".mpdev/mixer";
 			break;
 		case OUTPUT_EVENT:
@@ -1334,7 +1345,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.22 2021-09-09 12:18:09+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.23 2021-09-09 16:59:12+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

@@ -18,7 +18,7 @@ mpdevbin_PROGRAMS = mpdev
 mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
 				   transfer_play karma
 libexec_PROGRAMS = mpdev_cleanup mpdev_update
-libexec_SCRIPTS = player playpause mpdev_rename output create_service
+libexec_SCRIPTS = player playpause mpdev_rename output mixer create_service
 noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1 \
@@ -29,7 +29,7 @@ doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose haveip6.h \
-				   create_service romprhost karma output
+				   create_service romprhost karma output mixer
 
 mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
 mpdev_LDADD = $(LIB_QMAIL)
@@ -122,6 +122,10 @@ transfer_play: transfer_play.in
 	chmod +x $@
 
 output: output.in
+	$(edit) $@.in > $@
+	chmod +x $@
+
+mixer: mixer.in
 	$(edit) $@.in > $@
 	chmod +x $@
 

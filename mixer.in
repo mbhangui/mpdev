@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# $Log: mixer.in,v $
+# Revision 1.1  2021-09-09 17:09:45+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: mixer.in,v 1.1 2021-09-09 17:09:45+05:30 Cprogrammer Exp mbhangui $
+#
+echo "$0: args=$*"
+echo volume=$VOLUME
+exit 0

@@ -105,6 +105,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/playpause
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/output
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mixer
 %attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-release
 %attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-rpm.info
 
