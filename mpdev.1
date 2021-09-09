@@ -16,7 +16,7 @@ events. By default it will get the host name and port for mpd from
 variables aren't set, \fBmpdev\fR(1) connects to localhost on port 6600.
 
 .SH OPTIONS
-.TP
+.TP 3
 .B -v
 Set verbose output. You can increase verbosity by specifying it multiple
 times
@@ -212,13 +212,6 @@ OUTPUT_2_NAME=Headphone
 OUTPUT_2_STATE=enabled
 OUTPUT_2_TYPE=alsa
 .EE
-
-.SH FILES
-
-.IP \[bu] 2
-\f[B]~/.mpdev/player\f[] User Script that will be run everytime song plays.
-This script is passed the argument now-playing when a new song starts and
-end-song when the song ends.
 
 .SH SEE ALSO
 .IP \[bu] 2
