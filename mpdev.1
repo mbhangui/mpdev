@@ -8,12 +8,12 @@ mpdev [\f[I]option\f[]]
 
 .SH DESCRIPTION
 
-mpdev is a mpd event watcher. It connects to mpd, waits for idle events.
-By default it will get the host name and port for mpd from
+\fBmpdev\fR(1) is a mpd event watcher. It connects to mpd, waits for idle
+events. By default it will get the host name and port for mpd from
 \f[B]MPD_HOST\f[] and \f[B]MPD_PORT\f[] environment variables.
-\f[B]MPD_PASSWORD\f[] environment variable can be set to make mpdev
-connect to a password-protected mpd. If these environment variables aren't
-set, mpdev connects to localhost on port 6600.
+\f[B]MPD_PASSWORD\f[] environment variable can be set to make
+\fBmpdev\fR(1) connect to a password-protected mpd. If these environment
+variables aren't set, \fBmpdev\fR(1) connects to localhost on port 6600.
 
 .SH OPTIONS
 .TP
@@ -43,7 +43,7 @@ Unix domain socket in case you don't want to use \fIIP\fR and \fIport\fR
 
 .TP
 \fB-r\fR \fIretry_interval\fR
-Retry interval in seconds in case \fBmpd\fR(1) is done
+Retry interval in seconds in case \fBmpd\fR(1) is down
 .RS
 .RE
 
@@ -59,22 +59,34 @@ scrobbling by setting DISABLE_SCROBBLE environment variable
 .sp -1
 .IP \[bu]
 updates play counts in the sqlite stats.db and
-[RompR](https://fatg3erman.github.io/RompR/) db
+[RompR](https://fatg3erman.github.io/RompR/) db. RompR db update gets
+enabled only when you set the \fBROMPR\fR environment variable. All db
+updates get disabled if you set \fBNO_DB_UPDATE\fR environment variable.
 .sp -1
 .IP \[bu]
 Synchronizes the ratings in the sticker (sqlite),
 [RompR](https://fatg3erman.github.io/RompR/) (MySQL) and the stats (sqlite)
 databases. It also initializes the rating to 3 when you play an unrated
-song.
+song. RompR db update gets enabled only when you set the \fBROMPR\fR
+environment variable. All db updates get disabled if you set
+\fBNO_DB_UPDATE\fR environment variable.
 .PP
 
-The above three are actually done by running a hook, a script named
-`player` in $HOME/.mpdev directory. You can put your own script named
-`player` in this directory. In fact mpdev can run specific hooks for
-specific types of mpd events. A hook can be any executable program or
-script. It will be passed arguments and have certain environment variables
-related to the song playing, available to it. Below is a list of of events
-and corresping hooks that will be executed if available.
+You can put your own script named `player` in this directory. In fact
+\fBmpdev\fR(1) can run specific hooks for specific types of mpd events. A
+hook can be any executable program or script. It will be passed arguments
+and have certain environment variables related to the song playing,
+available to it. Apart from the \fBplayer\fR script, the default
+installation will put the following scripts
+
+.EX
+\fBplaypause\fR - This gets executed when you pause or play a song
+\fBmixer\fR     - This gets executed when you change the mixer volume
+\fBoutput\fR    - This gets executed when you enable or disable any output
+.EE
+
+Below is a list of of events and corresping hooks that will be executed if
+available.
 
 .TS
 l l.
@@ -118,7 +130,7 @@ end-song       - Passed when a song finishes playing
 
 .SH Environment Variables
 
-mpdev sets the following environment variables
+\fBmpdev\fR(1) sets the following environment variables
 
 .EX
 SONG_ID            - Set to the ID from mpd database
@@ -142,15 +154,15 @@ VOLUME             - Set during startup and when you change mixer volume
 .EE
 
 if \fI$HOME/.config/lastfm-scrobbler\fR &
-\fI$HOME/.config/librefm-scrobbler\fR are present, mpdev sets
+\fI$HOME/.config/librefm-scrobbler\fR are present, \fBmpdev\fR(1) sets
 SCROBBLER_LASTFM and SCROBBLER_LIBREFM environment variables respectively.
-This get created when you create API keys for lastfm, librefm by running
+These get created when you create API keys for lastfm, librefm by running
 lastfm-scrobbler and librefm-scrobbler one time with --connect argument.
 
-mpdev also runs OUTPUT_EVENT on startup ($HOME/.mpdev/output), with the
-argument output-initialize. This allows you to store information for
-devices configured in your \fBmpd.conf\fR(5). If any output changes, the
-environment variable OUTPUT_CHANGED is set in the form
+\fBmpdev\fR(1) also runs OUTPUT_EVENT on startup ($HOME/.mpdev/output),
+with the argument output-initialize. This allows you to store information
+for devices configured in your \fBmpd.conf\fR(5). If any output changes,
+the environment variable OUTPUT_CHANGED is set in the form
 
 .TP 2
 "\fIDEVNO\fR - \fIstate\fR"
@@ -159,10 +171,10 @@ Where \fIDEVNO\fR is the ID of the device in mpd.conf (0, 1, 2, etc) and
 \fIstate\fR is either the word "enabled" or "disabled".
 
 .PP
-So, in the below example, if you disable the headphone, \fBOUTPUT_CHANGED\fR
-environment variable will be set as "3 - disabled"
+So, in the below example, if you disable the headphone,
+\fBOUTPUT_CHANGED\fR environment variable will be set as "3 - disabled"
 
-All devices are also maintained in the environment variables
+All devices are maintained in the environment variables
 \fBOUTPUT_\fR\fIDEVNO\fR\fB_ID\fR, \fBOUTPUT_\fR\fIDEVNO\fR\fB_NAME\fR,
 \fBOUTPUT_\fR\fIDEVNO\fR\fB_STATE\fR, \fBOUTPUT_\fR\fIDEVNO\fR\fB_TYPE\fR,
 \fBOUTPUT_\fR\fIDEVNO\fR\fB_EXTRA1\fR,
