@@ -192,25 +192,18 @@ All devices are maintained in the environment variables
 Here \fIDEVNO\fR is the device id of the audio device in mpd.conf.
 
 Below is an example of the state of environment variables where mpd.conf
-have 3 devices configured.
+have 3 devices configured (Piano DAC Plus 2.1, Xonar EssenceOne, Scarlet 2i2 USB).
 
 .EX
 OUTPUT_0_ID=0
-OUTPUT_0_NAME=My PULSE Device
-OUTPUT_0_STATE=disabled
-OUTPUT_0_TYPE=pulse
+OUTPUT_0_NAME=Piano DAC Plus 2.1
+OUTPUT_0_STATE=enabled
 OUTPUT_1_ID=1
-OUTPUT_1_EXTRA_1=attribute: allowed_formats=
-OUTPUT_1_EXTRA_2=attribute: dop=0
-OUTPUT_1_NAME=HDMI/Speaker
-OUTPUT_1_STATE=enabled
-OUTPUT_1_TYPE=alsa
+OUTPUT_1_NAME=Xonar EssenceOne
+OUTPUT_1_STATE=disabled
 OUTPUT_2_ID=2
-OUTPUT_2_EXTRA_1=attribute: allowed_formats=
-OUTPUT_2_EXTRA_2=attribute: dop=0
-OUTPUT_2_NAME=Headphone
-OUTPUT_2_STATE=enabled
-OUTPUT_2_TYPE=alsa
+OUTPUT_2_NAME=Scarlett 2i2 USB
+OUTPUT_2_STATE=disabled
 .EE
 
 .SH SEE ALSO
