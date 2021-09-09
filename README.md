@@ -258,11 +258,12 @@ $ ls -l $HOME/stage/mpdev*
 
 Prebuilt binaries using openSUSE Build Service are available for mpdev for
 
-* Debian (including ARM images for Debian 10 which work (and tested) for RaspberryPI (model 2,3 & 4) and Allo Sparky)
-* openSUSE Tumbleweed
-* Arch Linux
-* Fedora
-* Ubuntu
+* Debian (including ARM images for Debian 10 which work (and tested) for RaspberryPI (model 2,3 & 4) and Debian 9 for Allo Sparky)
+* Raspbian 10 and 11 for RaspberryPI (ARM images)
+* openSUSE Tumbleweed (x86\_64)
+* Arch Linux (x86\_64)
+* Fedora (x86\_64)
+* Ubuntu (x86\_64 and ARM images for BananaPI)
 
 Use the below url for installation
 
