@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $Log: output.in,v $
+# Revision 1.1  2021-09-09 12:19:13+05:30  Cprogrammer
+# Initial revision
+#
+#
+# $Id: output.in,v 1.1 2021-09-09 12:19:13+05:30 Cprogrammer Exp mbhangui $
+#
+echo "$0: args=$*"
+if [ -n "$OUTPUT_CHANGED" ] ; then
+	echo "Output Changed: $OUTPUT_CHANGED"
+fi
+env|grep OUTPUT_|grep -v "OUTPUT_C"| sort
+exit $?

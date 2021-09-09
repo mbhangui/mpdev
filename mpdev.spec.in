@@ -49,7 +49,7 @@ mpdev is a daemon, written in C, that watches a Music Player Daemon events,
 using mpd's idle command and execs user defined script on event changes.
 
  * Uses mpd's idle mode.
- * Calls user $HOME/bin/player
+ * Calls user scripts in $HOME/.mpdev (player, playpause, output)
  * Sets special environment variables to pass data to the hooks.
  * Optional support for scrobbling to last.fm, libre.fm through external scripts
  * Included scripts:
@@ -104,6 +104,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
 %attr(755,root,root)                    %{_prefix}/libexec/mpdev/playpause
+%attr(755,root,root)                    %{_prefix}/libexec/mpdev/output
 %attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-release
 %attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-rpm.info
 

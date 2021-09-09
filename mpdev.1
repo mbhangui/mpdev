@@ -11,14 +11,15 @@ mpdev [\f[I]option\f[]]
 mpdev is a mpd event watcher. It connects to mpd, waits for idle events.
 By default it will get the host name and port for mpd from
 \f[B]MPD_HOST\f[] and \f[B]MPD_PORT\f[] environment variables.
-\f[B]MPD_PASSWORD\f[] environment variable can be set to make mpdev connect
-to a password-protected mpd. If these environment variables aren't set,
-mpdev connects to localhost on port 6600.
+\f[B]MPD_PASSWORD\f[] environment variable can be set to make mpdev
+connect to a password-protected mpd. If these environment variables aren't
+set, mpdev connects to localhost on port 6600.
 
 .SH OPTIONS
 .TP
 .B -v
-Set verbose output. You can increase verbosity by specifying it multiple times
+Set verbose output. You can increase verbosity by specifying it multiple
+times
 .RS
 .RE
 
@@ -48,13 +49,13 @@ Retry interval in seconds in case \fBmpd\fR(1) is done
 
 .SH HOOKS
 You can create scripts in $HOME/.mpdev directory. The default installation
-installs a script named $HOME/.mpdev/player for the uid 1000. The script does
-the following
+installs a script named $HOME/.mpdev/player for the uid 1000. The script
+does the following
 
 .IP \[bu] 4
-scrobbles titles to last.fm and libre.fm. You have to create API keys by running
-lastfm-scrobbler and librefm-scrobbler one time. You can disable scrobbling by
-setting DISABLE_SCROBBLE environment variable
+scrobbles titles to last.fm and libre.fm. You have to create API keys by
+running lastfm-scrobbler and librefm-scrobbler one time. You can disable
+scrobbling by setting DISABLE_SCROBBLE environment variable
 .sp -1
 .IP \[bu]
 updates play counts in the sqlite stats.db and
@@ -63,10 +64,17 @@ updates play counts in the sqlite stats.db and
 .IP \[bu]
 Synchronizes the ratings in the sticker (sqlite),
 [RompR](https://fatg3erman.github.io/RompR/) (MySQL) and the stats (sqlite)
-databases. It also initializes the rating to 3 when you play an unrated song.
+databases. It also initializes the rating to 3 when you play an unrated
+song.
 .PP
 
-The above three are actually done by running a hook, a script named `player` in $HOME/.mpdev directory. You can put your own script named `player` in this directory. In fact mpdev can run specific hooks for specific types of mpd events. A hook can be any executable program or script. It will be passed arguments and have certain environment variables related to the song playing, available to it. Below is a list of of events and corresping hooks that will be executed if available.
+The above three are actually done by running a hook, a script named
+`player` in $HOME/.mpdev directory. You can put your own script named
+`player` in this directory. In fact mpdev can run specific hooks for
+specific types of mpd events. A hook can be any executable program or
+script. It will be passed arguments and have certain environment variables
+related to the song playing, available to it. Below is a list of of events
+and corresping hooks that will be executed if available.
 
 .TS
 l l.
@@ -76,8 +84,8 @@ SONG_CHANGE           | ~/.mpdev/player
 PLAY/PAUSE            | ~/.mpdev/playpause
 STICKER_EVENT         | ~/.mpdev/sticker
 MIXER_EVENT           | ~/.mpdev/mixer
-OPTIONS_EVENT         | ~/.mpdev/options
 OUTPUT_EVENT          | ~/.mpdev/output
+OPTIONS_EVENT         | ~/.mpdev/options
 UPDATE_EVENT          | ~/.mpdev/update
 DATABASE_EVENT        | ~/.mpdev/database
 PLAYLIST_EVENT        | ~/.mpdev/playlist
@@ -93,7 +101,8 @@ CUSTOM_EVENT          | ~/.mpdev/custom
 The hooks are passed the following arguments
 
 .IP \[bu] 4
-mpd-event      - Passed when the above events listed, apart from SONG_CHANGE happen.
+mpd-event      - Passed when the above events listed, apart from
+SONG_CHANGE happen.
 .sp -1
 .IP \[bu]
 player-event   - Passwd when you play/pause player
@@ -131,11 +140,58 @@ PLAYER_STATE       - Set when you pause/resume player
 VERBOSE            - Set to the verbose field
 .EE
 
-if \fI$HOME/.config/lastfm-scrobbler\fR & \fI$HOME/.config/librefm-scrobbler\fR
-are present, mpdev sets SCROBBLER_LASTFM and SCROBBLER_LIBREFM environment
-variables respectively. This get created when you create API keys for lastfm,
-librefm by running lastfm-scrobbler and librefm-scrobbler one time with
---connect argument.
+if \fI$HOME/.config/lastfm-scrobbler\fR &
+\fI$HOME/.config/librefm-scrobbler\fR are present, mpdev sets
+SCROBBLER_LASTFM and SCROBBLER_LIBREFM environment variables respectively.
+This get created when you create API keys for lastfm, librefm by running
+lastfm-scrobbler and librefm-scrobbler one time with --connect argument.
+
+mpdev also runs OUTPUT_EVENT on startup ($HOME/.mpdev/output), with the
+argument output-initialize. This allows you to store information for
+devices configured in your \fBmpd.conf\fR(5). If any output changes, the
+environment variable OUTPUT_CHANGED is set in the form
+
+.TP 2
+"\fIDEVNO\fR - \fIstate\fR"
+
+Where \fIDEVNO\fR is the ID of the device in mpd.conf (0, 1, 2, etc) and
+\fIstate\fR is either the word "enabled" or "disabled".
+
+.PP
+So, in the below example, if you disable the headphone, \fBOUTPUT_CHANGED\fR
+environment variable will be set as "3 - disabled"
+
+All devices are also maintained in the environment variables
+\fBOUTPUT_\fR\fIDEVNO\fR\fB_ID\fR, \fBOUTPUT_\fR\fIDEVNO\fR\fB_NAME\fR,
+\fBOUTPUT_\fR\fIDEVNO\fR\fB_STATE\fR, \fBOUTPUT_\fR\fIDEVNO\fR\fB_TYPE\fR,
+\fBOUTPUT_\fR\fIDEVNO\fR\fB_EXTRA1\fR,
+\fBOUTPUT_\fR\fIDEVNO\fR\fB_EXTRA2\fR,
+\fBOUTPUT_\fR\fIDEVNO\fR\fB_EXTRA...\fR
+\fBOUTPUT_\fR\fIDEVNO\fR\fB_EXTRAn\fR
+
+Here \fIDEVNO\fR is the device id of the audio device in mpd.conf.
+
+Below is an example of the state of environment variables where mpd.conf
+have 3 devices configured.
+
+.EX
+OUTPUT_0_ID=0
+OUTPUT_0_NAME=My PULSE Device
+OUTPUT_0_STATE=disabled
+OUTPUT_0_TYPE=pulse
+OUTPUT_1_ID=1
+OUTPUT_1_EXTRA_1=attribute: allowed_formats=
+OUTPUT_1_EXTRA_2=attribute: dop=0
+OUTPUT_1_NAME=HDMI/Speaker
+OUTPUT_1_STATE=enabled
+OUTPUT_1_TYPE=alsa
+OUTPUT_2_ID=2
+OUTPUT_2_EXTRA_1=attribute: allowed_formats=
+OUTPUT_2_EXTRA_2=attribute: dop=0
+OUTPUT_2_NAME=Headphone
+OUTPUT_2_STATE=enabled
+OUTPUT_2_TYPE=alsa
+.EE
 
 .SH FILES
 
@@ -147,6 +203,7 @@ end-song when the song ends.
 .SH SEE ALSO
 .IP \[bu] 2
 \f[B]mpd\f[](1),
+\f[B]mpd.conf\f[](5),
 \f[B]sqlite3\f[](1),
 \f[B]lastfm-scrobbler\f[](1),
 \f[B]librefm-scrobbler\f[](1),

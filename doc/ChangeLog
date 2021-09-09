@@ -63,6 +63,9 @@ Release 1.0 Start 02/03/2020
 45. fixed idle handling
 46. added output even with OUTPUT devices passed as env variables. Feature
     request from Markus Gerl
+- 09/09/2021
+47. report OUTPUT changes in env variable OUTPUT_CHANGED
+48. added script 'output'
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

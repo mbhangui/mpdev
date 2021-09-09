@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.22  2021-09-09 12:18:09+05:30  Cprogrammer
+ * added feature to report changes in state of OUTPUT devices
+ *
  * Revision 1.21  2021-09-08 19:25:47+05:30  Cprogrammer
  * added output event
  *
@@ -71,7 +74,6 @@
  *
  * Full documentation of mpd commands at https://www.musicpd.org/doc/html/protocol.html
  */
-#include <stdio.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -106,7 +108,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.21 2021-09-08 19:25:47+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.22 2021-09-09 12:18:09+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -354,11 +356,14 @@ get_status(char *prefix, double *elapsed, double *duration, stralloc *status_lin
 int
 get_outputs()
 {
-	int             match, i, j, count, line_no;
-	char            strnum1[FMT_ULONG], strnum2[FMT_ULONG];
+	int             match, i, j, count, line_no, value_len;
+	char            strnum1[FMT_ULONG + 12], strnum2[FMT_ULONG];
+	char           *ptr, *value;
 
 	mpd_out("outputs");
 	output.len = 0;
+	if (!env_unset("OUTPUT_CHANGED"))
+		die_nomem();
 	for (count = 0, line_no = 0;;) {
 		if (getln(&mpdin, &line, &match, '\n') == -1)
 			die_read("status");
@@ -377,32 +382,78 @@ get_outputs()
 			continue;
 		if (!str_diffn(line.s, "OK\n", 3))
 			break;
-		if (!stralloc_0(&line))
-			die_nomem();
 		line.len--;
+		line.s[line.len] = 0; /*- remove newline */
 		if (!str_diffn(line.s, "outputid: ", 10)) {
 			line_no = 1;
 			count++;
-		} else
-			line_no++;
-		strnum1[i = fmt_int(strnum1, count)] = 0;
-		strnum2[j = fmt_int(strnum2, line_no)] = 0;
+		}
+		strnum1[i = fmt_int(strnum1, count - 1)] = 0;
 		if (!stralloc_copyb(&output, "OUTPUT_", 7) ||
 				!stralloc_catb(&output, strnum1, i) ||
-				!stralloc_append(&output, "_") ||
-				!stralloc_catb(&output, "LINE_", 5) ||
-				!stralloc_catb(&output, strnum2, j) ||
-				!stralloc_append(&output, "=") ||
-				!stralloc_catb(&output, line.s, line.len) ||
+				!stralloc_append(&output, "_"))
+			die_nomem();
+		if (!str_diffn(line.s, "outputid: ", 10)) {
+			if (!stralloc_catb(&output, "ID", 2))
+				die_nomem();
+			value = line.s + 10;
+			value_len = line.len - 10;
+		} else
+		if (!str_diffn(line.s, "outputname: ", 12)) {
+			if (!stralloc_catb(&output, "NAME", 4))
+				die_nomem();
+			value = line.s + 12;
+			value_len = line.len - 12;
+		} else
+		if (!str_diffn(line.s, "outputenabled: ", 15)) {
+			if (!stralloc_catb(&output, "STATE", 5) ||
+					!stralloc_0(&output))
+				die_nomem();
+			output.len--; /*- remove null */
+			if ((ptr = env_get(output.s))) {
+				if (str_diff(ptr, line.s)) {
+					i += fmt_str(strnum1 + i, line.s[15] - '0' ? " - enabled" : " - disabled");
+					strnum1[i] = 0;
+					if (!env_put2("OUTPUT_CHANGED", strnum1))
+						die_nomem();
+				}
+			}
+			value = line.s[15] - '0' ? "enabled" : "disabled";
+			value_len = line.s[15] - '0' ? 7 : 8;
+		} else
+		if (!str_diffn(line.s, "plugin: ", 8)) {
+			if (!stralloc_catb(&output, "TYPE", 4))
+				die_nomem();
+			value = line.s + 8;
+			value_len = line.len - 8;
+		} else {
+			strnum2[j = fmt_int(strnum2, line_no++)] = 0;
+			if (!stralloc_catb(&output, "EXTRA", 5) ||
+					!stralloc_catb(&output, strnum2, j))
+				die_nomem();
+			value = line.s;
+			value_len = line.len;
+		}
+		if (!stralloc_append(&output, "=") ||
+				!stralloc_catb(&output, value, value_len) ||
 				!stralloc_0(&output))
 			die_nomem();
 		if (!env_put(output.s))
 			die_nomem();
+	} /*- for (count = 0, line_no = 0;;) */
+	/*- handle device deletion */
+	for (;;count++) {
+		strnum1[i = fmt_int(strnum1, count)] = 0;
+		if (!stralloc_copyb(&output, "OUTPUT_", 7) ||
+				!stralloc_catb(&output, strnum1, i) ||
+				!stralloc_catb(&output, "_ID", 3) ||
+				!stralloc_0(&output))
+			die_nomem();
+		if (!env_get(output.s))
+			break;
+		if (!env_unset(output.s))
+			die_nomem();
 	}
-	if (!stralloc_0(&output))
-		die_nomem();
-	if (!env_put(output.s))
-		die_nomem();
 	return 1;
 }
 
@@ -649,10 +700,6 @@ run_command(int status, char *arg, int *state)
 			break;
 		case OUTPUT_EVENT:
 			player_cmd[0] = ".mpdev/output";
-			if (verbose) {
-				out("MPD status: output changed\n");
-				flush();
-			}
 			break;
 		case UPDATE_EVENT:
 			player_cmd[0] = ".mpdev/update";
@@ -858,6 +905,10 @@ do_idle(int *p_state)
 				}
 				get_outputs();
 				run_command(status, "output-event", 0);
+				if (verbose) {
+					out("MPD status: output changed\n");
+					flush();
+				}
 				break;
 			default:
 				run_command(status, "mpd-event", 0);
@@ -1145,6 +1196,8 @@ main(int argc, char **argv)
 		}
 		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
 		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
+		get_outputs();
+		run_command(OUTPUT_EVENT, "output-initialize", 0);
 
 		/*-
 		 * initial state is when mpdev is invoked
@@ -1281,7 +1334,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.21 2021-09-08 19:25:47+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.22 2021-09-09 12:18:09+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
