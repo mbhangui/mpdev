@@ -100,25 +100,18 @@ OUTPUT_CHANGED|Set when you enable or disable any output devices. This indicates
 VOLUME|Set during startup and when you change mixer volume. This indicates the volume level as a percentage.
 VERBOSE|Verbose level of mpdev
 
-Apart from the above environment variables, the state of all output device are available as environment variable to the script ~/.mpdev/output. Below example is for a case where three devices listed in /etc/mpd.conf - (My PULSE Device with ID 0, HDMI/Speaker with ID 1 and Headphone with ID 2). e.g. To check if the first device is enabled, you can just query the environment variable **OUTPUT_0_STATE**. Whenever the state of any output device is changed (enabled or disabled), the script ~/.mpdev/output gets called with access to the following environment variables.
+Apart from the above environment variables, the state of all output device are available as environment variable to the script ~/.mpdev/output. Below example is for a case where three devices listed in /etc/mpd.conf - (Piano DAC Plus 2.1 with ID 0, Xonar EssenceOne with ID 1 and Scarlett 2i2 USB with ID 2). e.g. To check if the first device is enabled, you can just query the environment variable **OUTPUT_0_STATE**. Whenever the state of any output device is changed (enabled or disabled), the script ~/.mpdev/output gets called with access to the following environment variables.
 
 ```
 OUTPUT_0_ID=0
-OUTPUT_0_NAME=My PULSE Device
-OUTPUT_0_STATE=disabled
-OUTPUT_0_TYPE=pulse
-OUTPUT_1_EXTRA1=attribute: allowed_formats=
-OUTPUT_1_EXTRA2=attribute: dop=0
+OUTPUT_0_NAME=Piano DAC Plus 2.1
+OUTPUT_0_STATE=enabled
 OUTPUT_1_ID=1
-OUTPUT_1_NAME=HDMI/Speaker
-OUTPUT_1_STATE=enabled
-OUTPUT_1_TYPE=alsa
-OUTPUT_2_EXTRA1=attribute: allowed_formats=
-OUTPUT_2_EXTRA2=attribute: dop=0
+OUTPUT_1_NAME=Xonar EssenceOne
+OUTPUT_1_STATE=disabled
 OUTPUT_2_ID=2
-OUTPUT_2_NAME=Headphone
+OUTPUT_2_NAME=Scarlett 2i2 USB
 OUTPUT_2_STATE=disabled
-OUTPUT_2_TYPE=alsa
 ```
 
 If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX. mpdev can also update [RompЯ](https://fatg3erman.github.io/RompR/) ratings and play counts and synchronize the ratings between [RompЯ](https://fatg3erman.github.io/RompR/) MySQL and sticker sqlite databases. Since mpdev runs in the background, it can keep updating [RompЯ](https://fatg3erman.github.io/RompR/), stats db play counts and history without you having to keep [RompЯ Web Frontend](https://fatg3erman.github.io/RompR/) running.
