@@ -117,16 +117,20 @@ mpd-event      - Passed when the above events listed, apart from
 SONG_CHANGE happen.
 .sp -1
 .IP \[bu]
-player-event   - Passwd when you play/pause player
+player-event   - Passed to ~/.mpdev/playpause when you play/pause player
 .sp -1
 .IP \[bu]
-playlist-event - Passwd when the playlist changes
+playlist-event - Passed to ~/.mpdev/playlist when the playlist changes
 .sp -1
 .IP \[bu]
-now-playing    - Passed when a song starts playing
+now-playing    - Passed to ~/.mpdev/player when a song starts playing
 .sp -1
 .IP \[bu]
-end-song       - Passed when a song finishes playing
+end-song       - Passed to ~/.mpdev/player when a song finishes playing
+.sp -1
+.IP \[bu]
+output-event   - Passed to ~/.mpdev/output script when any device outputs
+are enabled or disabled
 
 .SH Environment Variables
 
