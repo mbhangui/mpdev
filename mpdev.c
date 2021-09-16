@@ -845,61 +845,61 @@ do_idle(int *p_state)
 			flush();
 		}
 		if (!str_diffn(line.s, "changed: playlist\n", 18)) {
-			prev_status = status = PLAYLIST_EVENT;
+			prev_state = status = PLAYLIST_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: player\n", 16)) {
-			if (prev_status == PLAYLIST_EVENT)
+			if (prev_state == PLAYLIST_EVENT)
 				count--;
-			prev_status = status = PLAYER_EVENT;
+			prev_state = status = PLAYER_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: sticker\n", 17)) {
-			prev_status = status = STICKER_EVENT;
+			prev_state = status = STICKER_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: mixer\n", 15)) {
-			prev_status = status = MIXER_EVENT;
+			prev_state = status = MIXER_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: output\n", 16)) {
-			prev_status = status = OUTPUT_EVENT;
+			prev_state = status = OUTPUT_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: options\n", 17)) {
-			prev_status = status = OPTIONS_EVENT;
+			prev_state = status = OPTIONS_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: update\n", 16)) {
-			prev_status = status = UPDATE_EVENT;
+			prev_state = status = UPDATE_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: database\n", 18)) {
-			prev_status = status = DATABASE_EVENT;
+			prev_state = status = DATABASE_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: stored_playlist\n", 25)) {
-			prev_status = status = STORED_PLAYLIST_EVENT;
+			prev_state = status = STORED_PLAYLIST_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: partition\n", 19)) {
-			prev_status = status = PARTITION_EVENT;
+			prev_state = status = PARTITION_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: subscription\n", 22)) {
-			prev_status = status = SUBSCRIPTION_EVENT;
+			prev_state = status = SUBSCRIPTION_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: message\n", 17)) {
-			prev_status = status = MESSAGE_EVENT;
+			prev_state = status = MESSAGE_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: mount\n", 15)) {
-			prev_status = status = MOUNT_EVENT;
+			prev_state = status = MOUNT_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: neighbor\n", 18)) {
-			prev_status = status = NEIGHBOUR_EVENT;
+			prev_state = status = NEIGHBOUR_EVENT;
 			continue;
 		}
 		if (!str_diffn(line.s, "OK\n", 3)) {
