@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.40  2021-09-16 22:17:40+05:30  Cprogrammer
+# sanitize shell input for scrobble
+#
 # Revision 1.39  2021-09-16 21:03:02+05:30  Cprogrammer
 # disable UPDATE/INSERT echo statements when NO_DB_UPDATE is set
 #
@@ -122,7 +125,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.39 2021-09-16 21:03:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.40 2021-09-16 22:17:40+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -560,37 +563,40 @@ get_rompr_playcount_ts()
 
 scrobble()
 {
+	S_TITLE=$(echo $SONG_TITLE|tr \` \')
+	S_ARTIST=$(echo $SONG_ARTIST|tr \` \')
+	S_ALBUM=$(echo $SONG_ALBUM|tr \` \')
 	if [ -n "$SCROBBLE_LASTFM" ] ; then
 		if [ $VERBOSE -eq 2 ] ; then
-			echo lastfm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
+			echo lastfm-scrobbler --update --artist="$S_ARTIST" --album="$S_ALBUM" --track="$S_TITLE"  --duration="$SONG_DURATION"
 		fi
 		if [ $VERBOSE -eq 1 ] ; then
 			echo "Scrobbling [lastfm]"
 		fi
 		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-			lastfm-scrobbler --update --artist="$SONG_ARTIST" \
-				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+			lastfm-scrobbler --update --artist="$S_ARTIST" \
+				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION" > /dev/null
 		else
-			lastfm-scrobbler --update --artist="$SONG_ARTIST" \
-				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+			lastfm-scrobbler --update --artist="$S_ARTIST" \
+				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION"
 		fi
 	fi
 	if [ -n "$SCROBBLE_LIBREFM" ] ; then
 		if [ $VERBOSE -eq 2 ] ; then
-			echo librefm-scrobbler --update --artist="$SONG_ARTIST" --album="$SONG_ALBUM" --track="$SONG_TITLE"  --duration="$SONG_DURATION"
+			echo librefm-scrobbler --update --artist="$S_ARTIST" --album="$S_ALBUM" --track="$S_TITLE"  --duration="$SONG_DURATION"
 		fi
 		if [ $VERBOSE -eq 1 ] ; then
 			echo "Scrobbling [librefm]"
 		fi
 		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-			librefm-scrobbler --update --artist="$SONG_ARTIST" \
-				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+			librefm-scrobbler --update --artist="$S_ARTIST" \
+				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION" > /dev/null
 		else
-			librefm-scrobbler --update --artist="$SONG_ARTIST" \
-				--album="$SONG_ALBUM" --track="$SONG_TITLE" \
+			librefm-scrobbler --update --artist="$S_ARTIST" \
+				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION"
 		fi
 	fi
