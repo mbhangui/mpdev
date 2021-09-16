@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.24  2021-09-16 10:37:24+05:30  Cprogrammer
+ * BUGFIX: Fixed player not comining out of do idle loop
+ *
  * Revision 1.23  2021-09-09 16:59:12+05:30  Cprogrammer
  * set env variable VOLUME on startup and on mixer level change
  *
@@ -111,7 +114,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.23 2021-09-09 16:59:12+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.24 2021-09-16 10:37:24+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -1327,13 +1330,13 @@ main(int argc, char **argv)
 					submit_song(verbose, "end-song");
 					break;
 				}
-				if (p_state == PLAY_STATE)
-					break;
 				if (p_state == STOP_STATE) {
 					submit_song(verbose, "end-song");
 					prev_id1 = prev_id2 = 0;
 					continue;
 				}
+				if (i == PLAYER_EVENT)
+					break;
 			}
 			if (!i)
 				break;
@@ -1345,7 +1348,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.23 2021-09-09 16:59:12+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.24 2021-09-16 10:37:24+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

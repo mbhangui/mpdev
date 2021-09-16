@@ -67,6 +67,8 @@ Release 1.0 Start 02/03/2020
 47. report OUTPUT changes in env variable OUTPUT_CHANGED
 48. added script 'output'
 49. set env variable VOLUME on startup and on mixer level change
+16/09/2021
+50. BUGFIX: Fixed player not comining out of do idle loop
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
