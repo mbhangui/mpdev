@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.39  2021-09-16 21:03:02+05:30  Cprogrammer
+# disable UPDATE/INSERT echo statements when NO_DB_UPDATE is set
+#
 # Revision 1.38  2021-09-08 15:06:28+05:30  Cprogrammer
 # rating shouldn't be created on end-song
 #
@@ -119,7 +122,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.38 2021-09-08 15:06:28+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.39 2021-09-16 21:03:02+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -598,6 +601,12 @@ update_song()
 	uri="$1"
 	state="$2"
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
+	no_db_update=0
+	if [ -n "$NO_DB_UPDATE" ] ; then
+		if [ $NO_DB_UPDATE -ne 0 ] ; then
+			no_db_update=1
+		fi
+	fi
 	if [ " $state" = " now-playing" ] ; then
 		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
@@ -753,21 +762,23 @@ update_song()
 			fi
 			echo $pcount_s > $MPDEV_TMPDIR/pcount.$csum
 			echo    "uri=[$uri]"
-			if [ $inserted -eq 1 ] ; then
-				if [ $sticker_enabled -eq 1 ] ; then
-					echo "INSERT stker rating=$rating"
-				elif [ -n "$ROMPR" ] ; then
-					echo "INSERT RompR rating=$rating  Start=$START_TIME"
-				elif  [ $stats_enabled -eq 1 ] ; then
-					echo "INSERT stats rating=$rating"
-				fi
-			elif [ $inserted -eq 2 ] ; then
-				if [ $sticker_enabled -eq 1 ] ; then
-					echo "UPDATE stker rating=$rating"
-				elif [ -n "$ROMPR" ] ; then
-					echo "UPDATE RompR rating=$rating  Start=$START_TIME"
-				elif  [ $stats_enabled -eq 1 ] ; then
-					echo "UPDATE stats rating=$rating"
+			if [ $no_db_update -eq 0 ] ; then
+				if [ $inserted -eq 1 ] ; then
+					if [ $sticker_enabled -eq 1 ] ; then
+						echo "INSERT stker rating=$rating"
+					elif [ -n "$ROMPR" ] ; then
+						echo "INSERT RompR rating=$rating  Start=$START_TIME"
+					elif  [ $stats_enabled -eq 1 ] ; then
+						echo "INSERT stats rating=$rating"
+					fi
+				elif [ $inserted -eq 2 ] ; then
+					if [ $sticker_enabled -eq 1 ] ; then
+						echo "UPDATE stker rating=$rating"
+					elif [ -n "$ROMPR" ] ; then
+						echo "UPDATE RompR rating=$rating  Start=$START_TIME"
+					elif  [ $stats_enabled -eq 1 ] ; then
+						echo "UPDATE stats rating=$rating"
+					fi
 				fi
 			fi
 		fi
@@ -786,14 +797,14 @@ update_song()
 		fi
 		if [ $stats_enabled -eq 1 -a ! -f $MPDEV_TMPDIR/stats.$csum ] ; then
 			stats_db_insert "$uri" "$rating"
-			if [ $VERBOSE -gt 0 ] ; then
+			if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 				echo "INSERT stats rating=$rating  Start=$START_TIME"
 			fi
 			touch $MPDEV_TMPDIR/stats.$csum
 		fi
 		if [ $sticker_enabled -eq 1 -a -n "$ROMPR" -a ! -f $MPDEV_TMPDIR/rompr.$csum ] ; then
 			rompr_rating_update "$uri" "$START_TIME" "$rating"
-			if [ $VERBOSE -gt 0 ] ; then
+			if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 				tmp1=`expr "$rating" / 2`
 				echo "UPDATE RompR rating=$tmp1  Start=$START_TIME"
 			fi
@@ -858,7 +869,7 @@ update_song()
 						rating=$tmp
 						# update sticker with rating from rompr
 						sticker_db_update "$uri" $rating
-						if [ $VERBOSE -gt 0 ] ; then
+						if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 							echo "UPDATE stker from RompR new=$tmp old=$rating, TTindex=$TTindex, Times=old[$START_TIME], new[$tstamp]"
 						fi
 						echo $rating > $MPDEV_TMPDIR/rating.$csum
@@ -868,7 +879,7 @@ update_song()
 					echo $rating > $MPDEV_TMPDIR/rating.$csum
 					# update rompr with rating from sticker
 					rompr_rating_update "$uri" "$START_TIME" "$rating" "$TTindex"
-					if [ $VERBOSE -gt 0 ] ; then
+					if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 						tmp1=`expr "$rating" / 2`
 						tmp2=`expr "$old_rating" / 2`
 						echo "UPDATE RompR from stker new=$tmp1 old=$tmp2, TTindex=$TTindex, Times=old[$START_TIME], new[$START_TIME]"
@@ -893,7 +904,7 @@ update_song()
 			# update rating + playcount
 			if [ -f $MPDEV_TMPDIR/stats_playcount.$csum ] ; then
 				stats_db_update "$uri" "$rating" "$START_TIME" 0
-				if [ $VERBOSE -gt 0 ] ; then
+				if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 					echo "UPDATE stats Start=$START_TIME End=$END_TIME rating=[$rating]"
 				fi
 			else
@@ -916,7 +927,7 @@ update_song()
 					if [ -n "$pcount_s" ] ; then
 						pcount_s=$(expr $pcount_s + 1)
 					fi
-					if [ $VERBOSE -gt 0 ] ; then
+					if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 						if [ -z "$pcount_s" ] ; then
 							echo "UPDATE stats Playcount rating=[$rating] Start=$START_TIME End=$END_TIME"
 						else
@@ -933,7 +944,7 @@ update_song()
 		# Update Play Counts in rompr Playcounttable
 		if [ -n "$ROMPR" -a $var -eq 1 -a -n "$TTindex" -a ! -f $MPDEV_TMPDIR/rompr_playcount.$csum ] ; then
 			if [ -n "$pcount_s" ] ; then
-				if [ $VERBOSE -gt 0 ] ; then
+				if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 					echo -n "UPDATE RompR Playcount Playcount=$pcount_s, TTindex=$TTindex "
 					echo "[ts=$END_TIME][`date +"%Y-%m-%d %H:%M:%S" --date=@"$END_TIME"`] mpdev"
 				fi
@@ -949,7 +960,7 @@ update_song()
 					pcount_r=$(expr $1 + 1)
 					ts=$2
 				fi
-				if [ $VERBOSE -gt 0 ] ; then
+				if [ $VERBOSE -gt 0 -a $no_db_update -eq 0 ] ; then
 					echo -n "UPDATE RompR Playcount Playcount=$pcount_r, TTindex=$TTindex "
 					if [ -n "$ts" ] && [ $ts -gt $START_TIME ] && [ $ts -lt $END_TIME ] ; then
 						echo "[ts=$ts][`date +"%Y-%m-%d %H:%M:%S" --date=@"$ts"`] RompR"
