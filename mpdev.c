@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.25  2021-09-16 21:00:47+05:30  Cprogrammer
+ * decrement count when PLAYLIST_EVENT is followed by PLAYER_EVENT
+ *
  * Revision 1.24  2021-09-16 10:37:24+05:30  Cprogrammer
  * BUGFIX: Fixed player not comining out of do idle loop
  *
@@ -114,7 +117,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.24 2021-09-16 10:37:24+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.25 2021-09-16 21:00:47+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -822,7 +825,7 @@ run_command(int status, char *arg, int *state)
 int
 do_idle(int *p_state)
 {
-	int             match, status, count;
+	int             match, status, count, prev_state = -1;
 
 	mpd_out("idle");
 	status = 0;
@@ -842,62 +845,72 @@ do_idle(int *p_state)
 			flush();
 		}
 		if (!str_diffn(line.s, "changed: playlist\n", 18)) {
-			status = PLAYLIST_EVENT;
+			prev_status = status = PLAYLIST_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: player\n", 16)) {
-			status = PLAYER_EVENT;
+			if (prev_status == PLAYLIST_EVENT)
+				count--;
+			prev_status = status = PLAYER_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: sticker\n", 17)) {
-			status = STICKER_EVENT;
+			prev_status = status = STICKER_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: mixer\n", 15)) {
-			status = MIXER_EVENT;
+			prev_status = status = MIXER_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: output\n", 16)) {
-			status = OUTPUT_EVENT;
+			prev_status = status = OUTPUT_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: options\n", 17)) {
-			status = OPTIONS_EVENT;
+			prev_status = status = OPTIONS_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: update\n", 16)) {
-			status = UPDATE_EVENT;
+			prev_status = status = UPDATE_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: database\n", 18)) {
-			status = DATABASE_EVENT;
+			prev_status = status = DATABASE_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: stored_playlist\n", 25)) {
-			status = STORED_PLAYLIST_EVENT;
+			prev_status = status = STORED_PLAYLIST_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: partition\n", 19)) {
-			status = PARTITION_EVENT;
+			prev_status = status = PARTITION_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: subscription\n", 22)) {
-			status = SUBSCRIPTION_EVENT;
+			prev_status = status = SUBSCRIPTION_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: message\n", 17)) {
-			status = MESSAGE_EVENT;
+			prev_status = status = MESSAGE_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: mount\n", 15)) {
-			status = MOUNT_EVENT;
+			prev_status = status = MOUNT_EVENT;
 			continue;
 		} else
 		if (!str_diffn(line.s, "changed: neighbor\n", 18)) {
-			status = NEIGHBOUR_EVENT;
+			prev_status = status = NEIGHBOUR_EVENT;
 			continue;
 		}
 		if (!str_diffn(line.s, "OK\n", 3)) {
+			strnum[fmt_uint(strnum, status)] = 0;
+			out("do_idle status=");
+			out(strnum);
+			out(", count=");
+			strnum[fmt_uint(strnum, count)] = 0;
+			out(strnum);
+			out("\n");
+			flush();
 			switch(status)
 			{
 			case PLAYER_EVENT:
@@ -939,7 +952,7 @@ do_idle(int *p_state)
 			out(line.s);
 			flush();
 		}
-	} /*- for (;;) { */
+	} /*- for (;;) */
 	return status;
 }
 
@@ -1335,20 +1348,25 @@ main(int argc, char **argv)
 					prev_id1 = prev_id2 = 0;
 					continue;
 				}
+				strnum[fmt_uint(strnum, i)] = 0;
+				out("do_idle=");
+				out(strnum);
+				out("\n");
+				flush();
 				if (i == PLAYER_EVENT)
 					break;
 			}
 			if (!i)
 				break;
 		} /*- for (;;) - get_current_song */
-	} /*- for (connection_num = 1;;connection_num++) { */
+	} /*- for (connection_num = 1;;connection_num++) */
 	_exit(0);
 }
 
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.24 2021-09-16 10:37:24+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.25 2021-09-16 21:00:47+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
