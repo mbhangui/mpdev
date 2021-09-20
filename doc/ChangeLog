@@ -72,6 +72,8 @@ Release 1.0 Start 02/03/2020
 51. mpdev.c: decrement count when PLAYLIST_EVENT is followed by PLAYER_EVENT
 53. player.in: disable UPDATE/INSERT echo statements when NO_DB_UPDATE is set
 54. player.in: sanitize shell input
+17/09/2021
+55. mpdev.c: print debug statements for verbose > 1
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

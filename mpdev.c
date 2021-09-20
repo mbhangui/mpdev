@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.26  2021-09-17 13:19:01+05:30  Cprogrammer
+ * print debug statements for verbose > 1
+ *
  * Revision 1.25  2021-09-16 21:00:47+05:30  Cprogrammer
  * decrement count when PLAYLIST_EVENT is followed by PLAYER_EVENT
  *
@@ -117,7 +120,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.25 2021-09-16 21:00:47+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.26 2021-09-17 13:19:01+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -903,14 +906,16 @@ do_idle(int *p_state)
 			continue;
 		}
 		if (!str_diffn(line.s, "OK\n", 3)) {
-			strnum[fmt_uint(strnum, status)] = 0;
-			out("do_idle status=");
-			out(strnum);
-			out(", count=");
-			strnum[fmt_uint(strnum, count)] = 0;
-			out(strnum);
-			out("\n");
-			flush();
+			if (verbose > 1) {
+				strnum[fmt_uint(strnum, status)] = 0;
+				out("do_idle status=");
+				out(strnum);
+				out(", count=");
+				strnum[fmt_uint(strnum, count)] = 0;
+				out(strnum);
+				out("\n");
+				flush();
+			}
 			switch(status)
 			{
 			case PLAYER_EVENT:
@@ -1348,11 +1353,16 @@ main(int argc, char **argv)
 					prev_id1 = prev_id2 = 0;
 					continue;
 				}
-				strnum[fmt_uint(strnum, i)] = 0;
-				out("do_idle=");
-				out(strnum);
-				out("\n");
-				flush();
+				if (verbose > 1) {
+					strnum[fmt_uint(strnum, i)] = 0;
+					out("do_idle=");
+					out(strnum);
+					strnum[fmt_uint(strnum, p_state)] = 0;
+					out(", p_state=");
+					out(strnum);
+					out("\n");
+					flush();
+				}
 				if (i == PLAYER_EVENT)
 					break;
 			}
@@ -1366,7 +1376,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.25 2021-09-16 21:00:47+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.26 2021-09-17 13:19:01+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
