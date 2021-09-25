@@ -283,6 +283,45 @@ Use the below url for installation
 
 https://software.opensuse.org//download.html?project=home%3Ambhangui%3Adietpi&package=mpdev
 
+## NOTE for debian if you are going to use supervise from daemontools package
+
+debian/ubuntu repositories already has daemontools which is far behind in terms of feature list that the indimail-mta repo provides. When you install indimail-mta, apt-get may pull the wrong version with limited features. Also `apt-get install indimail` or `apt-get install indimail-mta` will get installed with errors, leading to an incomplete setup. You need to ensure that the two packages get installed from the indimail-mta repository instead of the debian repository.
+
+All you need to do is set a higher preference for the indimail-mta repository by creating /etc/apt/preferences.d/preferences with the following conents
+
+```
+$ sudo /bin/bash
+# cat > /etc/apt/preferences.d/preferences <<EOF
+Package: *
+Pin: origin download.opensuse.org
+Pin-Priority: 1001
+EOF
+```
+
+You can verify this by doing
+
+```
+$ apt policy daemontools ucspi-tcp
+daemontools:
+  Installed: 2.11-1.1+1.1
+  Candidate: 2.11-1.1+1.1
+  Version table:
+     1:0.76-7 500
+        500 http://raspbian.raspberrypi.org/raspbian buster/main armhf Packages
+ *** 2.11-1.1+1.1 1001
+       1001 http://download.opensuse.org/repositories/home:/indimail/Debian_10  Packages
+        100 /var/lib/dpkg/status
+ucspi-tcp:
+  Installed: 2.11-1.1+1.1
+  Candidate: 2.11-1.1+1.1
+  Version table:
+     1:0.88-6 500
+        500 http://raspbian.raspberrypi.org/raspbian buster/main armhf Packages
+ *** 2.11-1.1+1.1 1001
+       1001 http://download.opensuse.org/repositories/home:/indimail/Debian_10/ Packages
+        100 /var/lib/dpkg/status
+```
+
 # Building your own mpd music server
 
 Take a look at [pistop](https://github.com/mbhangui/pistop) and this [README](https://github.com/mbhangui/pistop/blob/master/example_config/README.md).
