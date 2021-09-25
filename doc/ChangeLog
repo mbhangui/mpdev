@@ -74,6 +74,8 @@ Release 1.0 Start 02/03/2020
 54. player.in: sanitize shell input
 17/09/2021
 55. mpdev.c: print debug statements for verbose > 1
+26/09/2021
+56. create_service: fix ownership of $HOME/.mpdev
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
