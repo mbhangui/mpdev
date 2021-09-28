@@ -1,6 +1,10 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.41  2021-09-28 16:23:39+05:30  Cprogrammer
+# fix INSERT statement for extra (last_modified) field added to sticker table
+# skip db_update for streams
+#
 # Revision 1.40  2021-09-16 22:17:40+05:30  Cprogrammer
 # sanitize shell input for scrobble
 #
@@ -125,7 +129,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.40 2021-09-16 22:17:40+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.41 2021-09-28 16:23:39+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -238,9 +242,10 @@ sticker_db_insert()
 	fi
 	turi=`echo $1|sed -e "s{'{''{g"`
 	tmprate=$2
-	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker values('song', '$turi', 'rating', $tmprate);"
+	sqlite3 -batch $sticker_file "INSERT or IGNORE into sticker \
+		(type, uri, name, value) values ('song', '$turi', 'rating', $tmprate);"
 	if [ $? -ne 0 ] ; then
-		echo "error: INSERT into sticker values('song', '$turi', 'rating',$tmprate);" 1>&2
+		echo "error: INSERT or IGNORE into sticker (type, uri, name, value) into sticker values ('song', '$turi', 'rating', $tmprate);" 1>&2
 		return 1
 	fi
 	return 0
@@ -606,6 +611,11 @@ update_song()
 {
 	uri="$1"
 	state="$2"
+	echo $uri|egrep "^http:|^https:" > /dev/null
+	if [ $? -eq 0 ] ; then
+		echo "Streaming $uri"
+		no_db_update=1
+	fi
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
 	no_db_update=0
 	if [ -n "$NO_DB_UPDATE" ] ; then
