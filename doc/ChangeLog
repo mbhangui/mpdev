@@ -80,6 +80,8 @@ Release 1.0 Start 02/03/2020
 57. player: fix INSERT statement for extra (last_modified) field added to sticker
     table
 58. player: skip db update for streams
+29/09/2021
+59. mpdev_update.c: added last_modified column to sticker table
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

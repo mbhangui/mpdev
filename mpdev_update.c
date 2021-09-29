@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.6  2021-09-29 19:16:58+05:30  Cprogrammer
+ * added last_modified column to sticker table
+ *
  * Revision 1.5  2020-08-11 14:02:11+05:30  Cprogrammer
  * adjust date_added for localtime
  *
@@ -54,7 +57,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.5 2020-08-11 14:02:11+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.6 2021-09-29 19:16:58+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -383,7 +386,8 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
         	"type  VARCHAR NOT NULL,\n"
         	"uri   VARCHAR NOT NULL,\n"
         	"name  VARCHAR NOT NULL,\n"
-        	"value VARCHAR NOT NULL\n"
+        	"value VARCHAR NOT NULL,\n"
+			"last_modified INTEGER DEFAULT (strftime('%Y-%m-%d %H:%M:%S:%s','now', 'localtime'))\n"
 		");";
 	}
 	if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
@@ -489,7 +493,8 @@ stats_database_end(char *database, sqlite3_stmt *res, int transaction_mode)
 			  "CREATE INDEX IF NOT EXISTS last_modified on song(last_modified);";
 	} else {
 		sql = "CREATE INDEX IF NOT EXISTS rating        on sticker(value);\n"
-			  "CREATE INDEX IF NOT EXISTS uri           on sticker(uri);\n";
+			  "CREATE INDEX IF NOT EXISTS uri           on sticker(uri);\n"
+			  "CREATE INDEX IF NOT EXISTS last          on sticker(last_modified);\n";
 	}
 	if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
 		sqlite3_close(db);
