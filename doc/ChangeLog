@@ -85,6 +85,9 @@ Release 1.0 Start 02/03/2020
 - 30/09/2021
 60. karma.in: display karma for current playing song when no options are
     provided
+61. use -noheader option to prevent .sqlitrc settings messing with results
+62. added songi script to display information from stats.db for any music
+    file
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
