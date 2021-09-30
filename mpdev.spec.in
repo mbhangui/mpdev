@@ -111,6 +111,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-rpm.info
 
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
+%attr(644,root,root)                    %{_prefix}/share/man/man1/songi.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_update.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_cleanup.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev_rename.1.gz
