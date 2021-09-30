@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.19  2021-09-30 20:31:46+05:30  Cprogrammer
+# use -noheader option to prevent .sqlitrc settings messing with results
+#
 # Revision 1.18  2021-04-24 11:56:20+05:30  Cprogrammer
 # minor fixes for display and error messages
 #
@@ -56,7 +59,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.18 2021-04-24 11:56:20+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.19 2021-09-30 20:31:46+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -543,9 +546,9 @@ if [ $dummy -eq 0 ] ; then
 	if [ -n "$playlist" ] ; then
 		if [ "$playlist" = "now" ] ; then
 			if [ $shuffle -eq 1 ] ; then
-				/usr/bin/sqlite3 $stats_file "$sql_query;" | shuf > $playlist_dir/now.m3u
+				/usr/bin/sqlite3 -noheader $stats_file "$sql_query;" | shuf > $playlist_dir/now.m3u
 			else
-				/usr/bin/sqlite3 $stats_file "$sql_query;" > $playlist_dir/now.m3u
+				/usr/bin/sqlite3 -noheader $stats_file "$sql_query;" > $playlist_dir/now.m3u
 			fi
 			if [ -z "$mpd_host" ] ; then
 				mpd_host=localhost
@@ -562,18 +565,18 @@ if [ $dummy -eq 0 ] ; then
 			if [ $shuffle -eq 1 ] ; then
 				(
 				echo "# $prog_args"
-				/usr/bin/sqlite3 $stats_file "$sql_query;" | shuf
+				/usr/bin/sqlite3 -noheader $stats_file "$sql_query;" | shuf
 				) | tee $playlist_dir/"$playlist".m3u
 			else
 				(
 				echo "# $prog_args"
-				/usr/bin/sqlite3 $stats_file "$sql_query;" 
+				/usr/bin/sqlite3 -noheader $stats_file "$sql_query;" 
 				) | tee $playlist_dir/"$playlist".m3u
 			fi
 		fi
 	else
 		echo "# $prog_args"
-		/usr/bin/sqlite3 $stats_file "$sql_query;"
+		/usr/bin/sqlite3 -noheader $stats_file "$sql_query;"
 	fi
 else
 	echo "$sql_query;"

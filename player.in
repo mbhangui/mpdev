@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.42  2021-09-30 20:31:49+05:30  Cprogrammer
+# use -noheader option to prevent .sqlitrc settings messing with results
+#
 # Revision 1.41  2021-09-28 16:23:39+05:30  Cprogrammer
 # fix INSERT statement for extra (last_modified) field added to sticker table
 # skip db_update for streams
@@ -129,7 +132,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.41 2021-09-28 16:23:39+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.42 2021-09-30 20:31:49+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -192,7 +195,7 @@ get_rompr_rating()
 get_mpd_rating()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $sticker_file "SELECT value FROM sticker WHERE type='song' AND uri='$turi';"
+	sqlite3 -noheader -batch $sticker_file "SELECT value FROM sticker WHERE type='song' AND uri='$turi';"
 	if [ $? -ne 0 ] ; then
 		echo "error: SELECT value FROM sticker WHERE type='song' AND uri=\"$turi\";" 1>&2
 		return 1
@@ -203,7 +206,7 @@ get_mpd_rating()
 get_stat_rating()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT rating FROM song WHERE uri='$turi';"
+	sqlite3 -noheader -batch $stats_file "SELECT rating FROM song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
 		echo "error: SELECT rating FROM song WHERE uri='$turi';" 1>&2
 		return 1
@@ -214,7 +217,7 @@ get_stat_rating()
 get_stat_last_played()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT last_played FROM song WHERE uri='$turi';"
+	sqlite3 -noheader -batch $stats_file "SELECT last_played FROM song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
 		echo "error: SELECT last_played FROM song WHERE uri='$turi';" 1>&2
 		return 1
@@ -225,7 +228,7 @@ get_stat_last_played()
 get_stat_playcount()
 {
 	turi=`echo "$1" | sed -e "s{'{''{g"`
-	sqlite3 -batch $stats_file "SELECT play_count from song WHERE uri='$turi';"
+	sqlite3 -noheader -batch $stats_file "SELECT play_count from song WHERE uri='$turi';"
 	if [ $? -ne 0 ] ; then
 		echo "error: SELECT play_count from song WHERE uri='$turi';" 1>&2
 		return 1
