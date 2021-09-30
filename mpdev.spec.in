@@ -94,6 +94,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
 %attr(755,root,root)                    %{_prefix}/bin/mpdplaylist
 %attr(755,root,root)                    %{_prefix}/bin/karma
+%attr(755,root,root)                    %{_prefix}/bin/songi
 %attr(755,root,root)                    %{_prefix}/bin/romprhist
 %attr(755,root,root)                    %{_prefix}/bin/transfer_play
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
