@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
+# Revision 1.3  2021-09-30 11:39:51+05:30  Cprogrammer
+# display karma for current playing song when no options are provided
+#
 # Revision 1.2  2021-09-09 20:41:02+05:30  Cprogrammer
 # added missing help display for --value
 #
@@ -8,7 +11,7 @@
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.2 2021-09-09 20:41:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.3 2021-09-30 11:39:51+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -170,6 +173,33 @@ while test $# -gt 0; do
 done
 }
 
+get_karma()
+{
+	uri=`echo $1|sed -e "s{'{''{g"`
+	sticker_file=$(get_mpd_conf_value sticker_file)
+	if [ $? -ne 0 ] ; then
+		echo "sticker database not enabled in /etc/mpd.conf" 1>&2
+		return 1
+	else
+		if [ ! -f $sticker_file ] ; then
+			echo "$sticker_file: No such file or directory" 1>&2
+			return 1
+		fi
+	fi
+	stats_dir=$(dirname $sticker_file)
+	stats_file=$stats_dir/stats.db
+	if [ ! -f $stats_file ] ; then
+		echo "$stats_file: No such file or directory" 1>&2
+		return 1
+	fi
+	sqlite3 -batch $stats_file "SELECT karma FROM song WHERE uri='$uri';"
+	if [ $? -ne 0 ] ; then
+		echo "error: SELECT karma FROM song WHERE uri='$uri';" 1>&2
+		return 1
+	fi
+	return 0
+}
+
 verbose=""
 song_id=""
 karma=""
@@ -181,8 +211,14 @@ dummy=0
 process_cmdline "$@"
 
 if [ -z "$karma" -a -z "$artist" -a -z "$rating" -a -z "$play_counts" ] ; then
-	echo "No options given" 1>&2
-	usage 1
+	uri=$(mpc current -f %file%)
+	if [ -z "$uri" ] ; then
+		echo "No song playing and no options given" 1>&2
+		usage 1
+	fi
+	karma=$(get_karma "$uri")
+	echo "karma=$karma, uri=$uri"
+	return 0
 fi
 
 music_dir=`get_mpd_conf_value music_directory`
