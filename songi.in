@@ -1,11 +1,14 @@
 #!/bin/sh
 #
 # $Log: songi.in,v $
+# Revision 1.2  2021-10-01 12:05:56+05:30  Cprogrammer
+# removed name column from song table in stats db
+#
 # Revision 1.1  2021-09-30 20:31:57+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: songi.in,v 1.1 2021-09-30 20:31:57+05:30 Cprogrammer Exp mbhangui $
+# $Id: songi.in,v 1.2 2021-10-01 12:05:56+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -33,7 +36,7 @@ locate_file()
 display_info()
 {
 	Q="SELECT play_count, rating, duration, datetime(last_modified, 'unixepoch', 'localtime'),"
-	Q="$Q datetime(date_added, 'unixepoch', 'localtime'), artist, album, title, track, name, genre,"
+	Q="$Q datetime(date_added, 'unixepoch', 'localtime'), artist, album, title, track, genre,"
 	Q="$Q date, composer, performer, disc, datetime(last_played, 'unixepoch', 'localtime'), karma"
 	Q="$Q FROM song WHERE uri='$1';"
 	sqlite3 -noheader -line -batch $stats_file "$Q"

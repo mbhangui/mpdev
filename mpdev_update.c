@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.7  2021-10-01 12:05:27+05:30  Cprogrammer
+ * removed name column from song table in stats db
+ *
  * Revision 1.6  2021-09-29 19:16:58+05:30  Cprogrammer
  * added last_modified column to sticker table
  *
@@ -57,7 +60,7 @@
 #include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.6 2021-09-29 19:16:58+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.7 2021-10-01 12:05:27+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -372,7 +375,6 @@ stats_database_init(char *database, int synch_mode, int journal_in_memory, int t
         	"album           TEXT,\n"
         	"title           TEXT,\n"
         	"track           TEXT,\n"
-        	"name            TEXT,\n"
         	"genre           TEXT,\n"
         	"date            TEXT,\n"
         	"composer        TEXT,\n"

@@ -88,6 +88,8 @@ Release 1.0 Start 02/03/2020
 61. use -noheader option to prevent .sqlitrc settings messing with results
 62. added songi script to display information from stats.db for any music
     file
+- 01/10/2021
+63. mpdev_update.c, songi.in: removed name column from song table in stats db
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
