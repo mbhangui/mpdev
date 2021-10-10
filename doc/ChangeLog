@@ -92,6 +92,8 @@ Release 1.0 Start 02/03/2020
 63. mpdev_update.c, songi.in: removed name column from song table in stats db
 - 06/10/2021
 64. karma: fixed sql statements
+- 10/10/2021
+65. player.in: fixed non-skipping of db update for streams
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

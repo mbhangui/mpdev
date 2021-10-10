@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.43  2021-10-10 21:59:30+05:30  Cprogrammer
+# fixed non-skipping of db update for streams
+#
 # Revision 1.42  2021-09-30 20:31:49+05:30  Cprogrammer
 # use -noheader option to prevent .sqlitrc settings messing with results
 #
@@ -132,7 +135,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.42 2021-09-30 20:31:49+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.43 2021-10-10 21:59:30+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -615,12 +618,8 @@ update_song()
 	uri="$1"
 	state="$2"
 	echo $uri|egrep "^http:|^https:" > /dev/null
-	if [ $? -eq 0 ] ; then
-		echo "Streaming $uri"
-		no_db_update=1
-	fi
-	csum=`echo "$uri"|cksum|awk '{print $1}'`
 	no_db_update=0
+	csum=`echo "$uri"|cksum|awk '{print $1}'`
 	if [ -n "$NO_DB_UPDATE" ] ; then
 		if [ $NO_DB_UPDATE -ne 0 ] ; then
 			no_db_update=1
@@ -1020,8 +1019,9 @@ if [ -z "$VERBOSE" ] ; then
 	VERBOSE=0
 fi
 # we don't handle stream uri currently
-echo $SONG_URI|grep "^http://" >/dev/null
+echo $SONG_URI|egrep "^http:|^https:" > /dev/null
 if [ $? -eq 0 ] ; then
+	echo "Streaming $SONG_URI"
 	exit 0
 fi
 music_dir=`get_mpd_conf_value music_directory`
