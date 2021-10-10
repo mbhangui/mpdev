@@ -1,8 +1,8 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
-# Revision 1.5  2021-10-06 23:16:30+05:30  Cprogrammer
-# fixed sql statements
+# Revision 1.5  2021-10-11 00:32:37+05:30  Cprogrammer
+# fixed sql statement
 #
 # Revision 1.4  2021-09-30 20:30:25+05:30  Cprogrammer
 # use -noheader option to prevent .sqlitrc settings messing with results
@@ -17,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.5 2021-10-06 23:16:30+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.5 2021-10-11 00:32:37+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -209,7 +209,6 @@ get_karma()
 verbose=""
 song_id=""
 karma=""
-karma_val=50
 artist=""
 rating=""
 play_counts=""
@@ -223,8 +222,8 @@ if [ $# -eq 0 ] ; then
 		usage 1
 	fi
 	karma=$(get_karma "$uri")
-	echo "karma=$karma, uri=$uri"
 	if [ -n "$karma_val" ] ; then
+		echo "karma=$karma, uri=$uri"
 	fi
 	return 0
 fi
@@ -340,11 +339,10 @@ if [ -n "$karma" ] ; then
 	sql_query_u="$sql_query_u karma=$karma"
 fi
 echo "# $0 $prog_args"
-if [ $dummy -eq 0 ] ; then
+if [ $dummy -ne 0 -a -n "$karma_val" ] ; then
 	echo /usr/bin/sqlite3 "$stats_file" "$sql_query_u";
 	/usr/bin/sqlite3 "$stats_file" "$sql_query_u";
 else
-	echo /usr/bin/sqlite3 -noheader "$stats_file" "$sql_query_s";
-	/usr/bin/sqlite3 -noheader "$stats_file" "$sql_query_s";
+	/usr/bin/sqlite3 -column -header "$stats_file" "$sql_query_s";
 fi
 exit 0
