@@ -87,6 +87,32 @@ Known values for OPTION are:
 --version
 
   output version information
+.
+EE
+.SH EXAMPLES
+
+.EX
+1. Set the karma of the current playing song to 55
+
+$ karma --value=52
+karma       id          uri                                                    
+----------  ----------  -------------------------------------------------------
+50          12490       Hindi/Milan/09 - Sawan Ka Mahina-Milan-1967-Mukesh.flac
+52          12490       Hindi/Milan/09 - Sawan Ka Mahina-Milan-1967-Mukesh.flac
+
+2. Display the karma of the current playing song
+
+$ karma
+karma       id          uri
+----------  ----------  -------------------------------------------------------
+50          12500       Hindi/Mirza Ghalib/03 - Aah ko chahiye ek umar-.flac
+
+3. Display the karma of a specific song
+
+$ karma --uri="Deep Purple/1971 - Fireball/01 - Fireball.wv"
+karma       id          uri                                         
+----------  ----------  --------------------------------------------
+50          52283       Deep Purple/1971 - Fireball/01 - Fireball.wv
 .EE
 
 .SH "SEE ALSO"

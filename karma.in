@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
+# Revision 1.8  2021-10-15 20:02:56+05:30  Cprogrammer
+# set song_uri to current playing song if no options are provided
+#
 # Revision 1.7  2021-10-15 18:31:39+05:30  Cprogrammer
 # fixed update not working
 #
@@ -23,7 +26,7 @@
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.7 2021-10-15 18:31:39+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.8 2021-10-15 20:02:56+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -255,6 +258,14 @@ sql_query_select="SELECT karma, id, uri FROM song "
 sql_query_update="UPDATE song set karma=$karma_val "
 first_condition=""
 
+if [ -z "$song_uri" -a -z "$song_id" -a -z "$artist" -a -z "$rating" -a -z "$play_counts" -a -z "$karma" ] ; then
+	song_uri=$(mpc current -f %file%)
+	if [ -z "$song_uri" ] ; then
+		echo "No song playing and no options given" 1>&2
+		usage 1
+	fi
+fi
+
 if [ -n "$song_uri" ] ; then
 	if [ "$song_uri" = "current" ] ; then
 		song_uri=$(mpc current -f %file%)
@@ -341,8 +352,9 @@ if [ -n "$karma" ] ; then
 	sql_query_u="$sql_query_u karma=$karma"
 fi
 if [ $do_update -eq 1 -a -n "$karma_val" ] ; then
-	/usr/bin/sqlite3 "$stats_file" "$sql_query_u";
 	/usr/bin/sqlite3 -column -header "$stats_file" "$sql_query_s";
+	/usr/bin/sqlite3 "$stats_file" "$sql_query_u";
+	/usr/bin/sqlite3 -column -noheader "$stats_file" "$sql_query_s";
 else
 	/usr/bin/sqlite3 -column -header "$stats_file" "$sql_query_s";
 fi
