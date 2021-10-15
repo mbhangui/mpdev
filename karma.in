@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
+# Revision 1.7  2021-10-15 18:31:39+05:30  Cprogrammer
+# fixed update not working
+#
 # Revision 1.6  2021-10-14 22:39:14+05:30  Cprogrammer
 # fixed typo
 #
@@ -20,7 +23,7 @@
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.6 2021-10-14 22:39:14+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.7 2021-10-15 18:31:39+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -165,7 +168,7 @@ while test $# -gt 0; do
 	fi
 	;;
 	--query)
-	dummy=1
+	do_update=0
 	;;
 	--verbose)
 	verbose="-v"
@@ -215,20 +218,16 @@ karma=""
 artist=""
 rating=""
 play_counts=""
-dummy=0
+do_update=1
 process_cmdline "$@"
 
 if [ $# -eq 0 ] ; then
-	uri=$(mpc current -f %file%)
-	if [ -z "$uri" ] ; then
+	do_update=0
+	song_uri=$(mpc current -f %file%)
+	if [ -z "$song_uri" ] ; then
 		echo "No song playing and no options given" 1>&2
 		usage 1
 	fi
-	karma=$(get_karma "$uri")
-	if [ -n "$karma" ] ; then
-		echo "karma=$karma, uri=$uri"
-	fi
-	return 0
 fi
 
 music_dir=`get_mpd_conf_value music_directory`
@@ -341,10 +340,9 @@ if [ -n "$karma" ] ; then
 	sql_query_s="$sql_query_s karma=$karma"
 	sql_query_u="$sql_query_u karma=$karma"
 fi
-echo "# $0 $prog_args"
-if [ $dummy -ne 0 -a -n "$karma_val" ] ; then
-	echo /usr/bin/sqlite3 "$stats_file" "$sql_query_u";
+if [ $do_update -eq 1 -a -n "$karma_val" ] ; then
 	/usr/bin/sqlite3 "$stats_file" "$sql_query_u";
+	/usr/bin/sqlite3 -column -header "$stats_file" "$sql_query_s";
 else
 	/usr/bin/sqlite3 -column -header "$stats_file" "$sql_query_s";
 fi
