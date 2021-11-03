@@ -44,43 +44,49 @@ fi
 echo "Press ENTER for options, Cntrl C to quit" 1>&2
 read key
 $MORE 1>&2 <<EOF
-Usage: mpdplaylist [OPTION]
+Usage: karma [OPTION]
 
 Known values for OPTION are:
 
 --value=karma
   Set karma to karma. If not set, karma is set as 50
 
+-u path
 --uri=path
   Finds song with uri matching path
 
+-i songID
 --id=songID
   Finds song with id matching songID
 
+-k
 --karma
   Find songs with karma as per expression. e.g.
-  --karma<50  means songs with karma less than 50
-  --karma<=50 means songs with karma less than or equal to 50
-  --karma=50  means songs with karma equal to 50
-  --karma>=50 means songs with karma greater than or equal to 50
-  --karma>50  means songs with karma greater than 50
+  --karma <50  means songs with karma less than 50
+  --karma <=50 means songs with karma less than or equal to 50
+  --karma =50  means songs with karma equal to 50
+  --karma >=50 means songs with karma greater than or equal to 50
+  --karma >50  means songs with karma greater than 50
 
+-p
 --playcount=exp
   Find songs with playcounts as per expression. e.g.
-  --playcount<5  means songs with play counts less than 5
-  --playcount<=5 means songs with play counts less than or equal to 5
-  --playcount=5  means songs with play counts equal to 5
-  --playcount>=5 means songs with play counts greater than or equal to 5
-  --playcount>5  means songs with play counts greater than 5
+  --playcount <5  means songs with play counts less than 5
+  --playcount <=5 means songs with play counts less than or equal to 5
+  --playcount =5  means songs with play counts equal to 5
+  --playcount >=5 means songs with play counts greater than or equal to 5
+  --playcount >5  means songs with play counts greater than 5
 
+-r
 --rating
   Find songs with karma as per expression. e.g.
-  --rating<6  means gons with ratings less than 6
-  --rating<=6 means gons with ratings less than or equal to 6
-  --rating=6  means gons with ratings equal to 6
-  --rating>=6 means gons with ratings greater than or equal to 6
-  --rating>6  means gons with ratings greater than 6
-
+  --rating <6  means gons with ratings less than 6
+  --rating <=6 means gons with ratings less than or equal to 6
+  --rating =6  means gons with ratings equal to 6
+  --rating >=6 means gons with ratings greater than or equal to 6
+  --rating >6  means gons with ratings greater than 6
+ 
+-a Artist
 --artist=Artist
   Find songs with Artist exactly matching 'Artist'
 
@@ -90,101 +96,57 @@ Known values for OPTION are:
 --query
   Display SQL query, results and exit
 
+-h
 --help
-
   display this help and exit
 
---version
-
-  output version information
 EOF
 exit $1
 }
 
 process_cmdline()
 {
-while test $# -gt 0; do
+OPTS=`getopt -o u:i:k:a:p:r:h --long value:,uri:,karma:,playcount:,rating:,artist:,artistany:,query,help -- "$@"`
+eval set -- "$OPTS"
+echo "$@"
+while true; do
 	case "$1" in
-	-*=*)
-	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
-	optval=`echo "$1" | cut -d'=' -f1`
-	prog_args="$prog_args $optval=\"$optarg\""
-	;;
-	-*\>*)
-	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*>//'`
-	optarg=">$optarg"
-	optval=`echo "$1" | cut -d'>' -f1`
-	prog_args="$prog_args $optval\"$optarg\""
-	;;
-	-*\<*)
-	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*<//'`
-	optarg="<$optarg"
-	optval=`echo "$1" | cut -d'<' -f1`
-	prog_args="$prog_args $optval\"$optarg\""
-	;;
-	*)
-	optarg=
-	prog_args="$prog_args $1"
-	;;
+		--value)
+			karma_val=$2 ; shift 2 ;;
+		-u|--uri)
+			song_uri=$2 ; shift 2 ;;
+		-i|--id)
+			song_id=$2 ; shift 2 ;;
+		-k|--karma)
+			if [ "${2:0:1}" = ">" -o "${2:0:1}" = "<" -o "${2:0:1}" = "=" ] ; then
+				karma="karma$2" ; shift 2 ;
+			else
+				karma="karma=$2" ; shift 2 ;
+			fi ;;
+		-a|--artist)
+			exact=1; artist=${2/ /_}; shift 2;;
+		--artistany)
+			exact=0; artist=${2/ /_}; shift 2;;
+		-p|--playcount)
+			if [ "${2:0:1}" = ">" -o "${2:0:1}" = "<" -o "${2:0:1}" = "=" ] ; then
+				play_counts="play_count$2" ; shift 2 ;
+			else
+				play_counts="play_count=$2" ; shift 2 ;
+			fi ;;
+		-r|--rating)
+			if [ "${2:0:1}" = ">" -o "${2:0:1}" = "<" -o "${2:0:1}" = "=" ] ; then
+				rating="rating$2" ; shift 2 ;
+			else
+				rating="rating=$2" ; shift 2 ;
+			fi ;;
+		--query)
+			do_update=0; shift 1;;
+		-h|--help)
+			usage 0 ;;
+		--) shift; break;;
+		*)
+			echo "invalid option [$1]" 1>&2; usage 1; break;;
 	esac
-
-	case "$1" in
-	--value=*)
-	karma_val=$optarg
-	;;
-	--uri=*)
-	song_uri=$optarg
-	;;
-	--id=*)
-	song_id=$optarg
-	;;
-	--karma=*|--karma\>*|--karma\<*)
-	first_char=$(echo $optarg | cut -c1)
-	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
-		karma="karma=$optarg"
-	else
-		karma="karma$optarg"
-	fi
-	;;
-	--artist=*)
-	exact=1
-	artist=`echo "$optarg"| sed "s/ /_/g"`
-	;;
-	--artistany=*)
-	exact=0
-	artist=`echo $optarg| sed "s/ /_/g"`
-	;;
-	--playcount=*|--playcount\>*|--playcount\<*)
-	first_char=$(echo $optarg | cut -c1)
-	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
-		play_counts="play_count=$optarg"
-	else
-		play_counts="play_count$optarg"
-	fi
-	;;
-	--rating=*|--rating\>*|--rating\<*)
-	first_char=$(echo $optarg | cut -c1)
-	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
-		rating="rating=$optarg"
-	else
-		rating="rating$optarg"
-	fi
-	;;
-	--query)
-	do_update=0
-	;;
-	--verbose)
-	verbose="-v"
-	;;
-	--help)
-	usage 0
-	;;
-	*)
-	echo "invalid option [$1]" 1>&2
-	usage 1
-	;;
-	esac
-	shift
 done
 }
 
@@ -215,7 +177,6 @@ get_karma()
 	return 0
 }
 
-verbose=""
 song_id=""
 karma=""
 artist=""
