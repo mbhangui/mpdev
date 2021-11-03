@@ -185,6 +185,8 @@ play_counts=""
 do_update=1
 process_cmdline "$@"
 
+echo "lol"
+
 if [ $# -eq 0 ] ; then
 	do_update=0
 	song_uri=$(mpc current -f %file%)
@@ -243,8 +245,8 @@ if [ -n "$song_uri" ] ; then
 		sql_query_s="$sql_query_s AND"
 		sql_query_u="$sql_query_u AND"
 	fi
-	sql_query_s="$sql_query_s uri='$song_uri'"
-	sql_query_u="$sql_query_u uri='$song_uri'"
+	sql_query_s="$sql_query_s uri='${song_uri/\'/\'\'}'"
+	sql_query_u="$sql_query_u uri='${song_uri/\'/\'\'}'"
 fi
 if [ -n "$song_id" ] ; then
 	if [ -z "$first_condition" ] ; then
