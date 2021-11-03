@@ -185,8 +185,6 @@ play_counts=""
 do_update=1
 process_cmdline "$@"
 
-echo "lol"
-
 if [ $# -eq 0 ] ; then
 	do_update=0
 	song_uri=$(mpc current -f %file%)
