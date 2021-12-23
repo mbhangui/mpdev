@@ -2,612 +2,618 @@
 
 ################################################################
 #
-# @name@-scrobbler. An audio scrobbler to submit music to last.fm.
+# @name@ scrobbler. An audio scrobbler to submit music to @url@
 #
 # Requires      : curl
-# Documentation : https://goto.pachanka.org/@name@-scrobbler
+# Documentation : https://goto.pachanka.org/lastfm-scrobbler
 # License       : MIT License - See LICENSE.md
 #
 ################################################################
 
+set_variables()
+{
+if [ ! -f $1 ] ; then
+	echo "$1: No such file or directory"
+	exit 1
+fi
+artist=$(sed -n 1p $1 | cut -d= -f2-)
+track=$(sed -n 2p $1 | cut -d= -f2-)
+album=$(grep "^album" $1 | cut -d= -f2-)
+duration=$(grep "^duration" $1 | cut -d= -f2-)
+}
+
+usage_connect()
+{
+echo "USAGE:"
+echo "$BASE_SCRIPT [OPTIONS]"
+echo ""
+echo "OPTIONS:"
+echo "	--connect to setup your connection to @name@ for the first time or reconfigure."
+echo "	--api_key to specify a custom API key. Must be called with --api_sec option."
+echo "	--api_sec to add a custom API shared secret. Must be called with --api_key option."
+echo "	--debug   to output debugging information."
+echo ""
+echo "EXAMPLE:"
+echo "$BASE_SCRIPT --connect --api_key=abcdef123456 --api_sec=abcdef123456"
+exit 1
+}
+
+usage_all()
+{
+echo "$USAGE_TITLE"
+echo "USAGE:"
+echo "$BASE_SCRIPT [OPTIONS]"
+echo "OPTIONS:"
+echo "Help:"
+echo "	--help"
+echo "	--help-connect"
+echo "	--help-scrobble"
+echo "About:"
+echo "	--version "
+echo "	--about"
+echo "Connecting:"
+echo "	--connect --api_key --api_sec"
+echo "Scrobbling:"
+echo "	--artist --track --album --duration"
+echo "	--ask-moc"
+echo "Update Current Song (\"Now scrobbling\"):"
+echo "	--update --artist --track --album  --duration"
+echo "	--update --ask-moc"
+echo "Stop:"
+echo "	--stop"
+echo "Debug:"
+echo "	--debug"
+exit 1
+}
+
+usage_scrobble()
+{
+echo "USAGE:"
+echo "$BASE_SCRIPT [OPTIONS]"
+echo ""
+echo "OPTIONS:"
+echo ""
+echo "Update: Will send a \"now scrobbling\" update with the current song and submit the last song."
+echo "	--update --ask-moc"
+echo "OR"
+echo "	--update --artist=\"etc\" --title=\"etc\"  --album=\"etc\"  --duration=\"123\""
+echo ""
+echo "Scrobble: Will directly scrobble the current song."
+echo "	-- ask-moc"
+echo "OR"
+echo "	--artist=\"etc\" --title=\"etc\" --album=\"etc\" --duration=\"123\""
+echo ""
+echo "Stop: Will delete the current and last songs saved for scrobbling."
+echo "	--stop"
+echo ""
+echo "Debug: Output the data being handled."
+echo "	--debug"
+echo ""
+echo "For help on connecting your account type: $BASE_SCRIPT --usage-connect"
+echo ""
+echo "USAGE WITH MOC PLAYER:"
+echo ""
+echo "In your MOC configuration file (usually at ~/.moc/config) add the following lines:"
+echo ""
+echo "OnSongChange = \"$BASE_SCRIPT --update --ask-moc\""
+echo "OnStop	   = \"$BASE_SCRIPT --stop\""
+echo ""
+echo "OTHER EXAMPLES:"
+echo ""
+echo "To scrobble a track directly"
+echo "$BASE_SCRIPT --artist=\"band name\" --title=\"song title\" --album=\"album title\"  --duration=\"123\""
+echo ""
+echo "To add a track to the now playing and submit the last updated track"
+echo "$BASE_SCRIPT --update --artist=\"band name\" --title=\"song title\" --album=\"album title\"  --duration=\"123\""
+exit 1
+}
+
 # Start
 BASE_SCRIPT=`basename "$0"`
-USAGE_ALL="$USAGE_TITLE
-USAGE:
-$BASE_SCRIPT [OPTIONS]
-OPTIONS:
-Help:
-    --help
-    --help-connect
-    --help-scrobble
-About:
-    --version 
-    --about
-Connecting:
-    --connect --api_key --api_sec
-Scrobbling:
-    --artist --track --album --duration
-    --ask-moc
-Update Current Song (\"Now scrobbling\"):
-    --update --artist --track --album  --duration
-    --update --ask-moc
-Stop:
-    --stop
-Debug:
-    --debug
-"
 
-if [ ! $# -eq 0 ] ; then
-
-    # Defaults
-    NAME_SCRIPT="@name@-scrobbler"
-    VERSION="0.0.2"
-    AUTHOR="Pachanka <social@pachanka.org>"
-
-    SCHEMA="https"
-    AUTH_URL=@auth_url@
-    API_URL=@api_url@
-    HOST=@host_url@
-    SIG_URL="api.pachanka.org/moc-scrobbler"
-
-    KEYTYPE="desktop"
-    CONF="~/.config/@name@-scrobbler/@name@-scrobbler.conf"
-
-    # Usage definitions
-    USAGE_TITLE="@name@-scrobbler an audio scrobbler to submit music to last.fm."
-    USAGE_CONNECT="
-USAGE:
-$BASE_SCRIPT [OPTIONS]
-
-OPTIONS:
---connect to setup your connection to lastfm for the first time or reconfigure.
---api_key to specify a custom API key. Must be called with --api_sec option.
---api_sec to add a custom API shared secret. Must be called with --api_key option.
---debug   to output debugging information.
-
-EXAMPLE:
-$BASE_SCRIPT --connect --api_key=abcdef123456 --api_sec=abcdef123456
-
-"
-
-    USAGE_SCROBBLE="
-USAGE:
-$BASE_SCRIPT [OPTIONS]
-
-OPTIONS:
-
-Update: Will send a \"now scrobbling\" update with the current song and submit the last song.
-    --update --ask-moc
-OR
-    --update --artist=\"etc\" --title=\"etc\"  --album=\"etc\"  --duration=\"123\"
-
-Scrobble: Will directly scrobble the current song.
-    -- ask-moc
-OR
-    --artist=\"etc\" --title=\"etc\" --album=\"etc\" --duration=\"123\"
-
-Stop: Will delete the current and last songs saved for scrobbling.
-    --stop
-
-Debug: Output the data being handled.
-    --debug
-
-For help on connecting your account type: $BASE_SCRIPT --usage-connect
-
-USAGE WITH MOC PLAYER:
-
-In your MOC configuration file (usually at ~/.moc/config) add the following lines:
-
-OnSongChange = \"$BASE_SCRIPT --update --ask-moc\"
-OnStop       = \"$BASE_SCRIPT --stop\"
-
-OTHER EXAMPLES:
-
-To scrobble a track directly
-$BASE_SCRIPT --artist=\"band name\" --title=\"song title\" --album=\"album title\"  --duration=\"123\"
-
-To add a track to the now playing and submit the last updated track
-$BASE_SCRIPT --update --artist=\"band name\" --title=\"song title\" --album=\"album title\"  --duration=\"123\"
-
-"
-
-    # Script vars
-    CONNECT=false
-    API_KEY=false
-    API_SEC=false
-    UPDATE=false
-    STOP=false
-    ASKMOC=false
-    DEBUG=false
-
-    # Collect options
-    for i in "$@"; do case $i in
-        --help)          echo "$USAGE_ALL"; exit 1;;
-        --help-connect*)  echo "$USAGE_CONNECT"; exit 1;;
-        --help-scrobble*) echo "$USAGE_SCROBBLE"; exit 1;;
-
-        --version*)     echo -e "$VERSION"; exit 1;;
-        --about*)       echo -e "$NAME_SCRIPT v$VERSION by $AUTHOR"; exit 1;;
-        
-        # Modes
-        --update*)      UPDATE=true;;
-        --stop*)        STOP=true;;
-
-        # Options
-        --debug*)       DEBUG=true;;
-        --ask-moc*)     ASKMOC=true;;
-        --artist=*)     artist="${i#*=}";;
-        --track=*)      track="${i#*=}";;
-        --duration=*)   duration="${i#*=}";;
-        --album=*)      album="${i#*=}";;
-
-        # Configure opts
-        --connect*)     CONNECT=true;;
-        --api_key=*)    API_KEY="${i#*=}";;
-        --api_sec=*)    API_SEC="${i#*=}";;
-        --host=*)       HOST="${i#*=}";;
-        --conf=*)       CONF="${i#*=}"; CONF="${CONF/#\~/$HOME}";;
-    esac
-    done
-
-    if ! type curl > /dev/null ; then
-        # curl does not exist
-        echo "Error: Curl is required by $BASE_SCRIPT."
-        exit 1
-    fi
-
-    # To be safe replace tilde with expansion
-    CONF="${CONF/#\~/$HOME}"
-    CONF_DIR=`dirname ${CONF}`
-    STATE="$CONF_DIR/track"
-
-    function log_scrobble() {
-        # Add to log.
-		dt=$(date +"%m%d%y")
-        echo "`date` $1" >> "${CONF_DIR}/scrobbles.$dt.log";
-    }
-
-    if [ $CONNECT = true ]; then
-    # Start in connect mode
-        echo ""
-        echo "This is the interactive setup for @name@-scrobbler."
-
-        if [[ ! -e $CONF_DIR ]]; then
-            echo "Creating $CONF_DIR..."
-            mkdir -p $CONF_DIR
-        elif [[ ! -d $CONF_DIR ]]; then
-            echo "$CONF_DIR already exists but is not a directory."
-            echo "Aborting."
-            exit 1;
-        fi
-
-        #Check if conf file exists
-        if [[ -a $CONF ]]; then 
-            echo "This will overwrite the previous configuration."
-            #Check if conf file exists is writable
-            if [[ ! -w $CONF ]]; then
-                echo "Error: Permission Denied. Cannot write to $CONF_DIR."
-                echo "Aborting."
-                exit 1
-            fi
-        fi
-        
-
-        # Configure mode
-        echo "You will be prompted to allow access to your scrobbling account."
-        echo ""
-        echo "Pres Ctrl+C to abort or any key to continue..."
-        read n
-
-        # First: Get signature.
-        if [ "$API_KEY" = false ] ; then
-            echo "Requesting API key... "
-            API_KEY=$(curl -sX GET "$SCHEMA://$SIG_URL/?type=$KEYTYPE")
-            CHECK=$(echo $API_KEY | cut -c1-5)
-            if [ "$CHECK" = "ERROR" ] ; then
-                echo "$API_KEY"
-                echo "Aborting."
-                exit 1;
-            else
-                echo "Got $API_KEY"
-            fi
-        fi
-
-        # Second sign request
-        TOSIGN="api_key${API_KEY}methodauth.getToken";
-        if [ "$API_SEC" = false ] ; then
-            # This is where the private key is. We call it to produce a signature
-            echo "Requesting secret key signature..."
-            API_TK_SIG=$(curl -sX GET "${SCHEMA}://${SIG_URL}/?type=$KEYTYPE&to_sign=$TOSIGN")
-            CHECK=$(echo $API_TK_SIG | cut -c1-5)
-            if [  "$CHECK" = "ERROR" ] ; then
-                echo "Error producing signature."
-                echo "Aborting."
-                exit 1;
-            else
-                echo "Got $API_TK_SIG"
-            fi
-        else
-            echo "Using provided credentials."
-            API_TK_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
-        fi
-
-        # Third: Authorize to build token with auth.getToken
-        TOKEN_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getToken&api_key=$API_KEY&api_sig=$API_TK_SIG")
-        status=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$TOKEN_XML")
-        
-        if [ "$status" = 'ok' ]; then
-            TOKEN=$(grep -oPm1 "(?<=<token>)[^<]+" <<< "$TOKEN_XML")
-        else
-            if [ "$status" = 'failed' ]; then
-                err=$(grep -oPm1 "(?<=<error code=\"[0-9]\">)[^<]+" <<< "$TOKEN_XML")
-                echo "Error: $TOKEN_XML"
-            else
-                echo "Error: Unknown."
-            fi
-            
-            echo "Aborting."
-            exit 1;
-        fi
-
-        URL="${SCHEMA}://${AUTH_URL}?api_key=${API_KEY}&token=${TOKEN}"
-
-        echo "Attempting to open a browser to:"
-        echo "$URL"
-        echo "If nothing happens you will have to go to this URL manually."
-        
-        # Open browser and keep it quiet
-        if which xdg-open > /dev/null; then
-            xdg-open "$URL" >/dev/null 2>&1
-        elif which gnome-open > /dev/null; then
-            gnome-open "$URL" >/dev/null 2>&1
-        elif which www-browser > /dev/null; then
-            www-browser "$URL" >/dev/null 2>&1
-        elif which x-www-browser > /dev/null; then
-            x-www-browser "$URL" >/dev/null 2>&1
-        elif which sensible-browser > /dev/null; then
-            sensible-browser "$URL" >/dev/null 2>&1
-        else
-            echo "... No browser was found, please access the URL above and grant @name@-scrobbler access to your profile so posting can begin."
-        fi
-        echo ""
-        echo "When you have authorized the application press any key to continue..."
-        read n
-
-        # Not DRY...
-        TOSIGN="api_key${API_KEY}methodauth.getSessiontoken${TOKEN}";
-        if [ "$API_SEC" = false ]; then
-            # This is where the private key is. We call it to produce a signature
-            echo "Requesting session signature..."
-            API_SES_SIG=$(curl -sX GET "$SCHEMA://$SIG_URL/?type=$KEYTYPE&to_sign=$TOSIGN")
-            CHECK=$(echo $API_SES_SIG | cut -c1-5)
-            if [ "$CHECK" = "ERROR" ]; then
-                echo "Error: Bad response."
-                echo "$API_SES_SIG"
-                echo "Aborting."
-                exit 1;
-            else
-                echo "Got $API_SES_SIG"
-            fi
-        else
-            echo "Using provided API credentials."
-            API_SES_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
-        fi
-
-        SESSION_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getSession&api_key=$API_KEY&token=$TOKEN&api_sig=$API_SES_SIG" | tr '\n' ' ')
-        STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$SESSION_XML")
-        
-        if [ "$STATUS" = 'ok' ]; then
-            SESSION_KEY=$(grep -oPm1 "(?<=<key>)[^<]+" <<< "$SESSION_XML")
-        else
-            
-            echo "Error:"
-            echo "$SESSION_XML"
-
-            echo "Aborting."
-            exit 1;
-        fi
-
-        # Save conf file
-        rm -f $CONF
-        echo "Saving configuration..."
-        echo '# @name@-scrobbler configuration' >> "$CONF"
-        echo 'SESSION_KEY="'"$SESSION_KEY"'"' >> "$CONF"
-        echo 'API_KEY="'"$API_KEY"'"' >> "$CONF"
-        if [[ "$API_SEC" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
-            echo 'API_SEC="'"$API_SEC"'"' >> "$CONF"
-        fi
-
-        if [ ! -f "$CONF" ]; then 
-            echo "ERROR";
-            echo "Failed to save configuration file.";
-            exit 1;
-        else
-            echo "Saved at $CONF";
-        fi
-
-        echo ""
-        echo 'All done. You can test your implementation by typing and checking your profile:'
-        echo ""
-        echo "$BASE_SCRIPT --artist=\"test\" --album=\"test\" --track=\"test\"  --duration=\"420\""
-        echo ""
-        exit 1;
-
-    else
-    
-    # Scrobble or Update mode.
-    # @name@-scrobbler --artist="etc" --album="etc" ...
-
-        TS=$(date +%s);
-        ERR=false;
-        API_SIG=false;
-
-        # Check for config file.
-        if [ ! -f "$CONF" ]; then 
-            echo "You must first run and connect to a scrobbling service, try:"
-            echo "$BASE_SCRIPT --connect"; 
-            exit 1;
-        fi
-
-        # Collect configuration data
-        source "$CONF";
-
-        if [ -z "$SESSION_KEY" ]; then echo "Session key is not set."; ERR=true; fi
-        if [ -z "$API_KEY" ]; then echo "API key is not set."; ERR=true; fi
-        if [ -z "$HOST" ]; then echo "Host is not set."; ERR=true; fi
-
-        if [ -z "$API_SEC" ]; then
-            API_SEC=false;
-        fi
-
-        if [ "$ERR" = true ]; then
-            echo "Your configuration at $CONF is not valid, try running:"
-            echo "$BASE_SCRIPT --connect"
-            exit 1;
-        fi
-
-        # Collect track data
-        if [ "$ASKMOC" = true ]; then
-            artist=$(mocp -Q %artist);
-            track=$(mocp -Q %song);
-            album=$(mocp -Q %album);
-            duration=$(mocp -Q %ts);
-
-            if [ "$artist" = "" ]; then
-                echo "No artist, is MOC playing?";
-                exit 1;
-            fi
-
-            if [ "$track" = "" ]; then
-                echo "No song name, is MOC playing?";
-                exit 1;
-            fi
-
-        else
-            # Check for minimum arguments to scrobble
-            if [ -z "$artist" ] || [ -z "$track" ]  || [ -z "$duration" ] ; then 
-                echo "--artist and --track and --duration options are required";
-                ERR=true;
-            fi
-
-            if [ "$ERR" = true ]; then
-                echo "Use $BASE_SCRIPT --help for more options." ;
-                exit 1;
-            fi
-        fi
-
-        if [ "$STOP" = true ]; then
-        # Stop     
-            echo "Deleting state."
-            rm -f "$STATE.current";
-            rm -f "$STATE.last";
-            exit 1;
-        
-        elif [ "$UPDATE" = true ]; then
-        # Update
-
-            # Get old values to submit
-            if [ -f "$STATE.current" ]; then
-                mv "$STATE.current" "$STATE.last"
-            fi
-
-            # Save current track
-            echo "artist=\"${artist/\"/\\\"}\"" > "$STATE.current"
-            echo "track=\"${track/\"/\\\"}\"" >> "$STATE.current"
-
-            if [ -n "$album" ]; then echo "album=\"${album/\"/\\\"}\"" >> "$STATE.current"; fi
-            if [ -n "$duration" ]; then echo "duration=\"${duration/\"/\\\"}\"" >> "$STATE.current"; fi
-
-            source "$STATE.last";
-        fi
-
-        if [ $DEBUG = true ]; then
-            echo "Submitting $artist - $track";
-        fi
-
-        # Get API signature to scrobble
-        TOSIGN=""
-        if [ -n "$album" ]; then
-            TOSIGN="${TOSIGN}album${album}";
-        fi
-        TOSIGN="${TOSIGN}api_key${API_KEY}artist${artist}"
-        if [ -n "$duration" ]; then
-            TOSIGN="${TOSIGN}duration${duration}";
-        fi
-        TOSIGN="${TOSIGN}methodtrack.scrobblesk${SESSION_KEY}timestamp${TS}track${track}"
-
-        if [ "$API_SEC" = false ]; then
-            # This is where the private key is,
-            # We call it to produce a signature.
-        
-            if [ $DEBUG = true ]; then
-                echo "Requesting API signature for scrobble..."
-                echo "Running:"
-                echo "curl -sX POST \"$SCHEMA://$SIG_URL/\" --data-urlencode \"type=$KEYTYPE\" --data-urlencode \"to_sign=$TOSIGN\" | tr '\n' ' '"
-            fi
-
-            API_SIG=$(curl -sX POST "$SCHEMA://$SIG_URL/" \
-                --data-urlencode "type=$KEYTYPE" \
-                --data-urlencode "to_sign=$TOSIGN" | tr '\n' ' ');
-            
-            CHECK=$(echo $API_SIG | cut -c1-5)
-            
-            if [ "$CHECK" = "ERROR" ]; then
-                echo "Error: Bad response."
-                echo "$API_SIG"
-                echo "Aborting."
-                exit 1;
-            elif [ $DEBUG = true ]; then
-                echo "Got signature:"
-                echo "$API_SIG"
-            fi
-        else
-            if [ $DEBUG = true ]; then
-                echo "Using API credentials provided in @name@-scrobbler.conf file."
-                echo "Running:"
-                echo "echo -n \"${TOSIGN}${API_SEC}\" | iconv -t utf8 | md5sum | cut -c1-32"
-            fi
-            
-            API_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
-            
-            if [ $DEBUG = true ]; then
-                echo "Got signature:"
-                echo "$API_SIG"
-            fi
-        fi
-
-        # DO SCROBBLE POST
-        if [[ "$API_SIG" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
-            
-            if [ $DEBUG = true ]; then
-                echo "Scrobbling..."
-            fi
-
-            RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
-                --data-urlencode "album=$album" \
-                --data "api_key=$API_KEY" \
-                --data "api_sig=$API_SIG"  \
-                --data-urlencode "artist=$artist" \
-                --data "duration=$duration" \
-                --data "method=track.scrobble" \
-                --data "sk=$SESSION_KEY" \
-                --data "timestamp=$TS" \
-                --data-urlencode "track=$track" | tr '\n' ' ');
-
-            if [ $DEBUG = true ]; then
-                echo "$RESPONSE_XML"
-            fi
-
-            STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")    
-            if [ "$STATUS" = 'ok' ]; then
-                echo "Success!"
-                log_scrobble "Scrobbled $track - $artist";
-            else
-                echo "Error attempting to scrobble"
-
-                log_scrobble "Error scrobbling $artist - $track - \
-                    $RESPONSE_XML";
-
-                echo "Aborting."
-                exit 1;
-            fi
-
-        else
-            echo "Error, bad API signature."
-        fi
-
-        # DO NOW LISTENING POST
-        if [ "$UPDATE" = true ]; then
-            if [ -f "$STATE.current" ]; then
-                source "$STATE.current"
-            fi
-
-            TOSIGN=""
-            if [ -n "$album" ]; then TOSIGN="${TOSIGN}album${album}"; fi
-            TOSIGN="${TOSIGN}api_key${API_KEY}artist${artist}"
-            if [ -n "$duration" ]; then TOSIGN="${TOSIGN}duration${duration}"; fi
-            TOSIGN="${TOSIGN}methodtrack.updateNowPlayingsk${SESSION_KEY}timestamp${TS}track${track}"
-
-            if [ "$API_SEC" = false ]; then
-                # This is where the private key is,
-                # We call it to produce a signature.
-
-                if [ $DEBUG = true ]; then
-                    echo "Requesting API signature for update."
-                    echo "Running:"
-                    echo "curl -sX POST \"$SCHEMA://$SIG_URL/\" --data-urlencode \"type=$KEYTYPE\" --data-urlencode \"to_sign=$TOSIGN\" | tr '\n' ' '"
-                fi
-
-                API_SIG=$(curl -sX POST "$SCHEMA://$SIG_URL/" \
-                    --data-urlencode "type=$KEYTYPE" \
-                    --data-urlencode "to_sign=$TOSIGN" | tr '\n' ' ');
-                CHECK=$(echo $API_SIG | cut -c1-5)
-                if [ "$CHECK" = "ERROR" ]; then
-                    echo "Error: Bad response."
-                    echo "$API_SIG"
-                    echo "Aborting."
-                    exit 1;
-                elif [ $DEBUG = true ]; then
-                    echo "Got $API_SIG"
-                fi
-            else
-                if [ $DEBUG = true ]; then
-                    echo "Using provided API credentials."
-                fi
-                
-                API_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
-                
-                if [ $DEBUG = true ]; then
-                    echo "Got $API_SIG "
-                fi
-            fi
-
-            # DO UPDATE POST
-            if [[ "$API_SIG" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
-                if [ $DEBUG = true ]; then
-                    echo "Updating..."
-                fi
-
-                RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
-                    --data-urlencode "album=$album" \
-                    --data "api_key=$API_KEY" \
-                    --data "api_sig=$API_SIG"  \
-                    --data-urlencode "artist=$artist" \
-                    --data "duration=$duration" \
-                    --data "method=track.updateNowPlaying" \
-                    --data "sk=$SESSION_KEY" \
-                    --data "timestamp=$TS" \
-                    --data-urlencode "track=$track" | tr '\n' ' ');
-
-                STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")    
-                if [ "$STATUS" = 'ok' ]; then
-                    log_scrobble "Now listening to $track by $artist";
-                    echo "Success!"
-                else
-                    echo "Error doing scrobble update."
-                    if [ $DEBUG = true ]; then
-                        echo "$RESPONSE_XML"
-                    fi
-                    log_scrobble "Now listening failed for $artist - $track - \
-                    $RESPONSE_XML";
-                    echo "Aborting."
-                    exit 1;
-                fi
-            else
-                echo "Error, bad API signature."
-            fi
-        fi
-
-    fi
-
-    # Using tail, put the last 1MB of the file in a temporary file
-    tail -c 1MB "${CONF_DIR}/scrobbles.log" > "${CONF_DIR}/temp" 2>&1
-
-    # Overwrite the older and oversize log file with the new one
-    mv "${CONF_DIR}/temp" "${CONF_DIR}/scrobbles.log"
+if [ $# -eq 0 ] ; then
+	usage_all
+fi
+# Defaults
+VERSION="0.0.2"
+AUTHOR="Pachanka <social@pachanka.org>"
+SCHEMA="https"
+if [ " $BASE_SCRIPT" = " lastfm-scrobbler" ] ; then
+AUTH_URL="www.last.fm/api/auth"
+API_URL="ws.audioscrobbler.com/2.0"
+HOST="post.audioscrobbler.com"
 else
-    echo "$USAGE_ALL"
+AUTH_URL="libre.fm/api/auth/"
+API_URL="libre.fm/2.0/"
+HOST="http://turtle.libre.fm"
+fi
+USAGE_TITLE="$BASE_SCRIPT an audio scrobbler to submit music to @url@"
+SIG_URL="api.pachanka.org/moc-scrobbler"
+KEYTYPE="desktop"
+CONF="~/.config/$BASE_SCRIPT/$BASE_SCRIPT.conf"
+
+# Script vars
+CONNECT=false
+API_KEY=false
+API_SEC=false
+UPDATE=false
+STOP=false
+ASKMOC=false
+DEBUG=false
+
+# Collect options
+for i in "$@"
+do
+	case $i in
+		--help)
+			usage_all
+		;;
+		--help-connect*)
+			usage_connect
+		;;
+		--help-scrobble*)
+			usage_scrobble
+		;;
+		--version*)
+			echo -e "$VERSION"
+			exit 1
+		;;
+		--about*)
+			echo -e "$BASE_SCRIPT v$VERSION by $AUTHOR"
+			exit 1
+		;;
+
+		# Modes
+		--update*)
+			UPDATE=true
+		;;
+		--stop*)
+			STOP=true
+		;;
+
+		# Options
+		--debug*)
+			DEBUG=true
+		;;
+		--ask-moc*)
+			ASKMOC=true
+		;;
+		--artist=*)
+			artist="${i#*=}"
+		;;
+		--track=*)
+			track="${i#*=}"
+		;;
+		--duration=*)
+			duration="${i#*=}"
+		;;
+		--album=*)
+			album="${i#*=}"
+		;;
+		
+		# Configure opts
+		--connect*)
+			CONNECT=true
+		;;
+		--api_key=*)
+			API_KEY="${i#*=}"
+		;;
+		--api_sec=*)
+			API_SEC="${i#*=}"
+		;;
+		--host=*)
+			HOST="${i#*=}"
+		;;
+		--conf=*)
+			CONF="${i#*=}"
+			CONF="${CONF/#\~/$HOME}"
+		;;
+esac
+done
+
+if ! type curl > /dev/null ; then
+	# curl does not exist
+	echo "Error: Curl is required by $BASE_SCRIPT."
+	exit 1
 fi
 
-# Safety catch
-exit 1;
+# To be safe replace tilde with expansion
+CONF="${CONF/#\~/$HOME}"
+CONF_DIR=`dirname ${CONF}`
+STATE="$CONF_DIR/track"
+
+function log_scrobble() {
+	# Add to log.
+	dt=$(date +"%m%d%y")
+	echo "`date` $1" >> "${CONF_DIR}/scrobbles.$dt.log";
+}
+
+if [ $CONNECT = true ]; then
+	# Start in connect mode
+	echo ""
+	echo "This is the interactive setup for $BASE_SCRIPT."
+	if [[ ! -e $CONF_DIR ]]; then
+		echo "Creating $CONF_DIR..."
+		mkdir -p $CONF_DIR
+	elif [[ ! -d $CONF_DIR ]]; then
+		echo "$CONF_DIR already exists but is not a directory."
+		echo "Aborting."
+		exit 1;
+	fi
+	#Check if conf file exists
+	if [[ -a $CONF ]]; then 
+		echo "This will overwrite the previous configuration."
+		#Check if conf file exists is writable
+		if [[ ! -w $CONF ]]; then
+			echo "Error: Permission Denied. Cannot write to $CONF_DIR."
+			echo "Aborting."
+			exit 1
+		fi
+	fi
+	# Configure mode
+	echo "You will be prompted to allow access to your scrobbling account."
+	echo ""
+	echo "Pres Ctrl+C to abort or any key to continue..."
+	read n
+	# First: Get signature.
+	if [ "$API_KEY" = false ] ; then
+		echo "Requesting API key... "
+		API_KEY=$(curl -sX GET "$SCHEMA://$SIG_URL/?type=$KEYTYPE")
+		CHECK=$(echo $API_KEY | cut -c1-5)
+		if [ "$CHECK" = "ERROR" ] ; then
+			echo "$API_KEY"
+			echo "Aborting."
+			exit 1;
+		else
+			echo "Got $API_KEY"
+		fi
+	fi
+	# Second sign request
+	TOSIGN="api_key${API_KEY}methodauth.getToken";
+	if [ "$API_SEC" = false ] ; then
+		# This is where the private key is. We call it to produce a signature
+		echo "Requesting secret key signature..."
+		API_TK_SIG=$(curl -sX GET "${SCHEMA}://${SIG_URL}/?type=$KEYTYPE&to_sign=$TOSIGN")
+		CHECK=$(echo $API_TK_SIG | cut -c1-5)
+		if [  "$CHECK" = "ERROR" ] ; then
+			echo "Error producing signature."
+			echo "Aborting."
+			exit 1;
+		else
+			echo "Got $API_TK_SIG"
+		fi
+	else
+		echo "Using provided credentials."
+		API_TK_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
+	fi
+	# Third: Authorize to build token with auth.getToken
+	TOKEN_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getToken&api_key=$API_KEY&api_sig=$API_TK_SIG")
+	status=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$TOKEN_XML")
+	if [ "$status" = 'ok' ]; then
+		TOKEN=$(grep -oPm1 "(?<=<token>)[^<]+" <<< "$TOKEN_XML")
+	else
+		if [ "$status" = 'failed' ]; then
+			err=$(grep -oPm1 "(?<=<error code=\"[0-9]\">)[^<]+" <<< "$TOKEN_XML")
+			echo "Error: $TOKEN_XML"
+		else
+			echo "Error: Unknown."
+		fi
+		echo "Aborting."
+		exit 1;
+	fi
+	URL="${SCHEMA}://${AUTH_URL}?api_key=${API_KEY}&token=${TOKEN}"
+	echo "Attempting to open a browser to:"
+	echo "$URL"
+	echo "If nothing happens you will have to go to this URL manually."
+	# Open browser and keep it quiet
+	if which xdg-open > /dev/null; then
+		xdg-open "$URL" >/dev/null 2>&1
+	elif which gnome-open > /dev/null; then
+		gnome-open "$URL" >/dev/null 2>&1
+	elif which www-browser > /dev/null; then
+		www-browser "$URL" >/dev/null 2>&1
+	elif which x-www-browser > /dev/null; then
+		x-www-browser "$URL" >/dev/null 2>&1
+	elif which sensible-browser > /dev/null; then
+		sensible-browser "$URL" >/dev/null 2>&1
+	else
+		echo "... No browser was found, please access the URL above and grant $BASE_SCRIPT access to your profile so posting can begin."
+	fi
+	echo ""
+	echo "When you have authorized the application press any key to continue..."
+	read n
+	# Not DRY...
+	TOSIGN="api_key${API_KEY}methodauth.getSessiontoken${TOKEN}";
+	if [ "$API_SEC" = false ]; then
+		# This is where the private key is. We call it to produce a signature
+		echo "Requesting session signature..."
+		API_SES_SIG=$(curl -sX GET "$SCHEMA://$SIG_URL/?type=$KEYTYPE&to_sign=$TOSIGN")
+		CHECK=$(echo $API_SES_SIG | cut -c1-5)
+		if [ "$CHECK" = "ERROR" ]; then
+			echo "Error: Bad response."
+			echo "$API_SES_SIG"
+			echo "Aborting."
+			exit 1;
+		else
+			echo "Got $API_SES_SIG"
+		fi
+	else
+		echo "Using provided API credentials."
+		API_SES_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
+	fi
+	SESSION_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getSession&api_key=$API_KEY&token=$TOKEN&api_sig=$API_SES_SIG" | tr '\n' ' ')
+	STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$SESSION_XML")
+	if [ "$STATUS" = 'ok' ]; then
+		SESSION_KEY=$(grep -oPm1 "(?<=<key>)[^<]+" <<< "$SESSION_XML")
+	else
+		echo "Error:"
+		echo "$SESSION_XML"
+		echo "Aborting."
+		exit 1;
+	fi
+	# Save conf file
+	rm -f $CONF
+	echo "Saving configuration..."
+	echo '# $BASE_SCRIPT configuration' >> "$CONF"
+	echo 'SESSION_KEY="'"$SESSION_KEY"'"' >> "$CONF"
+	echo 'API_KEY="'"$API_KEY"'"' >> "$CONF"
+	if [[ "$API_SEC" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
+		echo 'API_SEC="'"$API_SEC"'"' >> "$CONF"
+	fi
+	if [ ! -f "$CONF" ]; then 
+		echo "ERROR";
+		echo "Failed to save configuration file.";
+		exit 1;
+	else
+		echo "Saved at $CONF";
+	fi
+	echo ""
+	echo 'All done. You can test your implementation by typing and checking your profile:'
+	echo ""
+	echo "$BASE_SCRIPT --artist=\"test\" --album=\"test\" --track=\"test\"  --duration=\"420\""
+	echo ""
+	exit 1;
+fi
+
+# Scrobble or Update mode.
+# @name@-scrobbler --artist="etc" --album="etc" ...
+TS=$(date +%s);
+ERR=false;
+API_SIG=false;
+# Check for config file.
+if [ ! -f "$CONF" ]; then 
+	echo "You must first run and connect to a scrobbling service, try:"
+	echo "$BASE_SCRIPT --connect"; 
+	exit 1;
+fi
+# Collect configuration data
+source $CONF
+if [ -z "$SESSION_KEY" ]; then
+	echo "Session key is not set."
+	ERR=true
+fi
+if [ -z "$API_KEY" ]; then
+	echo "API key is not set."
+	ERR=true
+fi
+if [ -z "$HOST" ]; then
+	echo "Host is not set."
+	ERR=true
+fi
+if [ -z "$API_SEC" ]; then
+	API_SEC=false;
+fi
+if [ "$ERR" = true ]; then
+	echo "Your configuration at $CONF is not valid, try running:"
+	echo "$BASE_SCRIPT --connect"
+	exit 1;
+fi
+# Collect track data
+if [ "$ASKMOC" = true ]; then
+	artist=$(mocp -Q %artist);
+	track=$(mocp -Q %song);
+	album=$(mocp -Q %album);
+	duration=$(mocp -Q %ts);
+	if [ "$artist" = "" ]; then
+		echo "No artist, is MOC playing?";
+		exit 1;
+	fi
+	if [ "$track" = "" ]; then
+		echo "No song name, is MOC playing?";
+		exit 1;
+	fi
+else
+	# Check for minimum arguments to scrobble
+	if [ -z "$artist" ] || [ -z "$track" ]  || [ -z "$duration" ] ; then 
+		echo "--artist and --track and --duration options are required";
+		ERR=true;
+	fi
+	if [ "$ERR" = true ]; then
+		echo "Use $BASE_SCRIPT --help for more options." ;
+		exit 1;
+	fi
+fi
+if [ "$STOP" = true ]; then
+	# Stop	 
+	echo "Deleting state."
+	rm -f "$STATE.current";
+	rm -f "$STATE.last";
+	exit 1;
+elif [ "$UPDATE" = true ]; then
+	# Update
+	# Get old values to submit
+	if [ -f $STATE.current ]; then
+		mv $STATE.current $STATE.last
+	fi
+	# Save current track
+	(
+	echo "artist=${artist}"
+	echo "track=${track}"
+	if [ -n "$album" ] ; then
+		echo "album=${album}"
+	fi
+	if [ -n "$duration" ] ; then
+		echo "duration=${duration}"
+	fi
+	) > $STATE.current
+	set_variables $STATE.last
+fi
+if [ $DEBUG = true ]; then
+	echo "Submitting $artist - $track";
+fi
+# Get API signature to scrobble
+TOSIGN=""
+if [ -n "$album" ]; then
+	TOSIGN="${TOSIGN}album${album}";
+fi
+TOSIGN="${TOSIGN}api_key${API_KEY}artist${artist}"
+if [ -n "$duration" ]; then
+	TOSIGN="${TOSIGN}duration${duration}";
+fi
+TOSIGN="${TOSIGN}methodtrack.scrobblesk${SESSION_KEY}timestamp${TS}track${track}"
+if [ "$API_SEC" = false ]; then
+	# This is where the private key is,
+	# We call it to produce a signature.
+	if [ $DEBUG = true ]; then
+		echo "Requesting API signature for scrobble..."
+		echo "Running:"
+		echo "curl -sX POST \"$SCHEMA://$SIG_URL/\" --data-urlencode \"type=$KEYTYPE\" --data-urlencode \"to_sign=$TOSIGN\" | tr '\n' ' '"
+	fi
+	API_SIG=$(curl -sX POST "$SCHEMA://$SIG_URL/" \
+		--data-urlencode "type=$KEYTYPE" \
+		--data-urlencode "to_sign=$TOSIGN" | tr '\n' ' ');
+	CHECK=$(echo $API_SIG | cut -c1-5)
+	if [ "$CHECK" = "ERROR" ]; then
+		echo "Error: Bad response."
+		echo "$API_SIG"
+		echo "Aborting."
+		exit 1;
+	elif [ $DEBUG = true ]; then
+		echo "Got signature:"
+		echo "$API_SIG"
+	fi
+else
+	if [ $DEBUG = true ]; then
+		echo "Using API credentials provided in $BASE_SCRIPT.conf file."
+		echo "Running:"
+		echo "echo -n \"${TOSIGN}${API_SEC}\" | iconv -t utf8 | md5sum | cut -c1-32"
+	fi
+	API_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
+	if [ $DEBUG = true ]; then
+		echo "Got signature:"
+		echo "$API_SIG"
+	fi
+fi
+
+# DO SCROBBLE POST
+if [[ "$API_SIG" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
+	if [ $DEBUG = true ]; then
+		echo "Scrobbling..."
+	fi
+	RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
+		--data-urlencode "album=$album" \
+		--data "api_key=$API_KEY" \
+		--data "api_sig=$API_SIG"  \
+		--data-urlencode "artist=$artist" \
+		--data "duration=$duration" \
+		--data "method=track.scrobble" \
+		--data "sk=$SESSION_KEY" \
+		--data "timestamp=$TS" \
+		--data-urlencode "track=$track" | tr '\n' ' ');
+	if [ $DEBUG = true ]; then
+		echo "$RESPONSE_XML"
+	fi
+	STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")	
+	if [ "$STATUS" = 'ok' ]; then
+		echo "Success!"
+		log_scrobble "Scrobbled $track - $artist"
+	else
+		echo "Error attempting to scrobble"
+		log_scrobble "Error scrobbling $artist - $track - $RESPONSE_XML"
+		echo "Aborting."
+		exit 1
+	fi
+else
+	echo "Error, bad API signature."
+	exit 1
+fi
+
+# DO NOW LISTENING POST
+if [ "$UPDATE" = true ]; then
+	if [ -f $STATE.current ]; then
+		set_variables $STATE.current
+	fi
+	TOSIGN=""
+	if [ -n "$album" ]; then
+		TOSIGN="${TOSIGN}album${album}"
+	fi
+	TOSIGN="${TOSIGN}api_key${API_KEY}artist${artist}"
+	if [ -n "$duration" ]; then
+		TOSIGN="${TOSIGN}duration${duration}"
+	fi
+	TOSIGN="${TOSIGN}methodtrack.updateNowPlayingsk${SESSION_KEY}timestamp${TS}track${track}"
+	if [ "$API_SEC" = false ]; then
+		# This is where the private key is,
+		# We call it to produce a signature.
+
+		if [ $DEBUG = true ]; then
+			echo "Requesting API signature for update."
+			echo "Running:"
+			echo "curl -sX POST \"$SCHEMA://$SIG_URL/\" --data-urlencode \"type=$KEYTYPE\" --data-urlencode \"to_sign=$TOSIGN\" | tr '\n' ' '"
+		fi
+		API_SIG=$(curl -sX POST "$SCHEMA://$SIG_URL/" \
+			--data-urlencode "type=$KEYTYPE" \
+			--data-urlencode "to_sign=$TOSIGN" | tr '\n' ' ');
+		CHECK=$(echo $API_SIG | cut -c1-5)
+		if [ "$CHECK" = "ERROR" ]; then
+			echo "Error: Bad response."
+			echo "$API_SIG"
+			echo "Aborting."
+			exit 1;
+		elif [ $DEBUG = true ]; then
+			echo "Got $API_SIG"
+		fi
+	else
+		if [ $DEBUG = true ]; then
+			echo "Using provided API credentials."
+		fi
+		API_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
+		if [ $DEBUG = true ]; then
+			echo "Got $API_SIG "
+		fi
+	fi
+	# DO UPDATE POST
+	if [[ "$API_SIG" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
+		if [ $DEBUG = true ]; then
+			echo "Updating..."
+		fi
+		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
+			--data-urlencode "album=$album" \
+			--data "api_key=$API_KEY" \
+			--data "api_sig=$API_SIG"  \
+			--data-urlencode "artist=$artist" \
+			--data "duration=$duration" \
+			--data "method=track.updateNowPlaying" \
+			--data "sk=$SESSION_KEY" \
+			--data "timestamp=$TS" \
+			--data-urlencode "track=$track" | tr '\n' ' ');
+		STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")	
+		if [ "$STATUS" = 'ok' ]; then
+			log_scrobble "Now listening to $track by $artist";
+			echo "Success!"
+		else
+			echo "Error doing scrobble update."
+			if [ $DEBUG = true ]; then
+				echo "$RESPONSE_XML"
+			fi
+			log_scrobble "Now listening failed for $artist - $track - \
+			$RESPONSE_XML";
+			echo "Aborting."
+			exit 1;
+		fi
+	else
+		echo "Error, bad API signature."
+		exit 1
+	fi
+fi
+exit 0

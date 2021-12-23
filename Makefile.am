@@ -54,15 +54,11 @@ edit = sed \
 
 editlastfm = sed \
 	-e 's}@name\@}lastfm}g' \
-	-e 's}@auth_url\@}"www.last.fm/api/auth"}g' \
-	-e 's}@api_url\@}"ws.audioscrobbler.com/2.0"}g' \
-	-e 's}@host_url\@}"post.audioscrobbler.com"}g'
+	-e 's}@url\@}"last.fm"}g'
 
 editlibrefm = sed \
 	-e 's}@name\@}librefm}g' \
-	-e 's}@auth_url\@}"libre.fm/api/auth/"}g' \
-	-e 's}@api_url\@}"libre.fm/2.0/"}g' \
-	-e 's}@host_url\@}"http://turtle.libre.fm"}g'
+	-e 's}@url\@}"libre.fm"}g'
 
 choose: choose.sh warn-auto.sh
 	/bin/rm -f choose
