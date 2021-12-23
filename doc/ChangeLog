@@ -100,6 +100,9 @@ Release 1.0 Start 02/03/2020
 68. karma: set song_uri to current playing song if no options are provided
 - 18/11/2021
 69. player.in: display mysql error
+- 23/12/2021
+70. moc-scrobbler.in: removed use of source command to avoid syntax error
+caused by data in track.current, track.last
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
