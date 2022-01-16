@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.45  2022-01-16 22:30:28+05:30  Cprogrammer
+# scrobble only when PLAYER_STATE is play
+#
 # Revision 1.44  2021-11-18 23:50:09+05:30  Cprogrammer
 # display mysql error
 #
@@ -138,7 +141,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.44 2021-11-18 23:50:09+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.45 2022-01-16 22:30:28+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -644,46 +647,44 @@ update_song()
 		# If the song was already playing, we should create
 		# files related to the song in MPDEV_TMPDIR. If not,
 		# we should delete files related to the song.
-		if [ -n "$PLAYER_STATE" ] ; then
-			if [ "$PLAYER_STATE" = "pause" ] ; then
-				if [ ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
-					if [ $sticker_enabled -eq 1 ] ; then
-						rating=`get_mpd_rating "$uri"`
-					elif  [ -n "$ROMPR" ] ; then
-						tmp=`get_rompr_rating "$uri" | awk '{print $1}'`
-						rating=`expr $tmp \* 2`
-					elif [ $stats_enabled -eq 1 ] ; then
-						rating=`get_stats_rating "$uri"`
-					else
-						echo "Nothing to do"
-						exit 0
+		if [ "$PLAYER_STATE" = "pause" ] ; then
+			if [ ! -f $MPDEV_TMPDIR/rating.$csum ] ; then
+				if [ $sticker_enabled -eq 1 ] ; then
+					rating=`get_mpd_rating "$uri"`
+				elif  [ -n "$ROMPR" ] ; then
+					tmp=`get_rompr_rating "$uri" | awk '{print $1}'`
+					rating=`expr $tmp \* 2`
+				elif [ $stats_enabled -eq 1 ] ; then
+					rating=`get_stats_rating "$uri"`
+				else
+					echo "Nothing to do"
+					exit 0
+				fi
+			fi
+			# Do not treat current song as New Song
+			for i in sticker rompr stats scrobble
+			do
+				if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
+					if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
+						if [ $VERBOSE -gt 0 ] ; then
+							echo "creating $MPDEV_TMPDIR/$i.$csum"
+						fi
+						touch $MPDEV_TMPDIR/$i.$csum
 					fi
 				fi
-				# Do not treat current song as New Song
-				for i in sticker rompr stats scrobble
-				do
-					if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
-						if [ ! -f $MPDEV_TMPDIR/$i.$csum ] ; then
-							if [ $VERBOSE -gt 0 ] ; then
-								echo "creating $MPDEV_TMPDIR/$i.$csum"
-							fi
-							touch $MPDEV_TMPDIR/$i.$csum
-						fi
+			done
+			return 0
+		elif [ "$PLAYER_STATE" = "stop" ] ; then
+			for i in sticker rompr stats scrobble start_time rating pcount
+			do
+				if [ -f $MPDEV_TMPDIR/$i.$csum ] ; then
+					if [ $VERBOSE -gt 0 ] ; then
+						echo "removing $MPDEV_TMPDIR/$i.$csum"
 					fi
-				done
-				return 0
-			elif [ "$PLAYER_STATE" = "stop" ] ; then
-				for i in sticker rompr stats scrobble start_time rating pcount
-				do
-					if [ -f $MPDEV_TMPDIR/$i.$csum ] ; then
-						if [ $VERBOSE -gt 0 ] ; then
-							echo "removing $MPDEV_TMPDIR/$i.$csum"
-						fi
-						/bin/rm -f $MPDEV_TMPDIR/$i.$csum
-					fi
-				done
-				return 0
-			fi
+					/bin/rm -f $MPDEV_TMPDIR/$i.$csum
+				fi
+			done
+			return 0
 		fi
 	fi
 	inserted=0
@@ -839,8 +840,10 @@ update_song()
 		fi
 		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
 			if [ ! -f $MPDEV_TMPDIR/scrobble.$csum ] ; then
-				scrobble
-				touch $MPDEV_TMPDIR/scrobble.$csum
+				if [ "$PLAYER_STATE" = "play" ] ; then
+					scrobble
+					touch $MPDEV_TMPDIR/scrobble.$csum
+				fi
 			fi
 		fi
 		;;
