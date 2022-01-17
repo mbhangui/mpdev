@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: player.in,v $
+# Revision 1.46  2022-01-17 19:09:28+05:30  Cprogrammer
+# fixed scrobbling getting skipped
+#
 # Revision 1.45  2022-01-16 22:30:28+05:30  Cprogrammer
 # scrobble only when PLAYER_STATE is play
 #
@@ -141,7 +144,7 @@
 # Initial revision
 #
 #
-# $Id: player.in,v 1.45 2022-01-16 22:30:28+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.46 2022-01-17 19:09:28+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -840,7 +843,7 @@ update_song()
 		fi
 		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
 			if [ ! -f $MPDEV_TMPDIR/scrobble.$csum ] ; then
-				if [ "$PLAYER_STATE" = "play" ] ; then
+				if [ ! " $PLAYER_STATE" = " pause" -a ! " $PLAYER_STATE" = " stop" ] ; then
 					scrobble
 					touch $MPDEV_TMPDIR/scrobble.$csum
 				fi
