@@ -105,6 +105,9 @@ Release 1.0 Start 02/03/2020
 caused by data in track.current, track.last
 - 16/01/2022
 71. player.in: scrobble only when PLAYER_STATE is play
+- 06/02/2022
+72. mpdplaylist.in: added --incartist, --exlartist option to include/exclude
+    comma separated list of artists
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

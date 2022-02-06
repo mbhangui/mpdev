@@ -97,6 +97,12 @@ Known values for OPTION are:
 --exlgenre=Genre List to be excluded
   comma separated list of genre
 
+--incartist=Arist List to be included
+  comma separated list of artist.
+
+--exlartist=Arist List to be excluded
+  comma separated list of artist
+
 --minrating=Minimum Rating (value from 0 to 10, or -1 for unrated songs)
 
 --artist=Artist
@@ -226,6 +232,20 @@ while test $# -gt 0; do
 	fi
 	exlgenre=`echo $optarg| sed "s/ /_/g"`
 	;;
+	--incartist=*)
+	if [ -n "$exlartist" ] ; then
+		echo "you cannot give both incartist and exlartist together" 1>&2
+		usage 1
+	fi
+	incartist=`echo $optarg| sed "s/ /_/g"`
+	;;
+	--exlartist=*)
+	if [ -n "$incartist" ] ; then
+		echo "you cannot give both incartist and exlartist together" 1>&2
+		usage 1
+	fi
+	exlartist=`echo $optarg| sed "s/ /_/g"`
+	;;
 	--minrating=*)
 	minrate=$optarg
 	;;
@@ -293,6 +313,7 @@ while test $# -gt 0; do
 	mpd_host=$optarg
 	;;
 	--help)
+	playlist_dir=`get_mpd_conf_value playlist_dir`
 	usage 0
 	;;
 	*)
@@ -309,6 +330,8 @@ fromyear=""
 toyear=""
 incgenre=""
 exlgenre=""
+incarist=""
+exlarist=""
 artist=""
 minrate=""
 oldfirst=0
@@ -418,6 +441,46 @@ if [ -n "$incgenre" ] ; then
 		f=`echo $i|sed "s/_/ /g"`
 		if [ $count -eq 0 ] ; then
 			sql_query="$sql_query genre IN ('$f'"
+		else
+			sql_query="$sql_query, '$f'"
+		fi
+		count=`expr $count + 1`
+	done
+	sql_query="$sql_query)"
+fi
+count=0
+if [ -n "$exlartist" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	for i in $(echo $exlartist | sed "s/,/ /g")
+	do
+		f=`echo $i|sed "s/_/ /g"`
+		if [ $count -eq 0 ] ; then
+			sql_query="$sql_query artist NOT IN ('$f'"
+		else
+			sql_query="$sql_query, '$f'"
+		fi
+		count=`expr $count + 1`
+	done
+	sql_query="$sql_query)"
+fi
+count=0
+if [ -n "$incartist" ] ; then
+	if [ -z "$first_condition" ] ; then
+		sql_query="$sql_query WHERE"
+		first_condition=1
+	elif [ -n "$first_condition" ] ; then
+		sql_query="$sql_query AND"
+	fi
+	for i in $(echo $incartist | sed "s/,/ /g")
+	do
+		f=`echo $i|sed "s/_/ /g"`
+		if [ $count -eq 0 ] ; then
+			sql_query="$sql_query artist IN ('$f'"
 		else
 			sql_query="$sql_query, '$f'"
 		fi
@@ -535,7 +598,8 @@ fi
 if [ $limit -gt 0 ] ; then
 		sql_query="$sql_query limit $limit"
 fi
-if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" -a -z "$minrate" \
+if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" \
+	-a -z "$incartist" -a -z "$exlartist" -a -z "$minrate" \
 	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" \
 	-a -z "$play_counts" -a -z "$karma" ] ; then
 	echo "No options given and no default usage configuration found" 1>&2
