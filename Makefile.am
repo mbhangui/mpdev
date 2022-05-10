@@ -32,13 +32,13 @@ MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
 				   create_service romprhost karma output mixer \
 				   songi
 
-mpdev_SOURCES = mpdev.c tcpopen.c pathexec_env.c pathexec_run.c
+mpdev_SOURCES = mpdev.c
 mpdev_LDADD = $(LIB_QMAIL)
 
-mpdev_update_SOURCES = mpdev_update.c tcpopen.c
+mpdev_update_SOURCES = mpdev_update.c
 mpdev_update_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
 
-mpdev_cleanup_SOURCES = mpdev_cleanup.c replacestr.c tcpopen.c
+mpdev_cleanup_SOURCES = mpdev_cleanup.c replacestr.c
 mpdev_cleanup_LDADD = $(LIB_QMAIL) $(LIB_SQLITE3)
 
 edit = sed \
@@ -70,9 +70,6 @@ choose tryip6.c haveip6.h1 haveip6.h2 conf-ip
 	$(COMPILE) -c `grep -h -v "^#" conf-ip` tryip6.c; \
 	$(COMPILE)  tryip6.o -o tryip6; \
 	./choose r tryip6 haveip6.h1 haveip6.h2 > haveip6.h
-
-tcpopen.o: tcpopen.c tcpopen.h haveip6.h conf-ip
-	$(COMPILE) -c $(DEFS) `grep -h -v "^#" conf-ip` tcpopen.c
 
 librefm-scrobbler: moc-scrobbler.in
 	$(editlibrefm) moc-scrobbler.in > $@

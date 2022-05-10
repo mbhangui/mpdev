@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.8  2022-05-10 21:31:50+05:30  Cprogrammer
+ * use tcpopen from standard include path
+ *
  * Revision 1.7  2021-10-01 12:05:27+05:30  Cprogrammer
  * removed name column from song table in stats db
  *
@@ -57,10 +60,10 @@
 #include <scan.h>
 #include <str.h>
 #include <env.h>
-#include "tcpopen.h"
+#include <tcpopen.h>
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.7 2021-10-01 12:05:27+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.8 2022-05-10 21:31:50+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);

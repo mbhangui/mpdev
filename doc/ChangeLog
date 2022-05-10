@@ -108,6 +108,7 @@ caused by data in track.current, track.last
 - 06/02/2022
 72. mpdplaylist.in: added --incartist, --exlartist option to include/exclude
     comma separated list of artists
+73. use tcpopen, pathexec_run, pathexec_env from libqmail
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

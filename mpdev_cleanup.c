@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_cleanup.c,v $
+ * Revision 1.4  2022-05-10 21:31:23+05:30  Cprogrammer
+ * use tcpopen from standard include path
+ *
  * Revision 1.3  2020-08-08 11:07:46+05:30  Cprogrammer
  * fixed usage, error messages
  *
@@ -34,11 +37,11 @@
 #include <env.h>
 #include <scan.h>
 #include <str.h>
+#include <tcpopen.h>
 #include "replacestr.h"
-#include "tcpopen.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.3 2020-08-08 11:07:46+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.4 2022-05-10 21:31:23+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 ssize_t         safewrite(int, char *, int);

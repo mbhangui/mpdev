@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.27  2022-05-10 21:31:38+05:30  Cprogrammer
+ * use tcpopen, pathexec from standard include path
+ *
  * Revision 1.26  2021-09-17 13:19:01+05:30  Cprogrammer
  * print debug statements for verbose > 1
  *
@@ -116,11 +119,11 @@
 #include <strerr.h>
 #include <error.h>
 #include <wait.h>
-#include "pathexec.h"
-#include "tcpopen.h"
+#include <tcpopen.h>
+#include <pathexec.h>
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.26 2021-09-17 13:19:01+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.27 2022-05-10 21:31:38+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -1376,7 +1379,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.26 2021-09-17 13:19:01+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.27 2022-05-10 21:31:38+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
