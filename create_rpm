@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: create_rpm,v $
+# Revision 1.5  2022-05-10 21:30:47+05:30  Cprogrammer
+# added --clean option
+#
 # Revision 1.4  2020-08-10 12:03:41+05:30  Cprogrammer
 # fixed cwd
 #
@@ -14,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: create_rpm,v 1.4 2020-08-10 12:03:41+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_rpm,v 1.5 2022-05-10 21:30:47+05:30 Cprogrammer Exp mbhangui $
 #
 version=$(cat conf-version)
 
@@ -30,6 +33,9 @@ while test $# -gt 0; do
     case "$1" in
     --verbose)
 	verbose=1
+    ;;
+    --clean)
+	clean="--clean"
     ;;
     --release=*)
 	release=$optarg
@@ -138,11 +144,11 @@ if [ " $key" = " Y" -o " $key" = " y" ] ; then
 	fi
 	build_arch=`rpmbuild --showrc|grep "^build arch" | awk '{print $4}'`
 	if [ $verbose -eq 0 ] ; then
-		echo "rpmbuild -ba --clean --quiet /tmp/mpdev.spec"
-		rpmbuild -ba --clean --quiet /tmp/mpdev.spec
+		echo "rpmbuild -ba $clean --quiet /tmp/mpdev.spec"
+		rpmbuild -ba $clean --quiet /tmp/mpdev.spec
 	else
-		echo "rpmbuild -ba --clean --quiet /tmp/mpdev.spec"
-		rpmbuild -ba --clean /tmp/mpdev.spec
+		echo "rpmbuild -ba $clean --quiet /tmp/mpdev.spec"
+		rpmbuild -ba $clean /tmp/mpdev.spec
 	fi
 	if [ $? -eq 0 ] ; then
 		/bin/rm /tmp/mpdev.spec
