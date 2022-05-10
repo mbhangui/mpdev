@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.20  2022-05-10 21:33:16+05:30  Cprogrammer
+# added --incartist, --exlartist to include, exclude artists in query
+#
 # Revision 1.19  2021-09-30 20:31:46+05:30  Cprogrammer
 # use -noheader option to prevent .sqlitrc settings messing with results
 #
@@ -59,7 +62,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.19 2021-09-30 20:31:46+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.20 2022-05-10 21:33:16+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
