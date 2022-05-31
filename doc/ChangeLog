@@ -109,6 +109,10 @@ caused by data in track.current, track.last
 72. mpdplaylist.in: added --incartist, --exlartist option to include/exclude
     comma separated list of artists
 73. use tcpopen, pathexec_run, pathexec_env from libqmail
+- 10/05/2022
+74. karma.in: merged modifications by https://github.com/Plexvol (use getopt)
+- 31/05/2022
+75. skip service creation if daemontools is not installed
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

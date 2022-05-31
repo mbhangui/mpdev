@@ -161,6 +161,10 @@ fi
 if [ -z "$argv1" ] ; then
   argv1=0
 fi
+if [ ! -x %{_prefix}/sbin/minisvc ] ; then
+  echo "%{_prefix}/sbin/minisvc not found: Proceeding without creating mpdev service" 1>&2
+  exit 0
+fi
 # we are doing upgrade
 if [ $argv1 -eq 2 ] ; then # upgrade
   if [ -d /run ] ; then
