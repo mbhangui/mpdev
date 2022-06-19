@@ -1,68 +1,6 @@
 #!/bin/sh
 #
-# $Log: create_service.in,v $
-# Revision 1.20  2021-09-26 02:57:43+05:30  Cprogrammer
-# change ownership of $HOME/.mpdev to uid 1000
-#
-# Revision 1.19  2021-09-09 17:10:03+05:30  Cprogrammer
-# added mixer script
-#
-# Revision 1.18  2021-09-09 12:17:03+05:30  Cprogrammer
-# added script output
-#
-# Revision 1.17  2021-04-25 10:22:15+05:30  Cprogrammer
-# remove cleanup of /tmp/mpdev as purpose is solved by having it as TMPFS
-#
-# Revision 1.16  2021-04-19 21:16:09+05:30  Cprogrammer
-# added MPDEV_TMPDIR variable
-#
-# Revision 1.15  2021-04-15 12:26:20+05:30  Cprogrammer
-# fixed cleanup of /tmp/mpdev
-#
-# Revision 1.14  2021-04-14 21:49:57+05:30  Cprogrammer
-# do cleanup only once
-#
-# Revision 1.13  2021-04-14 13:19:21+05:30  Cprogrammer
-# fixed .options
-#
-# Revision 1.12  2021-04-14 09:45:58+05:30  Cprogrammer
-# update variables only if changed
-#
-# Revision 1.11  2021-04-10 19:13:30+05:30  Cprogrammer
-# create variables/.options file
-#
-# Revision 1.10  2021-02-25 15:40:13+05:30  Cprogrammer
-# use relative path for variables to allow renaming of service directory
-#
-# Revision 1.9  2021-02-25 15:13:08+05:30  Cprogrammer
-# added cleanup of /tmp/mpdev and logs in scrobbles directory
-#
-# Revision 1.8  2021-01-07 12:20:08+05:30  Cprogrammer
-# fixed copy
-#
-# Revision 1.7  2020-08-30 10:56:28+05:30  Cprogrammer
-# update player, playpause script on startup
-#
-# Revision 1.6  2020-08-18 08:20:14+05:30  Cprogrammer
-# copy playpause script
-#
-# Revision 1.5  2020-08-17 22:15:20+05:30  Cprogrammer
-# set default rating to 0
-#
-# Revision 1.4  2020-07-23 10:47:04+05:30  Cprogrammer
-# fixed path variable
-#
-# Revision 1.3  2020-07-23 01:48:43+05:30  Cprogrammer
-# fix for raspberry pi, dietpi
-#
-# Revision 1.2  2020-07-22 15:51:03+05:30  Cprogrammer
-# added AUTO_RATING env variable
-#
-# Revision 1.1  2020-07-19 18:17:00+05:30  Cprogrammer
-# Initial revision
-#
-#
-# $Id: create_service.in,v 1.20 2021-09-26 02:57:43+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.21 2022-06-20 01:00:29+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -113,15 +51,15 @@ add_service()
 	if [ -n "$home" ] ; then
 		check_update_if_diff $servicedir/$service_name/variables/HOME "$home"
 		check_update_if_diff $servicedir/$service_name/variables/XDG_RUNTIME_DIR "$home"
-		check_update_if_diff $servicedir/$service_name/variables/PATH "/bin:/usr/bin:$home/.mpdev"
+		check_update_if_diff $servicedir/$service_name/variables/PATH "/bin:/usr/bin:@prefix@/bin:$home/.mpdev:/usr/local/bin:/opt/local/bin"
 	fi
 	mkdir -p $home/.mpdev
 	for i in player playpause output mixer
 	do
 		if [ ! -f $home/.mpdev/$i ] ; then
-			cp /usr/libexec/$service_name/$i $home/.mpdev
+			cp @mpdevlibexecdir@/$i $home/.mpdev
 		elif [ ! -f $home/.mpdev/."$i".nooverwrite ] ; then
-			cp /usr/libexec/$service_name/$i $home/.mpdev
+			cp @mpdevlibexecdir@/$i $home/.mpdev
 		fi
 	done
 	t_uid=$(getent passwd $userid|cut -d: -f3)
@@ -133,11 +71,11 @@ add_service()
 		echo "# generated log script for $host on `date`"
 		echo "# by the below command"
 		echo "# $prog_args"
-		echo "exec /usr/bin/setuidgid qmaill \\"
-		if [ -f /usr/sbin/multilog ] ; then
-			echo "/usr/sbin/multilog t $logdir/$service_name"
+		echo "exec @prefix@/bin/setuidgid qmaill \\"
+		if [ -f @prefix@/sbin/multilog ] ; then
+			echo "@prefix@/sbin/multilog t $logdir/$service_name"
 		else
-			echo "/usr/bin/multilog t $logdir/$service_name"
+			echo "@prefix@/bin/multilog t $logdir/$service_name"
 		fi
 	) > /service/$service_name/log/run
 	chmod +x /service/$service_name/log/run
@@ -163,13 +101,13 @@ add_service()
 		echo "  if [ -f \$home/.mpdev/.\$i.nooverwrite ] ; then"
 		echo "    continue"
 		echo "  fi"
-		echo "  diff /usr/libexec/mpdev/\$i \$home/.mpdev/\$i > /dev/null 2>&1"
+		echo "  diff @mpdevlibexecdir@/\$i \$home/.mpdev/\$i > /dev/null 2>&1"
 		echo "  if [ \$? -ne 0 ] ; then"
-		echo "    cp /usr/libexec/mpdev/\$i \$home/.mpdev/\$i"
+		echo "    cp @mpdevlibexecdir@/\$i \$home/.mpdev/\$i"
 		echo "  fi"
 		echo "done"
-		echo "exec /usr/bin/setuidgid \$user /usr/bin/envdir \\"
-		echo "  /service/$service_name/variables /usr/bin/mpdev -v"
+		echo "exec @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
+		echo "  /service/$service_name/variables @prefix@/bin/mpdev -v"
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
 }
@@ -246,3 +184,68 @@ while test $# -gt 0; do
     esac
     shift
 done
+#
+# $Log: create_service.in,v $
+# Revision 1.21  2022-06-20 01:00:29+05:30  Cprogrammer
+# use directories set by ./configure
+#
+# Revision 1.20  2021-09-26 02:57:43+05:30  Cprogrammer
+# change ownership of $HOME/.mpdev to uid 1000
+#
+# Revision 1.19  2021-09-09 17:10:03+05:30  Cprogrammer
+# added mixer script
+#
+# Revision 1.18  2021-09-09 12:17:03+05:30  Cprogrammer
+# added script output
+#
+# Revision 1.17  2021-04-25 10:22:15+05:30  Cprogrammer
+# remove cleanup of /tmp/mpdev as purpose is solved by having it as TMPFS
+#
+# Revision 1.16  2021-04-19 21:16:09+05:30  Cprogrammer
+# added MPDEV_TMPDIR variable
+#
+# Revision 1.15  2021-04-15 12:26:20+05:30  Cprogrammer
+# fixed cleanup of /tmp/mpdev
+#
+# Revision 1.14  2021-04-14 21:49:57+05:30  Cprogrammer
+# do cleanup only once
+#
+# Revision 1.13  2021-04-14 13:19:21+05:30  Cprogrammer
+# fixed .options
+#
+# Revision 1.12  2021-04-14 09:45:58+05:30  Cprogrammer
+# update variables only if changed
+#
+# Revision 1.11  2021-04-10 19:13:30+05:30  Cprogrammer
+# create variables/.options file
+#
+# Revision 1.10  2021-02-25 15:40:13+05:30  Cprogrammer
+# use relative path for variables to allow renaming of service directory
+#
+# Revision 1.9  2021-02-25 15:13:08+05:30  Cprogrammer
+# added cleanup of /tmp/mpdev and logs in scrobbles directory
+#
+# Revision 1.8  2021-01-07 12:20:08+05:30  Cprogrammer
+# fixed copy
+#
+# Revision 1.7  2020-08-30 10:56:28+05:30  Cprogrammer
+# update player, playpause script on startup
+#
+# Revision 1.6  2020-08-18 08:20:14+05:30  Cprogrammer
+# copy playpause script
+#
+# Revision 1.5  2020-08-17 22:15:20+05:30  Cprogrammer
+# set default rating to 0
+#
+# Revision 1.4  2020-07-23 10:47:04+05:30  Cprogrammer
+# fixed path variable
+#
+# Revision 1.3  2020-07-23 01:48:43+05:30  Cprogrammer
+# fix for raspberry pi, dietpi
+#
+# Revision 1.2  2020-07-22 15:51:03+05:30  Cprogrammer
+# added AUTO_RATING env variable
+#
+# Revision 1.1  2020-07-19 18:17:00+05:30  Cprogrammer
+# Initial revision
+#

@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.7  2022-06-20 01:07:37+05:30  Cprogrammer
+# use directories set in ./configure
+#
 # Revision 1.6  2021-02-14 18:43:07+05:30  Cprogrammer
 # display list of valid hosts on wrong input
 #
@@ -19,11 +22,11 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.6 2021-02-14 18:43:07+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.7 2022-06-20 01:07:37+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
-    grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+    grep "^$1" @sysconfdir@/mpd.conf|awk '{print $2}' | \
     sed -e 's{"{{g'
 }
 

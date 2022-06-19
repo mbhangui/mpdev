@@ -13,18 +13,19 @@ INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 
 mpdevbindir=@prefix@/bin
 mpdevsbindir=@prefix@/sbin
+mpdevlibexecdir=@libexecdir@/mpdev
+mpdevsysconfdir=@sysconfdir@/mpdev
 
 mpdevbin_PROGRAMS = mpdev
 mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
 				   transfer_play karma songi
-libexec_PROGRAMS = mpdev_cleanup mpdev_update
-libexec_SCRIPTS = player playpause mpdev_rename output mixer create_service
+mpdevlibexec_PROGRAMS = mpdev_cleanup mpdev_update
+mpdevlibexec_SCRIPTS = player playpause mpdev_rename output mixer create_service
 noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1 \
 		 mpdev_rename.1 karma.1 songi.1
-SYSCONFDIR=@sysconfdir@
-sysconf_DATA=mpdev-release
+mpdevsysconf_DATA=mpdev-release
 doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
@@ -50,6 +51,7 @@ edit = sed \
 	-e 's}@pkgconfigdir\@}$(pkgconfigdir)}g' \
 	-e 's}@VERSION\@}$(VERSION)}g' \
 	-e 's}@sysconfdir\@}$(sysconfdir)}g' \
+	-e 's}@mpdevlibexecdir\@}$(mpdevlibexecdir)}g' \
 	-e 's}@prefix\@}$(prefix)}g'
 
 editlastfm = sed \

@@ -1,6 +1,9 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.21  2022-06-20 01:04:54+05:30  Cprogrammer
+# use directories set in ./configure
+#
 # Revision 1.20  2022-05-10 21:33:16+05:30  Cprogrammer
 # added --incartist, --exlartist to include, exclude artists in query
 #
@@ -62,12 +65,12 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.20 2022-05-10 21:33:16+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.21 2022-06-20 01:04:54+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
 {
-  grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+  grep "^$1" @sysconfdir@/mpd.conf|awk '{print $2}' | \
   sed -e 's{"{{g'
 }
 
@@ -621,12 +624,12 @@ if [ $dummy -eq 0 ] ; then
 				mpd_host=localhost
 			fi
 			if [ $do_clear -eq 1 ] ; then
-				/usr/bin/mpc --host="$mpd_host" clear
+				mpc --host="$mpd_host" clear
 			fi
-			/usr/bin/mpc --host="$mpd_host" load now
-			/usr/bin/mpc --host="$mpd_host" rm now
+			mpc --host="$mpd_host" load now
+			mpc --host="$mpd_host" rm now
 			if [ $do_play -eq 1 ] ; then
-				/usr/bin/mpc --host="$mpd_host" play
+				mpc --host="$mpd_host" play
 			fi
 		else
 			if [ $shuffle -eq 1 ] ; then
