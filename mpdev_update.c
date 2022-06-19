@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.9  2022-06-20 01:04:16+05:30  Cprogrammer
+ * remove extra arguments passed to print_song
+ *
  * Revision 1.8  2022-05-10 21:31:50+05:30  Cprogrammer
  * use tcpopen from standard include path
  *
@@ -63,7 +66,7 @@
 #include <tcpopen.h>
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.8 2022-05-10 21:31:50+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.9 2022-06-20 01:04:16+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
@@ -638,7 +641,7 @@ main(int argc, char **argv)
 			if (uri.len) {
 				insert_update_data(res, &processed, &failure, print_sql ? &ptr : 0);
 				if (sqlite3_changes(db) == 1) {
-					print_song(uri.s, last_modified.s, duration.s, artist.s, album.s, title.s, track.s, genre.s, date.s);
+					print_song();
 					if (print_sql && ptr) {
 						out(ptr);
 						sqlite3_free(ptr);
