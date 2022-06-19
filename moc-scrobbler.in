@@ -16,10 +16,15 @@ if [ ! -f $1 ] ; then
 	echo "$1: No such file or directory"
 	exit 1
 fi
+if [ -x /opt/local/bin/ggrep ] ; then
+	grep=/opt/local/bin/ggrep
+else
+	grep=grep
+fi
 artist=$(sed -n 1p $1 | cut -d= -f2-)
 track=$(sed -n 2p $1 | cut -d= -f2-)
-album=$(grep "^album" $1 | cut -d= -f2-)
-duration=$(grep "^duration" $1 | cut -d= -f2-)
+album=$($grep "^album" $1 | cut -d= -f2-)
+duration=$($grep "^duration" $1 | cut -d= -f2-)
 }
 
 usage_connect()
@@ -109,6 +114,11 @@ exit 1
 }
 
 # Start
+if [ -x /opt/local/bin/ggrep ] ; then
+	grep=/opt/local/bin/ggrep
+else
+	grep=grep
+fi
 BASE_SCRIPT=`basename "$0"`
 
 if [ $# -eq 0 ] ; then
@@ -288,12 +298,12 @@ if [ $CONNECT = true ]; then
 	fi
 	# Third: Authorize to build token with auth.getToken
 	TOKEN_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getToken&api_key=$API_KEY&api_sig=$API_TK_SIG")
-	status=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$TOKEN_XML")
+	status=$($grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$TOKEN_XML")
 	if [ "$status" = 'ok' ]; then
-		TOKEN=$(grep -oPm1 "(?<=<token>)[^<]+" <<< "$TOKEN_XML")
+		TOKEN=$($grep -oPm1 "(?<=<token>)[^<]+" <<< "$TOKEN_XML")
 	else
 		if [ "$status" = 'failed' ]; then
-			err=$(grep -oPm1 "(?<=<error code=\"[0-9]\">)[^<]+" <<< "$TOKEN_XML")
+			err=$($grep -oPm1 "(?<=<error code=\"[0-9]\">)[^<]+" <<< "$TOKEN_XML")
 			echo "Error: $TOKEN_XML"
 		else
 			echo "Error: Unknown."
@@ -342,9 +352,9 @@ if [ $CONNECT = true ]; then
 		API_SES_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | md5sum | cut -c1-32)
 	fi
 	SESSION_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getSession&api_key=$API_KEY&token=$TOKEN&api_sig=$API_SES_SIG" | tr '\n' ' ')
-	STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$SESSION_XML")
+	STATUS=$($grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$SESSION_XML")
 	if [ "$STATUS" = 'ok' ]; then
-		SESSION_KEY=$(grep -oPm1 "(?<=<key>)[^<]+" <<< "$SESSION_XML")
+		SESSION_KEY=$($grep -oPm1 "(?<=<key>)[^<]+" <<< "$SESSION_XML")
 	else
 		echo "Error:"
 		echo "$SESSION_XML"
@@ -523,7 +533,7 @@ if [[ "$API_SIG" =~ ^[0-9A-Fa-f]{32}$ ]] ; then
 	if [ $DEBUG = true ]; then
 		echo "$RESPONSE_XML"
 	fi
-	STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")	
+	STATUS=$($grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")	
 	if [ "$STATUS" = 'ok' ]; then
 		echo "Success!"
 		log_scrobble "Scrobbled $track - $artist"
@@ -597,7 +607,7 @@ if [ "$UPDATE" = true ]; then
 			--data "sk=$SESSION_KEY" \
 			--data "timestamp=$TS" \
 			--data-urlencode "track=$track" | tr '\n' ' ');
-		STATUS=$(grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")	
+		STATUS=$($grep -oPm1 "(?<=<lfm status=\")[^\"]+" <<< "$RESPONSE_XML")	
 		if [ "$STATUS" = 'ok' ]; then
 			log_scrobble "Now listening to $track by $artist";
 			echo "Success!"
