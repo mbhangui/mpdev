@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: songi.in,v $
+# Revision 1.5  2022-06-20 01:07:30+05:30  Cprogrammer
+# use directories set in ./configure
+#
 # Revision 1.4  2021-10-15 18:41:52+05:30  Cprogrammer
 # formatted for better display
 #
@@ -14,12 +17,12 @@
 # Initial revision
 #
 #
-# $Id: songi.in,v 1.4 2021-10-15 18:41:52+05:30 Cprogrammer Exp mbhangui $
+# $Id: songi.in,v 1.5 2022-06-20 01:07:30+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
 {
-  grep "^$1" /etc/mpd.conf|awk '{print $2}' | \
+  grep "^$1" @sysconfdir@/mpd.conf|awk '{print $2}' | \
   sed -e 's{"{{g'
 }
 
@@ -71,7 +74,7 @@ if [ $? -ne 0 ] ; then
 fi
 sticker_file=$(get_mpd_conf_value sticker_file)
 if [ $? -ne 0 ] ; then
-	echo "sticker database not enabled in /etc/mpd.conf" 1>&2
+	echo "sticker database not enabled in @sysconfdir@/mpd.conf" 1>&2
 	return 1
 else
 	if [ ! -f $sticker_file ] ; then
