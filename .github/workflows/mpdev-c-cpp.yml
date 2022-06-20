@@ -15,10 +15,19 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    name: ${{ matrix.host }}-${{ matrix.config.name }}
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [ubuntu-latest, macos-latest]
 
     steps:
+    - name: extra_packages
+      run: if [ "${OS}" = "macos-latest" ]; then brew install automake autoconf libtool pkgconfig sqlite3 openssl; fi
+      env:
+        OS: ${{ matrix.host }}
+
     - name: checkout_main
       uses: actions/checkout@v2
       with:
@@ -31,15 +40,9 @@ jobs:
         path: libqmail
 
     - name: install_qmail
-      run: cd libqmail; ./default.configure; make; sudo make install-strip
-
+      run: cd libqmail;env CPPFLAGS="-I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib" ./default.configure; env CPPFLAGS="-I/usr/local/opt/openssl@1.1/include" LDFLAGS="-L/usr/local/opt/openssl@1.1/lib" make; sudo make install-strip
     - name: build_mpdev
       run: |
         cd main; ./default.configure; make
         make clean; /bin/rm -rf .git ../libqmail autom4te.cache
         make -C debian;make mpdev.spec
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: mpdev
-        path: ${{ github.workspace }}
