@@ -13,6 +13,7 @@
 %global _hardened_build    1
 %endif
 %global _prefix            /usr
+%global libexecdir         @libexecdir@
 %global sysconfdir         @sysconfdir@
 %global logdir             /var/log/svc/mpdev
 
@@ -67,8 +68,8 @@ using mpd's idle command and execs user defined script on event changes.
 %autosetup
 
 %build
-%configure --prefix=%{_prefix} --sysconfdir=/etc/mpdev \
-  --libexecdir=%{_prefix}/libexec/mpdev
+%configure --prefix=%{_prefix} --sysconfdir=/etc \
+  --libexecdir=%{libexecdir}
 %{__make} -s %{?_smp_mflags}
 (
 echo "---------------- INFORMATION ------------------------"
@@ -84,11 +85,11 @@ echo "------------------------------------------------------"
 
 %install
 %{__make} -s DESTDIR=%{buildroot} install-strip
-%{__mkdir_p} %{buildroot}%{sysconfdir}
-install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
+%{__mkdir_p} %{buildroot}%{sysconfdir}/mpdev
+install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/mpdev/%{name}-rpm.info
 
 %files
-%dir %attr(755,root,root)               %{_prefix}/libexec/mpdev
+%dir %attr(755,root,root)               %{libexecdir}/mpdev
 %ghost %dir %attr(0755,qmaill,nofiles)  %{logdir}
 %ghost      %attr(-,qmaill,nofiles)     %{logdir}/*
 %attr(755,root,root)                    %{_prefix}/bin/mpdev
@@ -99,16 +100,16 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/%{name}-rpm.info
 %attr(755,root,root)                    %{_prefix}/bin/transfer_play
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
 %attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_update
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_cleanup
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mpdev_rename
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/create_service
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/player
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/playpause
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/output
-%attr(755,root,root)                    %{_prefix}/libexec/mpdev/mixer
-%attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-release
-%attr(644,root,root) %config(noreplace) %{sysconfdir}/%{name}-rpm.info
+%attr(755,root,root)                    %{libexecdir}/mpdev/mpdev_update
+%attr(755,root,root)                    %{libexecdir}/mpdev/mpdev_cleanup
+%attr(755,root,root)                    %{libexecdir}/mpdev/mpdev_rename
+%attr(755,root,root)                    %{libexecdir}/mpdev/create_service
+%attr(755,root,root)                    %{libexecdir}/mpdev/player
+%attr(755,root,root)                    %{libexecdir}/mpdev/playpause
+%attr(755,root,root)                    %{libexecdir}/mpdev/output
+%attr(755,root,root)                    %{libexecdir}/mpdev/mixer
+%attr(644,root,root) %config(noreplace) %{sysconfdir}/mpdev/%{name}-release
+%attr(644,root,root) %config(noreplace) %{sysconfdir}/mpdev/%{name}-rpm.info
 
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdev.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/songi.1.gz

@@ -51,6 +51,7 @@ edit = sed \
 	-e 's}@pkgconfigdir\@}$(pkgconfigdir)}g' \
 	-e 's}@VERSION\@}$(VERSION)}g' \
 	-e 's}@sysconfdir\@}$(sysconfdir)}g' \
+	-e 's}@libexecdir\@}$(libexecdir)}g' \
 	-e 's}@mpdevlibexecdir\@}$(mpdevlibexecdir)}g' \
 	-e 's}@prefix\@}$(prefix)}g'
 
