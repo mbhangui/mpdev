@@ -55,8 +55,10 @@ mpdev.dsc: mpdev.dsc.in Makefile ../conf-version ../conf-release ../conf-email
 
 debian.tar.gz: copyright preinst postinst prerm rules changelog compat \
 Makefile control mpdev.install docs
-	tar cf - copyright preinst postinst prerm rules changelog \
-	compat control mpdev.install docs source | gzip > $@
+	cd .. && tar cf - debian/copyright debian/preinst debian/postinst \
+	debian/prerm debian/rules debian/changelog debian/compat \
+	debian/control debian/mpdev.install debian/docs debian/source \
+	| gzip > debian/$@
 
 clean:
 	/bin/rm -f rules prerm preinst postinst *.dsc changelog \
