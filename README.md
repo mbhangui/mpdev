@@ -174,12 +174,12 @@ do
         MYSQL_PASS=romprdbpass
         MYSQL_DATABASE=romprdb \
         HOME=/home/pi \
-		MPDEV_TMPDIR=/tmp/mpdev \
+        MPDEV_TMPDIR=/tmp/mpdev \
         XDG_RUNTIME_DIR=/home/pi \
         PATH=\$PATH:/usr/bin:/bin \
         AUTO_RATING=6 \
     /usr/bin/mpdev -v
-	sleep 1
+    sleep 1
 done
 ```
 
