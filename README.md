@@ -158,6 +158,7 @@ You need to restart mpdev for the new environment variables to be available to m
 ```
 $ sudo svc -d /service/mpdev # this stops  the mpdev daemon
 $ sudo svc -u /service/mpdev # this starts the mpdev daemon
+$ sudo svc -r /service/mpdev # this stops and restarts the mpdev daemon
 ```
 
 If you want to do a source install and not have the supervise to run mpdev daemon, you could write a simple script and call it in a rc script during boot. If you don't use supervise, you need some knowledge of shell scripting. A very simple example of such a script is below. Another problem of not using supervise will be that you will have to enable your script to be called in some rc or systemd script whenever your machine is started.
@@ -173,6 +174,7 @@ do
         MYSQL_PASS=romprdbpass
         MYSQL_DATABASE=romprdb \
         HOME=/home/pi \
+		MPDEV_TMPDIR=/tmp/mpdev \
         XDG_RUNTIME_DIR=/home/pi \
         PATH=\$PATH:/usr/bin:/bin \
         AUTO_RATING=6 \
