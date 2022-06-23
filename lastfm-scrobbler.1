@@ -30,13 +30,16 @@ Connecting:
     --connect --api_key --api_sec
 
 Scrobbling:
-    --artist --track
+    --artist --track --duration
+
+Love:
+    --love --artist --track --duration
 
 Update Current Song:
-    --update --artist --track
+    --update --artist --track --duration
 
 Stop:
-    --stop
+    --stop --artist --track --duration
 .EE
 
 .SH Configuration
@@ -47,13 +50,25 @@ Run the connect command and follow the instructions:
 $ lastfm-scrobbler --connect
 .EE
 
-if you have your own [last.fm API keys](https://www.last.fm/api/account/create) (recommended).
+You need to have your own [last.fm API keys]
+(https://www.last.fm/api/account/create).
 
 .EX
 $ lastfm-scrobbler --connect --api_key="abc123" --api_sec="xyz890"
 .EE
 
-After you have added the connection you should have a `lastfm-scrobbler.conf` file in `~/.config/lastfm-scrobbler/`
+After you have added the connection you should have a
+`lastfm-scrobbler.conf` file in `~/.config/lastfm-scrobbler/`
+
+Other examples:
+
+.EX
+Scrobble a track
+  lastfm-scrobbler --artist="test artist" --album="test album" --track="test track"  --duration=420
+
+Love a track which has been scrobbled
+  lastfm-scrobbler --love --artist="test artist" --album="test album" --track="test track"  --duration=420
+.EE
 
 .SH SEE ALSO
 mpd(1),

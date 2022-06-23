@@ -213,14 +213,18 @@ CREATE INDEX date_added on song(date_added);
 CREATE INDEX last_modified on song(last_modified);
 ```
 
+To use lastfm-scrobbler, librefm-scrobbler, you need to have your own [last.fm API keys](https://www.last.fm/api/account/create). Once you have created your API keys, you can view the same at the [api accounts page](https://www.last.fm/api/accounts).
+
 The scrobbler modules lastfm-scrobbler, librefm-scrobbler enables scrobbling to last.fm and libre.fm and can be enabled by running lastfm-scrobbler and librefm-scrobbler once as shown below
 
 ```
-$ lastfm-scrobbler  --connect # for setting up lastfm
-$ librefm-scrobbler --connect # for setting up librefm
+$ lastfm-scrobbler  --connect --api_key="abc123" --api_sec="xyz890"
+$ librefm-scrobbler --connect --api_key="abc123" --api_sec="xyz890"
 ```
 
-After you have added the connection you should have lastfm-scrobbler.conf file in ~/.config/lastfm-scrobbler and librefm-scrobbler.conf file in ~/.config/librefm-scrobbler. These two files will have your `SESSION_KEY` and `API_KEY`. lastfm-scrobbler and librefm-scrobbler are a copy of moc-scrobbler from https://gitlab.com/pachanka/moc-scrobbler. moc-scrobbler is distributed under the terms of [MIT License](https://gitlab.com/pachanka/moc-scrobbler/-/blob/master/license.md). mpdev will not do scrobbling if the `SESSION_KEY` and `API_KEY` haven't been setup, or if the environment variable DISABLE\_SCROBBLE is set
+As you can see above, the same key generated for lastfm can be used for librefm.
+
+After you have added the connection you should have lastfm-scrobbler.conf file in ~/.config/lastfm-scrobbler and librefm-scrobbler.conf file in ~/.config/librefm-scrobbler. These two files will have your `SESSION_KEY`, `API_KEY` and `API_SEC`. lastfm-scrobbler and librefm-scrobbler are a copy of moc-scrobbler from https://gitlab.com/pachanka/moc-scrobbler. moc-scrobbler is distributed under the terms of [MIT License](https://gitlab.com/pachanka/moc-scrobbler/-/blob/master/license.md). mpdev will not do scrobbling if the `SESSION_KEY`, `API_KEY` and `API_SEC` haven't been setup, or if the environment variable DISABLE\_SCROBBLE is set
 
 By default mpdev will get the host name and port for mpd from MPD\_HOST and MPD\_PORT environment variables. MPD\_PASSWORD environment variable can be set to make mpdev connect to a password-protected mpd. If these environment variables aren’t set, mpdev connects to localhost on port 6600.. You can look at the logs while your songs are playing using `tail -f /var/log/svc/mpdev/current`
 

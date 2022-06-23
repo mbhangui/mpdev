@@ -122,6 +122,7 @@ caused by data in track.current, track.last
 80. moc-scrobbler.in: use gnu grep for OSX
 - 23/06/2022
 81. Mac OSX port
+82. moc-scrobbler.in: added --love option to love tracks
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
