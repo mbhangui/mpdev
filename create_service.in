@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.23 2022-06-23 19:02:51+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.23 2022-06-23 21:56:43+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -56,7 +56,7 @@ add_service()
 	check_update_if_diff $servicedir/$service_name/variables/MPD_HOST     127.0.0.1
 	check_update_if_diff $servicedir/$service_name/variables/MPD_PORT     6600
 	check_update_if_diff $servicedir/$service_name/variables/MPDEV_TMPDIR "/tmp/mpdev"
-	sock=$(grep "^bind_to_address" /etc/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
+	sock=$(grep "^bind_to_address" @sysconfdir@/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
 	if [ -n "$sock" ] ; then
 		check_update_if_diff $servicedir/$service_name/variables/MPD_SOCKET $sock
 	elif [ -S /run/mpd/mpd.sock ] ; then
@@ -90,11 +90,11 @@ add_service()
 		t_gid=$(getent passwd $user|cut -d: -f4)
 		;;
 		Darwin)
-		t_uid=$(dscl . -read /Users/$user UniqueID|cut -d: -f2)
-		t_gid=$(dscl . -read /Users/$user PrimaryGroupID|cut -d: -f2)
+		t_uid=$(dscl . -read /Users/$user UniqueID|cut -d: -f2|sed 's{ {{g')
+		t_gid=$(dscl . -read /Users/$user PrimaryGroupID|cut -d: -f2|sed 's{ {{g')
 		;;
 	esac
-	chown -R $t_uid:$t_uid $home/.mpdev
+	chown -R $t_uid:$t_gid $home/.mpdev
 	
 	(
 	echo "#!/bin/sh"
@@ -119,10 +119,11 @@ add_service()
 	echo "user=$user"
 	echo "home=$home"
 	echo
-	echo "@prefix@/bin/lastfm-scrobbler --stop"
-	echo "@prefix@/bin/librefm-scrobbler --stop"
 	echo "for i in lastfm librefm"
 	echo "do"
+	echo "  echo \"clearing \$i status\""
+	echo "  @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
+	echo "    /service/$service_name/variables @prefix@/bin/\$i-scrobbler --stop"
 	echo "  find \$home/.config/\$i-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
 	echo "done"
 	echo "if [ -f $service_name/variables/MPDEV_TMPDIR ] ; then"
@@ -145,8 +146,20 @@ add_service()
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
 	(
-	echo "@prefix@/bin/lastfm-scrobbler --stop"
-	echo "@prefix@/bin/librefm-scrobbler --stop"
+	echo "#!/bin/sh"
+	echo "# generated run script for $host on `date`"
+	echo "# by the below command"
+	echo "# $prog_args"
+	echo "exec 2>&1"
+	echo
+	echo "user=$user"
+	echo "home=$home"
+	echo "for i in lastfm librefm"
+	echo "do"
+	echo "  echo \"clearing \$i status\""
+	echo "  @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
+	echo "    /service/$service_name/variables @prefix@/bin/\$i-scrobbler --stop"
+	echo "done"
 	) > /service/$service_name/shutdown
 	chmod +x /service/$service_name/shutdown
 }
@@ -226,7 +239,7 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
-# Revision 1.23  2022-06-23 19:02:51+05:30  Cprogrammer
+# Revision 1.23  2022-06-23 21:56:43+05:30  Cprogrammer
 # added lastfm-scrobbler --stop, librefm-scrobbler --stop for cleanup
 #
 # Revision 1.22  2022-06-23 09:05:36+05:30  Cprogrammer
