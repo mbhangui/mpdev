@@ -115,7 +115,7 @@ caused by data in track.current, track.last
 75. skip service creation if daemontools is not installed
 - 20/06/2022
 76. create_services.in, Makefile.am, mpdplaylist.in, romprhist.in,
-	transfer_play.in, songi.in: set/use directories set byn ./configure
+    transfer_play.in, songi.in: set/use directories set by ./configure
 77. mpdev_update.c: remove extra arguments passed to print_song
 78. player.in, playpause.in: Fixed date syntax for non-gnu date
 79. player.in, playpause.in: use directories set in ./configure
@@ -123,6 +123,8 @@ caused by data in track.current, track.last
 - 23/06/2022
 81. Mac OSX port
 82. moc-scrobbler.in: added --love option to love tracks
+83. mpdev service: added lastfm-scrobbler --stop, librefm-scrobbler --stop for
+    cleanup
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.22 2022-06-23 09:05:36+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.23 2022-06-23 19:02:51+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -97,52 +97,58 @@ add_service()
 	chown -R $t_uid:$t_uid $home/.mpdev
 	
 	(
-		echo "#!/bin/sh"
-		echo "# generated log script for $host on `date`"
-		echo "# by the below command"
-		echo "# $prog_args"
-		echo "exec @prefix@/bin/setuidgid qmaill \\"
-		if [ -f @prefix@/sbin/multilog ] ; then
-			echo "@prefix@/sbin/multilog t $logdir/$service_name"
-		else
-			echo "@prefix@/bin/multilog t $logdir/$service_name"
-		fi
+	echo "#!/bin/sh"
+	echo "# generated log script for $host on `date`"
+	echo "# by the below command"
+	echo "# $prog_args"
+	echo "exec @prefix@/bin/setuidgid qmaill \\"
+	if [ -f @prefix@/sbin/multilog ] ; then
+		echo "@prefix@/sbin/multilog t $logdir/$service_name"
+	else
+		echo "@prefix@/bin/multilog t $logdir/$service_name"
+	fi
 	) > /service/$service_name/log/run
 	chmod +x /service/$service_name/log/run
 	(
-		echo "#!/bin/sh"
-		echo "# generated run script for $host on `date`"
-		echo "# by the below command"
-		echo "# $prog_args"
-		echo "exec 2>&1"
-		echo
-		echo "user=$user"
-		echo "home=$home"
-		echo
-		echo "for i in lastfm librefm"
-		echo "do"
-		echo "  /bin/rm -f \$home/.config/"\$i"-scrobbler/track.last"
-		echo "  find \$home/.config/\$i-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
-		echo "done"
-		echo "if [ -f $service_name/variables/MPDEV_TMPDIR ] ; then"
-		echo "  MPDEV_TMPDIR=\$(cat $service_name/variables/MPDEV_TMPDIR)"
-		echo "else"
-		echo "  MPDEV_TMPDIR=/tmp/mpdev"
-		echo "fi"
-		echo "for i in player playpause output mixer"
-		echo "do"
-		echo "  if [ -f \$home/.mpdev/.\$i.nooverwrite ] ; then"
-		echo "    continue"
-		echo "  fi"
-		echo "  diff @mpdevlibexecdir@/\$i \$home/.mpdev/\$i > /dev/null 2>&1"
-		echo "  if [ \$? -ne 0 ] ; then"
-		echo "    cp @mpdevlibexecdir@/\$i \$home/.mpdev/\$i"
-		echo "  fi"
-		echo "done"
-		echo "exec @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
-		echo "  /service/$service_name/variables @prefix@/bin/mpdev -v"
+	echo "#!/bin/sh"
+	echo "# generated run script for $host on `date`"
+	echo "# by the below command"
+	echo "# $prog_args"
+	echo "exec 2>&1"
+	echo
+	echo "user=$user"
+	echo "home=$home"
+	echo
+	echo "@prefix@/bin/lastfm-scrobbler --stop"
+	echo "@prefix@/bin/librefm-scrobbler --stop"
+	echo "for i in lastfm librefm"
+	echo "do"
+	echo "  find \$home/.config/\$i-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
+	echo "done"
+	echo "if [ -f $service_name/variables/MPDEV_TMPDIR ] ; then"
+	echo "  MPDEV_TMPDIR=\$(cat $service_name/variables/MPDEV_TMPDIR)"
+	echo "else"
+	echo "  MPDEV_TMPDIR=/tmp/mpdev"
+	echo "fi"
+	echo "for i in player playpause output mixer"
+	echo "do"
+	echo "  if [ -f \$home/.mpdev/.\$i.nooverwrite ] ; then"
+	echo "    continue"
+	echo "  fi"
+	echo "  diff @mpdevlibexecdir@/\$i \$home/.mpdev/\$i > /dev/null 2>&1"
+	echo "  if [ \$? -ne 0 ] ; then"
+	echo "    cp @mpdevlibexecdir@/\$i \$home/.mpdev/\$i"
+	echo "  fi"
+	echo "done"
+	echo "exec @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
+	echo "  /service/$service_name/variables @prefix@/bin/mpdev -v"
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
+	(
+	echo "@prefix@/bin/lastfm-scrobbler --stop"
+	echo "@prefix@/bin/librefm-scrobbler --stop"
+	) > /service/$service_name/shutdown
+	chmod +x /service/$service_name/shutdown
 }
 
 del_service()
@@ -220,6 +226,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.23  2022-06-23 19:02:51+05:30  Cprogrammer
+# added lastfm-scrobbler --stop, librefm-scrobbler --stop for cleanup
+#
 # Revision 1.22  2022-06-23 09:05:36+05:30  Cprogrammer
 # Mac OSX port
 #
