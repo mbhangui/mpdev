@@ -23,7 +23,7 @@ prefix=@prefix@
 libexecdir=@libexecdir@
 mandir=@mandir@
 mandir=$(prefix)/share/man
-shareddir=$(prefix)/share/mpdev
+sysconfdir=@sysconfdir@
 version=@version@
 package_name="mpdev"
 
@@ -42,7 +42,7 @@ build-stamp:
 	# run configure script
 	#
 	HOME='.';export HOME
-	./configure --prefix=${prefix} --sysconfdir=/etc/mpdev \
+	./configure --prefix=${prefix} --sysconfdir=${sysconfdir} \
 		--libexecdir=${libexecdir}
 	$(MAKE) -s DESTDIR=$(DESTDIR)
 	touch build-stamp

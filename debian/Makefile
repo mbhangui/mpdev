@@ -1,7 +1,7 @@
 prefix=/usr
-sysconfdir=/etc/mpdev
+sysconfdir=/etc
 shareddir=/usr/share/mpdev
-libexecdir=/usr/libexec/mpdev
+libexecdir=/usr/libexec
 mandir=/usr/share/man
 logdir=/var/log/svc
 servicedir=/service
