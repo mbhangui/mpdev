@@ -1,8 +1,8 @@
 # mpdev
 
-[![mpdev C/C++ CI](https://github.com/mbhangui/mpdev/actions/workflows/mpdev-c-cpp.yml/badge.svg)](https://github.com/mbhangui/mpdev/actions/workflows/mpdev-c-cpp.yml)
+[![mpdev C/C++ CI - Linux, Mac OSX](https://github.com/mbhangui/mpdev/actions/workflows/mpdev-c-cpp.yml/badge.svg)](https://github.com/mbhangui/mpdev/actions/workflows/mpdev-c-cpp.yml)
 
-**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/).
+**mpdev** is a music player daemon event watcher. It connects to the mpd socket and uses mpd's idle command to listen for player events. Whenever an event occurs, mpdev can carry out various activities using user defined hooks. The idea for doing mpdev comes from [mpdcron](https://alip.github.io/mpdcron/). Currently mpdev runs on linux and Mac OSX. For Linux you have binary package which mostly automates the installation and setup. For Mac OSX, one needs to manually compile, install and configure things like startup, configure environment variables, creating the sqlite3 database.
 
 
 mpdev helps in bulding a database of your played tracks. Along with a script `mpdplaylist`, it can generate a playlist for mpd as per your taste and mood.

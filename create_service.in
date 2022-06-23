@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.21 2022-06-20 01:00:29+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.22 2022-06-23 09:05:36+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -18,14 +18,29 @@ add_service()
 		return 1
 	fi
 	userid=$1
-	user=$(getent passwd $userid 2>/dev/null| cut -d: -f1)
-	if [ $? -ne 0 ] ; then
-		if [ $? -eq 2 ] ; then
+	case "$SYSTEM" in
+		Linux)
+		user=$(getent passwd $userid 2>/dev/null| cut -d: -f1)
+		if [ $? -ne 0 ] ; then
+			if [ $? -eq 2 ] ; then
+				echo "No such userid $userid" 1>&2
+				return 1
+			fi
+			return 1
+		fi
+		;;
+		Darwin)
+		user=$(dscl . -list /Users UniqueID|grep -w $userid|awk '{print $1}')
+		if [ -z "$user" ] ; then
 			echo "No such userid $userid" 1>&2
 			return 1
 		fi
-		return 1
-	fi
+		;;
+		*)
+		echo "Configure/setup startup manually" 1>&2
+		exit 1
+		;;
+	esac
 	if [ -z "$servicedir" ] ; then
 		echo "--servicedir not specified" 1>&2
 		exit 1
@@ -47,7 +62,14 @@ add_service()
 	elif [ -S /run/mpd/mpd.sock ] ; then
 		check_update_if_diff $servicedir/$service_name/variables/MPD_SOCKET "/run/mpd/mpd.sock"
 	fi
-	home=$(getent passwd $userid|cut -d: -f6)
+	case "$SYSTEM" in
+		Linux)
+		home=$(getent passwd $user|cut -d: -f6)
+		;;
+		Darwin)
+		home=$(dscl . -list /Users NFSHomeDirectory|grep $user|awk '{print $2}')
+		;;
+	esac
 	if [ -n "$home" ] ; then
 		check_update_if_diff $servicedir/$service_name/variables/HOME "$home"
 		check_update_if_diff $servicedir/$service_name/variables/XDG_RUNTIME_DIR "$home"
@@ -62,8 +84,16 @@ add_service()
 			cp @mpdevlibexecdir@/$i $home/.mpdev
 		fi
 	done
-	t_uid=$(getent passwd $userid|cut -d: -f3)
-	t_gid=$(getent passwd $userid|cut -d: -f4)
+	case "$SYSTEM" in
+		Linux)
+		t_uid=$(getent passwd $user|cut -d: -f3)
+		t_gid=$(getent passwd $user|cut -d: -f4)
+		;;
+		Darwin)
+		t_uid=$(dscl . -read /Users/$user UniqueID|cut -d: -f2)
+		t_gid=$(dscl . -read /Users/$user PrimaryGroupID|cut -d: -f2)
+		;;
+	esac
 	chown -R $t_uid:$t_uid $home/.mpdev
 	
 	(
@@ -86,16 +116,19 @@ add_service()
 		echo "# $prog_args"
 		echo "exec 2>&1"
 		echo
-		echo "home=\$(getent passwd $userid|cut -d: -f6)"
-		echo "user=\$(getent passwd $userid|cut -d: -f1)"
+		echo "user=$user"
+		echo "home=$home"
 		echo
+		echo "for i in lastfm librefm"
+		echo "do"
+		echo "  /bin/rm -f \$home/.config/"\$i"-scrobbler/track.last"
+		echo "  find \$home/.config/\$i-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
+		echo "done"
 		echo "if [ -f $service_name/variables/MPDEV_TMPDIR ] ; then"
 		echo "  MPDEV_TMPDIR=\$(cat $service_name/variables/MPDEV_TMPDIR)"
 		echo "else"
 		echo "  MPDEV_TMPDIR=/tmp/mpdev"
 		echo "fi"
-		echo "find \$home/.config/lastfm-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
-		echo "find \$home/.config/librefm-scrobbler -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
 		echo "for i in player playpause output mixer"
 		echo "do"
 		echo "  if [ -f \$home/.mpdev/.\$i.nooverwrite ] ; then"
@@ -150,6 +183,7 @@ service_name=mpdev
 logdir=/var/log/svc
 servicedir=/service
 prog_args="$0 $*"
+SYSTEM=$(uname -s)
 while test $# -gt 0; do
     case "$1" in
     -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
@@ -186,6 +220,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.22  2022-06-23 09:05:36+05:30  Cprogrammer
+# Mac OSX port
+#
 # Revision 1.21  2022-06-20 01:00:29+05:30  Cprogrammer
 # use directories set by ./configure
 #

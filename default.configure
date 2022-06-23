@@ -5,8 +5,22 @@ fi
 if [ ! -f conf-release ] ; then
 	echo 1.1 > conf-release
 fi
-prefix=/usr
+
+SYSTEM=$(uname -s)
+case "$SYSTEM" in
+  Linux)
+  prefix=/usr
+  sysconfdir=/etc
+  ;;
+  FreeBSD)
+  prefix=/usr/local
+  sysconfdir=/usr/local/etc
+  ;;
+  Darwin)
+  prefix=/usr/local
+  sysconfdir=/opt/local/etc
+esac
 ./configure \
   --prefix=$prefix \
-  --sysconfdir=/etc \
+  --sysconfdir=$sysconfdir \
   --libexecdir=$prefix/libexec
