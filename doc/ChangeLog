@@ -125,6 +125,8 @@ caused by data in track.current, track.last
 82. moc-scrobbler.in: added --love option to love tracks
 83. mpdev service: added lastfm-scrobbler --stop, librefm-scrobbler --stop for
     cleanup
+- 24/06/2022
+84. mpdev service: use relative path for variables directory
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

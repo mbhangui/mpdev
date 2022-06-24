@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.23 2022-06-23 21:56:43+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.24 2022-06-24 09:30:12+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -71,9 +71,11 @@ add_service()
 		;;
 	esac
 	if [ -n "$home" ] ; then
-		check_update_if_diff $servicedir/$service_name/variables/HOME "$home"
-		check_update_if_diff $servicedir/$service_name/variables/XDG_RUNTIME_DIR "$home"
 		check_update_if_diff $servicedir/$service_name/variables/PATH "/bin:/usr/bin:@prefix@/bin:$home/.mpdev:/usr/local/bin:/opt/local/bin"
+		check_update_if_diff $servicedir/$service_name/variables/HOME "$home"
+		if [ "$SYSTEM" = "Linux" ] ; then
+		check_update_if_diff $servicedir/$service_name/variables/XDG_RUNTIME_DIR "$home"
+		fi
 	fi
 	mkdir -p $home/.mpdev
 	for i in player playpause output mixer
@@ -123,14 +125,9 @@ add_service()
 	echo "do"
 	echo "  echo \"clearing \$i status\""
 	echo "  @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
-	echo "    /service/$service_name/variables @prefix@/bin/\$i-scrobbler --stop"
+	echo "    variables @prefix@/bin/\$i-scrobbler --stop"
 	echo "  find \$home/.config/\$i-scrobbler  -name '*'.log -ctime +7 -exec /bin/rm -f {} \;"
 	echo "done"
-	echo "if [ -f $service_name/variables/MPDEV_TMPDIR ] ; then"
-	echo "  MPDEV_TMPDIR=\$(cat $service_name/variables/MPDEV_TMPDIR)"
-	echo "else"
-	echo "  MPDEV_TMPDIR=/tmp/mpdev"
-	echo "fi"
 	echo "for i in player playpause output mixer"
 	echo "do"
 	echo "  if [ -f \$home/.mpdev/.\$i.nooverwrite ] ; then"
@@ -142,7 +139,7 @@ add_service()
 	echo "  fi"
 	echo "done"
 	echo "exec @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
-	echo "  /service/$service_name/variables @prefix@/bin/mpdev -v"
+	echo "  variables @prefix@/bin/mpdev -v"
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
 	(
@@ -158,7 +155,7 @@ add_service()
 	echo "do"
 	echo "  echo \"clearing \$i status\""
 	echo "  @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
-	echo "    /service/$service_name/variables @prefix@/bin/\$i-scrobbler --stop"
+	echo "    variables @prefix@/bin/\$i-scrobbler --stop"
 	echo "done"
 	) > /service/$service_name/shutdown
 	chmod +x /service/$service_name/shutdown
@@ -239,6 +236,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.24  2022-06-24 09:30:12+05:30  Cprogrammer
+# use relative path for variables directory
+#
 # Revision 1.23  2022-06-23 21:56:43+05:30  Cprogrammer
 # added lastfm-scrobbler --stop, librefm-scrobbler --stop for cleanup
 #
