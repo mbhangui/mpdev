@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: player.in,v 1.48 2022-06-26 22:07:59+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.47 2022-06-26 23:15:35+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -450,39 +450,29 @@ scrobble()
 	S_ARTIST=$(echo $SONG_ARTIST|tr \` \')
 	S_ALBUM=$(echo $SONG_ALBUM|tr \` \')
 	if [ -n "$SCROBBLE_LASTFM" ] ; then
-		if [ -f $HOME/.config/lastfm-scrobbler/track.current ] ; then
-			update="--update"
-		else
-			update=""
-		fi
 		if [ $VERBOSE -eq 1 ] ; then
-			echo lastfm-scrobbler $update --artist="$S_ARTIST" --album="$S_ALBUM" --track="$S_TITLE"  --duration="$SONG_DURATION"
+			echo lastfm-scrobbler --update --artist=\""$S_ARTIST"\" --album=\""$S_ALBUM"\" --track=\""$S_TITLE"\"  --duration=\""$SONG_DURATION"\"
 		fi
 		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-			lastfm-scrobbler $update --artist="$S_ARTIST" \
+			lastfm-scrobbler --update --artist="$S_ARTIST" \
 				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION" > /dev/null
 		else
-			lastfm-scrobbler $update --artist="$S_ARTIST" \
+			lastfm-scrobbler --update --artist="$S_ARTIST" \
 				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION"
 		fi
 	fi
 	if [ -n "$SCROBBLE_LIBREFM" ] ; then
-		if [ -f $HOME/.config/librefm-scrobbler/track.current ] ; then
-			update="--update"
-		else
-			update=""
-		fi
 		if [ $VERBOSE -eq 1 ] ; then
-			echo librefm-scrobbler $update --artist="$S_ARTIST" --album="$S_ALBUM" --track="$S_TITLE"  --duration="$SONG_DURATION"
+			echo librefm-scrobbler --update --artist=\""$S_ARTIST"\" --album=\""$S_ALBUM"\" --track=\""$S_TITLE"\"  --duration=\""$SONG_DURATION"\"
 		fi
 		if [ $VERBOSE -eq 0 -o $VERBOSE -eq 1 ] ; then
-			librefm-scrobbler $update --artist="$S_ARTIST" \
+			librefm-scrobbler --update --artist="$S_ARTIST" \
 				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION" > /dev/null
 		else
-			librefm-scrobbler $update --artist="$S_ARTIST" \
+			librefm-scrobbler --update --artist="$S_ARTIST" \
 				--album="$S_ALBUM" --track="$S_TITLE" \
 				--duration="$SONG_DURATION"
 		fi
@@ -973,12 +963,8 @@ update_song "$SONG_URI" "$1"
 exit 0
 
 # $Log: player.in,v $
-# Revision 1.48  2022-06-26 22:07:59+05:30  Cprogrammer
-# scrobble directly when track.current is missing
-#
-# Revision 1.47  2022-06-20 01:06:31+05:30  Cprogrammer
-# fixed date syntax for non-gnu date
-# use directories set in ./configure
+# Revision 1.47  2022-06-26 23:15:35+05:30  Cprogrammer
+# use variables from ./configure
 #
 # Revision 1.46  2022-01-17 19:09:28+05:30  Cprogrammer
 # fixed scrobbling getting skipped
