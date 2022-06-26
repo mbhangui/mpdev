@@ -12,8 +12,11 @@ A librefm.fm (https://libre.fm/) scrobbler for \fBmpdev\fR(1) / \fBmpdwatch\fR(1
 
 librefm-scrobbler has been cloned from https://goto.pachanka.org/moc-scrobbler.
 
+librefm-scrobbler is a command line scrobbler for libre.fm written as a
+bourne shell script.
+
 .EX
-USAGE: librefm-scrobbler.sh [OPTIONS]
+USAGE: librefm-scrobbler [OPTIONS]
 
 OPTIONS:
 
@@ -39,7 +42,7 @@ Update Current Song:
     --update --artist --track --duration
 
 Stop:
-    --stop --artist --track --duration
+    --stop
 .EE
 
 .SH Configuration
@@ -50,9 +53,8 @@ Run the connect command and follow the instructions:
 $ librefm-scrobbler --connect
 .EE
 
-You need to have your own [last.fm API
-keys](https://www.last.fm/api/account/create) (recommended). Note that the
-lst.fm API key works for libre.fm
+You need to have your own [last.fm API keys](https://www.last.fm/api/account/create).
+Note that the last.fm API key works for libre.fm
 
 .EX
 $ librefm-scrobbler --connect --api_key="abc123" --api_sec="xyz890"
@@ -65,11 +67,11 @@ Other examples:
 
 .EX
 Scrobble a track
-  librefm-scrobbler --artist="test artist" --album="test album" \
+$ librefm-scrobbler --artist="test artist" --album="test album" \
     --track="test track"  --duration=420
 
 Love a track which has been scrobbled
-  librefm-scrobbler --love --artist="test artist" --album="test album" \
+$ librefm-scrobbler --love --artist="test artist" --album="test album" \
     --track="test track"  --duration=420
 .EE
 

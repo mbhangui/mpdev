@@ -127,6 +127,9 @@ caused by data in track.current, track.last
     cleanup
 - 24/06/2022
 84. mpdev service: use relative path for variables directory
+85. moc-scrobbler.in: removed bashishm
+- 25/06/2022
+86. player.in: scrobble direct when track.last is missing
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020

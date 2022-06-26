@@ -8,12 +8,15 @@ lastfm-scrobbler - lastfm scrobbler
 lastfm-scrobbler [\f[I]option\f[]]
 
 .SH DESCRIPTION
-A lastfm.fm (https://libre.fm/) scrobbler for \fBmpdev\fR(1) / \fBmpdwatch\fR(1).
+A lastfm.fm (https://last.fm/) scrobbler for \fBmpdev\fR(1) / \fBmpdwatch\fR(1).
 
 lastfm-scrobbler has been cloned from https://goto.pachanka.org/moc-scrobbler.
 
+lastfm-scrobbler is a command line scrobbler for last.fm written as a
+bourne shell script.
+
 .EX
-USAGE: lastfm-scrobbler.sh [OPTIONS]
+USAGE: lastfm-scrobbler [OPTIONS]
 
 OPTIONS:
 
@@ -39,7 +42,7 @@ Update Current Song:
     --update --artist --track --duration
 
 Stop:
-    --stop --artist --track --duration
+    --stop
 .EE
 
 .SH Configuration
@@ -50,8 +53,7 @@ Run the connect command and follow the instructions:
 $ lastfm-scrobbler --connect
 .EE
 
-You need to have your own [last.fm API keys]
-(https://www.last.fm/api/account/create).
+You need to have your own [last.fm API keys] (https://www.last.fm/api/account/create).
 
 .EX
 $ lastfm-scrobbler --connect --api_key="abc123" --api_sec="xyz890"
@@ -64,10 +66,10 @@ Other examples:
 
 .EX
 Scrobble a track
-  lastfm-scrobbler --artist="test artist" --album="test album" --track="test track"  --duration=420
+$ lastfm-scrobbler --artist="test artist" --album="test album" --track="test track"  --duration=420
 
 Love a track which has been scrobbled
-  lastfm-scrobbler --love --artist="test artist" --album="test album" --track="test track"  --duration=420
+$ lastfm-scrobbler --love --artist="test artist" --album="test album" --track="test track"  --duration=420
 .EE
 
 .SH SEE ALSO
