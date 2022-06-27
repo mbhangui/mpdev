@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 #
-# $Id: moc-scrobbler.in,v 1.5 2022-06-26 23:56:07+05:30 Cprogrammer Exp mbhangui $
+# $Id: moc-scrobbler.in,v 1.6 2022-06-27 14:44:06+05:30 Cprogrammer Exp mbhangui $
 #
 
 ################################################################
@@ -100,11 +100,13 @@ usage_scrobble() {
 	echo "$BASE_SCRIPT --update --artist=\"artist name\" --title=\"song title\" --album=\"album title\"  --duration=\"123\""
 }
 
-function log_scrobble() {
-	# Add to log.
-	dt=$(date +"%d-%m-%y")
-	tm=$(date +"%H:%M:%S %d-%m-%y")
-	echo "$tm $1" >> "${CONF_DIR}/scrobbles.$dt.log"
+log_scrobble() {
+	if [ $DEBUG = true ] ; then
+		# Add to log.
+		dt=$(date +"%d-%m-%y")
+		tm=$(date +"%H:%M:%S %d-%m-%y")
+		echo "$tm $1" >> "${CONF_DIR}/scrobbles.$dt.log"
+	fi
 }
 
 create_conf() {
@@ -137,7 +139,7 @@ create_conf() {
 
 	# Sign request
 	TOSIGN="api_key${API_KEY}methodauth.getToken"
-	API_TK_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
+	API_TK_SIG=$(printf "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
 	# Authorize to build token with auth.getToken
 	TOKEN_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getToken&api_key=$API_KEY&api_sig=$API_TK_SIG")
 	status=$(echo "$TOKEN_XML" | $grep -oPm1 "(?<=<lfm status=\")[^\"]+")
@@ -173,7 +175,7 @@ create_conf() {
 	# Not DRY...
 	echo "Using provided API credentials."
 	TOSIGN="api_key${API_KEY}methodauth.getSessiontoken${TOKEN}"
-	API_SES_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
+	API_SES_SIG=$(printf "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
 	SESSION_XML=$(curl -sX GET "$SCHEMA://$API_URL?method=auth.getSession&api_key=$API_KEY&token=$TOKEN&api_sig=$API_SES_SIG" | tr '\n' ' ')
 	STATUS=$(echo "$SESSION_XML" | $grep -oPm1 "(?<=<lfm status=\")[^\"]+")
 	if [ "$STATUS" = 'ok' ] ; then
@@ -303,9 +305,9 @@ scrobble() {
 	if [ $DEBUG = true ] ; then
 		echo "Using API credentials provided in $BASE_SCRIPT.conf file."
 		echo "Running:"
-		echo "echo -n \"${TOSIGN}${API_SEC}\" | iconv -t utf8 | $md5sum | cut -c1-32"
+		echo "printf \"${TOSIGN}${API_SEC}\" | iconv -t utf8 | $md5sum | cut -c1-32"
 	fi
-	API_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
+	API_SIG=$(printf "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
 	echo $API_SIG | $grep -E "^[0-9A-Fa-f]{32}" >/dev/null
 	if [ $? -ne 0 ] ; then
 		echo "Bad signature [API_SIG=$API_SIG]" 1>&2
@@ -315,9 +317,7 @@ scrobble() {
 		echo "Signature API_SIG=$API_SIG"
 	fi
 	if [ "$LOVE" = true ] ; then
-		if [ "$DEBUG" = true ] ; then
-			echo "Loving..."
-		fi
+		echo "Loving ... $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 			--data-urlencode "album=$album" \
 			--data "api_key=$API_KEY" \
@@ -328,7 +328,7 @@ scrobble() {
 			--data "timestamp=$TS" \
 			--data-urlencode "track=$track" | tr '\n' ' ')
 	else
-		echo "Scrobbling $artist: $track - $album"
+		echo "Scrobbling $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 			--data-urlencode "album=$album" \
 			--data "api_key=$API_KEY" \
@@ -373,7 +373,7 @@ scrobble() {
 	if [ $DEBUG = true ] ; then
 		echo "Using provided API credentials."
 	fi
-	API_SIG=$(echo -n "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
+	API_SIG=$(printf "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
 	if [ $DEBUG = true ] ; then
 		echo "Got $API_SIG "
 	fi
@@ -383,7 +383,7 @@ scrobble() {
 		echo "Error, bad API signature." 1>&2
 		return 1
 	fi
-	echo "Scrobbling now $artist: $track - $album"
+	echo "Scrobbling now $track $album $artist"
 	RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 		--data-urlencode "album=$album" \
 		--data "api_key=$API_KEY" \
@@ -546,7 +546,7 @@ while test $# -gt 0; do
 		exit 0
 		;;
 		--version)
-		echo "$Id: moc-scrobbler.in,v 1.5 2022-06-26 23:56:07+05:30 Cprogrammer Exp mbhangui $"
+		echo "$Id: moc-scrobbler.in,v 1.6 2022-06-27 14:44:06+05:30 Cprogrammer Exp mbhangui $"
 		echo $AUTHOR
 		exit 0
 		;;
@@ -573,6 +573,9 @@ exit $?
 
 #
 # $Log: moc-scrobbler.in,v $
+# Revision 1.6  2022-06-27 14:44:06+05:30  Cprogrammer
+# replaced echo -n with printf for consistent behaviour under /bin/sh
+#
 # Revision 1.5  2022-06-26 23:56:07+05:30  Cprogrammer
 # fixed updation with --update option
 #

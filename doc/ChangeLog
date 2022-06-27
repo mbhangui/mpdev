@@ -130,6 +130,9 @@ caused by data in track.current, track.last
 85. moc-scrobbler.in: removed bashishm
 - 25/06/2022
 86. player.in: scrobble direct when track.last is missing
+- 27/06/2022
+87. moc-scrobbler.in: replaced echo -n with printf for consistent behaviour
+    under /bin/sh
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
