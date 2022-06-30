@@ -22,7 +22,6 @@ endif
 prefix=@prefix@
 libexecdir=@libexecdir@
 mandir=@mandir@
-mandir=$(prefix)/share/man
 sysconfdir=@sysconfdir@
 version=@version@
 package_name="mpdev"
