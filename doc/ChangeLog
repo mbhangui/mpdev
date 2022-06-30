@@ -1,5 +1,5 @@
-*
-Release 1.0 Start 02/03/2020
+* Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
+Release 1.0 Start 02/03/2020 End 30/06/2022
 - 15/04/2021
 01. Bump Release
 02. player: skip db update if NO_DB_UPDATE is defined and non-zero
@@ -48,91 +48,93 @@ Release 1.0 Start 02/03/2020
 33. player: skip update of last_played when paused to avoid karma getting
     increased
 34. player: refactored update of RompR playcounts
-37. player: fixed value of play counts in logs and RompR update
+35. player: fixed value of play counts in logs and RompR update
 - 26/04/2021
-38. mpdev.c: set song_played_duration when calling script for now-playing
-39. player: display initial song position in NewSong
-40. playpause: display song played duration
-41. mpdev.c: increment song_played_duration when prev state is not in pause
+36. mpdev.c: set song_played_duration when calling script for now-playing
+37. player: display initial song position in NewSong
+38. playpause: display song played duration
+39. mpdev.c: increment song_played_duration when prev state is not in pause
     state
-42. player: skip RompR playcount update when song is not fully heard
+40. player: skip RompR playcount update when song is not fully heard
 - 27/04/2021
-43. mpdev.c: initialize elapsed variable
+41. mpdev.c: initialize elapsed variable
 - 08/09/2021
-44. fixed usage string/description in mpdev.c and man page
-45. fixed idle handling
-46. added output even with OUTPUT devices passed as env variables. Feature
+42. fixed usage string/description in mpdev.c and man page
+43. fixed idle handling
+44. added output even with OUTPUT devices passed as env variables. Feature
     request from Markus Gerl
 - 09/09/2021
-47. report OUTPUT changes in env variable OUTPUT_CHANGED
-48. added script 'output'
-49. set env variable VOLUME on startup and on mixer level change
+45. report OUTPUT changes in env variable OUTPUT_CHANGED
+46. added script 'output'
+47. set env variable VOLUME on startup and on mixer level change
 16/09/2021
-50. mpdev.c: BUGFIX: Fixed player not comining out of do idle loop
-51. mpdev.c: decrement count when PLAYLIST_EVENT is followed by PLAYER_EVENT
-53. player.in: disable UPDATE/INSERT echo statements when NO_DB_UPDATE is set
-54. player.in: sanitize shell input
+48. mpdev.c: BUGFIX: Fixed player not comining out of do idle loop
+49. mpdev.c: decrement count when PLAYLIST_EVENT is followed by PLAYER_EVENT
+50. player.in: disable UPDATE/INSERT echo statements when NO_DB_UPDATE is set
+51. player.in: sanitize shell input
 - 17/09/2021
-55. mpdev.c: print debug statements for verbose > 1
+52. mpdev.c: print debug statements for verbose > 1
 - 26/09/2021
-56. create_service: fix ownership of $HOME/.mpdev
+53. create_service: fix ownership of $HOME/.mpdev
 - 28/09/2021
-57. player: fix INSERT statement for extra (last_modified) field added to sticker
+54. player: fix INSERT statement for extra (last_modified) field added to sticker
     table
-58. player: skip db update for streams
+55. player: skip db update for streams
 - 29/09/2021
-59. mpdev_update.c: added last_modified column to sticker table
+56. mpdev_update.c: added last_modified column to sticker table
 - 30/09/2021
-60. karma.in: display karma for current playing song when no options are
+57. karma.in: display karma for current playing song when no options are
     provided
-61. use -noheader option to prevent .sqlitrc settings messing with results
-62. added songi script to display information from stats.db for any music
+58. use -noheader option to prevent .sqlitrc settings messing with results
+59. added songi script to display information from stats.db for any music
     file
 - 01/10/2021
-63. mpdev_update.c, songi.in: removed name column from song table in stats db
+60. mpdev_update.c, songi.in: removed name column from song table in stats db
 - 06/10/2021
-64. karma: fixed sql statements
+61. karma: fixed sql statements
 - 10/10/2021
-65. player.in: fixed non-skipping of db update for streams
+62. player.in: fixed non-skipping of db update for streams
 - 15/10/2021
-66. karma: fixed update not working
-67. songi: formated for better display
-68. karma: set song_uri to current playing song if no options are provided
+63. karma: fixed update not working
+64. songi: formated for better display
+65. karma: set song_uri to current playing song if no options are provided
 - 18/11/2021
-69. player.in: display mysql error
+66. player.in: display mysql error
 - 23/12/2021
-70. moc-scrobbler.in: removed use of source command to avoid syntax error
+67. moc-scrobbler.in: removed use of source command to avoid syntax error
 caused by data in track.current, track.last
 - 16/01/2022
-71. player.in: scrobble only when PLAYER_STATE is play
+68. player.in: scrobble only when PLAYER_STATE is play
 - 06/02/2022
-72. mpdplaylist.in: added --incartist, --exlartist option to include/exclude
+69. mpdplaylist.in: added --incartist, --exlartist option to include/exclude
     comma separated list of artists
-73. use tcpopen, pathexec_run, pathexec_env from libqmail
+70. use tcpopen, pathexec_run, pathexec_env from libqmail
 - 10/05/2022
-74. karma.in: merged modifications by https://github.com/Plexvol (use getopt)
+71. karma.in: merged modifications by https://github.com/Plexvol (use getopt)
 - 31/05/2022
-75. skip service creation if daemontools is not installed
+72. skip service creation if daemontools is not installed
 - 20/06/2022
-76. create_services.in, Makefile.am, mpdplaylist.in, romprhist.in,
+73. create_services.in, Makefile.am, mpdplaylist.in, romprhist.in,
     transfer_play.in, songi.in: set/use directories set by ./configure
-77. mpdev_update.c: remove extra arguments passed to print_song
-78. player.in, playpause.in: Fixed date syntax for non-gnu date
-79. player.in, playpause.in: use directories set in ./configure
-80. moc-scrobbler.in: use gnu grep for OSX
+74. mpdev_update.c: remove extra arguments passed to print_song
+75. player.in, playpause.in: Fixed date syntax for non-gnu date
+76. player.in, playpause.in: use directories set in ./configure
+77. moc-scrobbler.in: use gnu grep for OSX
 - 23/06/2022
-81. Mac OSX port
-82. moc-scrobbler.in: added --love option to love tracks
-83. mpdev service: added lastfm-scrobbler --stop, librefm-scrobbler --stop for
+78. Mac OSX port
+79. moc-scrobbler.in: added --love option to love tracks
+80. mpdev service: added lastfm-scrobbler --stop, librefm-scrobbler --stop for
     cleanup
 - 24/06/2022
-84. mpdev service: use relative path for variables directory
-85. moc-scrobbler.in: removed bashishm
+81. mpdev service: use relative path for variables directory
+82. moc-scrobbler.in: removed bashishm
 - 25/06/2022
-86. player.in: scrobble direct when track.last is missing
+83. player.in: scrobble direct when track.last is missing
 - 27/06/2022
-87. moc-scrobbler.in: replaced echo -n with printf for consistent behaviour
+84. moc-scrobbler.in: replaced echo -n with printf for consistent behaviour
     under /bin/sh
+- 30/06/2022
+85. Release 1.0
 
 * Thu Apr 15 11:07:09 UTC 2021 - Manvendra Bhangui <mpdev@indimail.org>
 Release 0.1 Start 02/03/2020
