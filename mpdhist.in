@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: mpdhist.in,v 1.1 2022-09-26 19:11:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdhist.in,v 1.2 2022-09-26 20:18:34+05:30 Cprogrammer Exp mbhangui $
 #
 
 usage()
@@ -81,7 +81,7 @@ stmt=""
 stmt="$stmt select id, title, artist, album, play_count, rating, "
 stmt="$stmt strftime('%d-%m-%Y %H:%M:%S', datetime(last_played, 'unixepoch', 'localtime'))  "
 stmt="$stmt from song order by last_played DESC LIMIT $limit"
-sqlite3 -batch -column $stats_file "$stmt" | \
+sqlite3 -header -batch -column $stats_file "$stmt" | \
 	sed \
 		-e 's/[ \t]\+$//' \
 		-e 's{strftime.*${Last Played{' \
@@ -89,6 +89,9 @@ sqlite3 -batch -column $stats_file "$stmt" | \
 
 #
 # $Log: mpdhist.in,v $
+# Revision 1.2  2022-09-26 20:18:34+05:30  Cprogrammer
+# pass -header option to sqlite3
+#
 # Revision 1.1  2022-09-26 19:11:08+05:30  Cprogrammer
 # Initial revision
 #
