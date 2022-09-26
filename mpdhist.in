@@ -1,0 +1,95 @@
+#!/bin/sh
+#
+# $Id: mpdhist.in,v 1.1 2022-09-26 19:11:08+05:30 Cprogrammer Exp mbhangui $
+#
+
+usage()
+{
+cat 1>&2 <<EOF
+Usage: mpdhist [OPTION]
+
+Known values for OPTION are:
+
+-l limit
+--limit=limit
+  Finds song with uri matching path
+
+-h
+--help
+  display this help and exit
+EOF
+exit $1
+}
+
+get_mpd_conf_value()
+{
+  grep "^$1" @sysconfdir@/mpd.conf|awk '{print $2}' | \
+  sed -e 's{"{{g'
+}
+
+process_cmdline()
+{
+OPTS=$(getopt -o l:h --long limit:,help -- "$@")
+if [ $? -ne 0 ] ; then
+	usage 1
+fi
+#echo "OPTS=$OPTS"
+#echo "args=$@"
+eval set -- "$OPTS"
+while true; do
+	case "$1" in
+	-l|--limit)
+		limit=$2
+		shift 2
+	;;
+	-h|--help)
+		usage 0
+	;;
+	--)
+		shift
+		break
+	;;
+	*)
+		echo "invalid option [$1]" 1>&2
+		usage 1;
+		break
+	;;
+	esac
+done
+}
+
+limit=24
+process_cmdline "$@"
+
+music_dir=`get_mpd_conf_value music_directory`
+if [ $? -ne 0 ] ; then
+  echo "could not get music directory from mpd.conf" 1>&2
+  exit 1
+fi
+sticker_file=`get_mpd_conf_value sticker_file`
+if [ $? -ne 0 ] ; then
+  echo "could not get sticker database from mpd.conf" 1>&2
+  exit 1
+fi
+stats_dir=$(dirname $sticker_file)
+stats_file=$stats_dir/stats.db
+if [ ! -f $HOME/.mpdev/rompr.conf ] ; then
+  echo "$HOME/.mpdev/rompr.conf missing" 1>&2
+  exit 1
+fi
+stmt=""
+stmt="$stmt select id, title, artist, album, play_count, rating, "
+stmt="$stmt strftime('%d-%m-%Y %H:%M:%S', datetime(last_played, 'unixepoch', 'localtime'))  "
+stmt="$stmt from song order by last_played DESC LIMIT $limit"
+sqlite3 -batch -column $stats_file "$stmt" | \
+	sed \
+		-e 's/[ \t]\+$//' \
+		-e 's{strftime.*${Last Played{' \
+		-e 's{ -*${ ==================={'
+
+#
+# $Log: mpdhist.in,v $
+# Revision 1.1  2022-09-26 19:11:08+05:30  Cprogrammer
+# Initial revision
+#
+#
