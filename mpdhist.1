@@ -17,11 +17,13 @@ mpdhist \- Display History of Last played songs
 Known values for OPTION are:
 
 .EX
--l \fIlimit\fR
---limit=\fIlimit\fR
+-l \fIlimit\fR | --limit=\fIlimit\fR
   Display last played \fIlimit\fR songs from history
 
---help
+-r | --reverse
+  Show earliest played song first
+
+-h | --help
 
   display this help and exit
 .EE
