@@ -4,6 +4,9 @@ Release 1.1 Start 30/06/2022 End --/--/----
 01. First release
 - 04/07/2022
 02. preinst: redirect svstat output to /dev/null
+- 26/09/2022
+03. karma.in: exit if getopt returns non-zero
+04. mpdhist: new program to display history of last played songs
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
