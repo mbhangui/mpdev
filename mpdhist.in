@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: mpdhist.in,v 1.3 2022-09-26 21:12:59+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdhist.in,v 1.4 2022-09-26 21:15:59+05:30 Cprogrammer Exp mbhangui $
 #
 
 usage()
@@ -96,8 +96,6 @@ else
   stmt="$stmt from song where last_played is NOT NULL and play_count > 0 order by last_played ASC LIMIT $limit"
 fi
 
-echo "sqlite3 -header -batch -column $stats_file $stmt"
-
 sqlite3 -header -batch -column $stats_file "$stmt" | \
   sed \
     -e 's/[ \t]\+$//' \
@@ -106,6 +104,9 @@ sqlite3 -header -batch -column $stats_file "$stmt" | \
 
 #
 # $Log: mpdhist.in,v $
+# Revision 1.4  2022-09-26 21:15:59+05:30  Cprogrammer
+# removed debug statement
+#
 # Revision 1.3  2022-09-26 21:12:59+05:30  Cprogrammer
 # added -r option to show earliest played song first
 #
