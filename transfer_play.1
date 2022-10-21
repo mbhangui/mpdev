@@ -3,14 +3,25 @@
 transfer_play \- Transfer mpd playlist from one host to another
 
 .SH SYNOPSYS
-.B transfer_play \fIsrc\fR \fIdest\fR
+.B transfer_play [--play] [--no-rm] \fIsrc\fR \fIdest\fR
 
 .SH DESCRIPTION
-\fBtransfer_play\fR transfers your mpd(1) playlist from one host to another.
-It uses the value of \fIstate_file\fR parameter in mpd.conf(5) to get the current
-playlist and uses mpc(1) to load the playlist on \fIdest\fR
+\fBtransfer_play\fR transfers your mpd(1) playlist from one \fIsrc\fR to
+\fIdest\fR. It uses the value of \fIstate_file\fR parameter in mpd.conf(5)
+to get the current playlist on \fIsrc\fR. It the uses mpc(1) to load the
+playlist on \fIdest\fR.
+
+.SH OPTIONS
+Known values for OPTION are:
+
+--play
+  start playing on destination after transferring current playlist
+
+--no-rm
+  Do not remove current playlist from source after transfer
 
 .SH SEE ALSO
 mpd(1),
 mpdev(1),
+mpdplaylist(1),
 mpd.conf(5)

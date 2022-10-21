@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.8  2022-10-21 13:45:26+05:30  Cprogrammer
+# added command line options --play, --no-rm
+#
 # Revision 1.7  2022-06-20 01:07:37+05:30  Cprogrammer
 # use directories set in ./configure
 #
@@ -22,8 +25,9 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.7 2022-06-20 01:07:37+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.8 2022-10-21 13:45:26+05:30 Cprogrammer Exp mbhangui $
 #
+
 get_mpd_conf_value()
 {
     grep "^$1" @sysconfdir@/mpd.conf|awk '{print $2}' | \
@@ -32,10 +36,9 @@ get_mpd_conf_value()
 
 get_mpd_state()
 {
-	host=$1
 	(
 	do_print=0
-	cat $state_dir/mpd_state.$host | while read line
+	cat $state_dir/mpd_state.$1 | while read line
 	do
 		if [ " $line" = " playlist_begin" ] ; then
 			do_print=1
@@ -51,38 +54,132 @@ get_mpd_state()
 	) | sed -e 's{^.*:{{'
 }
 
-music_dir=`get_mpd_conf_value music_dir`
+usage()
+{
+if [ -f /usr/bin/less ] ; then
+	MORE=/usr/bin/less
+else
+	MORE=/usr/bin/more
+fi
+echo "Press ENTER for options, Cntrl C to quit" 1>&2
+read key
+$MORE 1>&2 <<EOF
+Usage: transfer_play [OPTION] source destination
+
+Known values for OPTION are:
+
+--play
+  transfer and start playing current playlist on destination
+
+--no-rm
+  do not remove currennt playlist from source
+EOF
+exit $1
+}
+
+process_cmdline()
+{
+while test $# -gt 0; do
+	case "$1" in
+	-*=*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
+	optval=`echo "$1" | cut -d'=' -f1`
+	prog_args="$prog_args $optval=\"$optarg\""
+	;;
+	-*\>*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*>//'`
+	optarg=">$optarg"
+	optval=`echo "$1" | cut -d'>' -f1`
+	prog_args="$prog_args $optval\"$optarg\""
+	;;
+	-*\<*)
+	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*<//'`
+	optarg="<$optarg"
+	optval=`echo "$1" | cut -d'<' -f1`
+	prog_args="$prog_args $optval\"$optarg\""
+	;;
+	*)
+	optarg=
+	prog_args="$prog_args $1"
+	;;
+	esac
+
+	case "$1" in
+	--play)
+	do_play=1
+	shift
+	;;
+	--no-rm)
+	rm_play=0
+	shift
+	;;
+	esac
+	if [ $# -ne 2 ] ; then
+		echo "transfer_play source destination" 1>&2
+		exit 1
+	fi
+	srchost=$1
+	dsthost=$2
+	break
+done
+}
+
+set -e
+do_play=0
+rm_play=1
+process_cmdline "$@"
+
+if [ " $dsthost" = " $srchost" ] ; then
+	echo "destination cannot be same as source" 1>&2
+	exit 1
+fi
+playlist_dir=$(get_mpd_conf_value playlist_directory)
+if [ $? -ne 0 ] ; then
+	echo "could not get playlist directory from mpd.conf" 1>&2
+	exit 1
+fi
+music_dir=$(get_mpd_conf_value music_dir)
 if [ $? -ne 0 ] ; then
 	echo "could not get music directory from mpd.conf" 1>&2
 	exit 1
 fi
 
-playlist_dir=`get_mpd_conf_value playlist_directory`
-if [ $? -ne 0 ] ; then
-	echo "could not get playlist directory from mpd.conf" 1>&2
-	exit 1
-fi
-if [ $# -ne 2 ] ; then
-	echo "transfer_play fromhost tohost" 1>&2
-	exit 1
-fi
-fromhost=$1
-tohost=$2
-
-state_file=`get_mpd_conf_value state_file`
+state_file=$(get_mpd_conf_value state_file)
 state_dir=$(dirname $state_file)
-if [ ! -f $state_dir/mpd_state.$fromhost ] ; then
-	echo "No such host $fromhost" 1>&2
+if [ ! -f $state_dir/mpd_state.$srchost ] ; then
+	echo "No such host $srchost" 1>&2
 	echo "List of valid hosts"
 	ls $state_dir/mpd_state.*|cut -d. -f2
 	exit 1
 fi
-out=`mktemp -t mpdevXXXXXXXXXX`
-get_mpd_state $fromhost > $out.m3u
-mv $out.m3u $playlist_dir
-out=`basename $out`
-mpc --host="$tohost" clear
-echo "mpc --host=$tohost load $out"
-mpc --host=$tohost load $out
-mpc --host=$tohost play
-mpc --host=$tohost rm $out
+out=$(mktemp -t mpdevXXXXXXXXXX)
+#
+# get current playlist from $srchost
+#
+get_mpd_state $srchost > $out.m3u
+if [ -s $out.m3u ] ; then
+	mv $out.m3u $playlist_dir
+	# clear current playlist on $dsthost
+	mpc --host="$dsthost" clear
+
+	# create current playlist from $outb
+	outb=$(basename $out)
+	mpc --host=$dsthost load $outb
+	# delete playlist $outb.m3u from playlist directory
+	mpc --host=$dsthost rm $outb
+
+	if [ $do_play -eq 1 ] ; then
+		# start playing current playlist on $dsthost
+		mpc --host=$dsthost play
+	fi
+
+	if [ $rm_play -eq 1 ] ; then
+		# clear current playlist on $srchost
+		mpc --host="$srchost" clear
+	fi
+	/bin/rm -f $out
+else
+	/bin/rm -f $out $out.m3u
+	echo "empty current playlist on source" 1>&2
+	exit 1
+fi
