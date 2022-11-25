@@ -9,6 +9,9 @@ Release 1.1 Start 30/06/2022 End --/--/----
 04. mpdhist: new program to display history of last played songs
 - 20/10/2022
 05. transfer_play: added --play, --no-rm command line options
+- 25/10/2022
+06. transfer_play: added --clearsrc, --cleardst to clear current playlist on
+    source, destination
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022

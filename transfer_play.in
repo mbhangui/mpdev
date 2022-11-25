@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.9  2022-11-25 21:17:02+05:30  Cprogrammer
+# added --clearsrc, --cleardst to clear current playlist on source, destination
+#
 # Revision 1.8  2022-10-21 13:45:26+05:30  Cprogrammer
 # added command line options --play, --no-rm
 #
@@ -25,7 +28,7 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.8 2022-10-21 13:45:26+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.9 2022-11-25 21:17:02+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -61,8 +64,6 @@ if [ -f /usr/bin/less ] ; then
 else
 	MORE=/usr/bin/more
 fi
-echo "Press ENTER for options, Cntrl C to quit" 1>&2
-read key
 $MORE 1>&2 <<EOF
 Usage: transfer_play [OPTION] source destination
 
@@ -71,8 +72,11 @@ Known values for OPTION are:
 --play
   transfer and start playing current playlist on destination
 
---no-rm
-  do not remove currennt playlist from source
+--clearsrc
+  clear current playlist from source
+
+--cleardst
+  clear current playlist from destination
 EOF
 exit $1
 }
@@ -109,14 +113,21 @@ while test $# -gt 0; do
 	do_play=1
 	shift
 	;;
-	--no-rm)
-	rm_play=0
+	--cleardst)
+	cleardst=1
 	shift
+	;;
+	--clearsrc)
+	clearsrc=1
+	shift
+	;;
+	--help)
+	usage 0
 	;;
 	esac
 	if [ $# -ne 2 ] ; then
 		echo "transfer_play source destination" 1>&2
-		exit 1
+		usage 1
 	fi
 	srchost=$1
 	dsthost=$2
@@ -126,12 +137,17 @@ done
 
 set -e
 do_play=0
-rm_play=1
+clearsrc=0
+cleardst=0
 process_cmdline "$@"
 
+if [ -z "$srchost" -o -z "$dsthost" ] ; then
+	echo "Must specify source and destination hosts"
+	usage 1
+fi
 if [ " $dsthost" = " $srchost" ] ; then
 	echo "destination cannot be same as source" 1>&2
-	exit 1
+	usage 1
 fi
 playlist_dir=$(get_mpd_conf_value playlist_directory)
 if [ $? -ne 0 ] ; then
@@ -152,16 +168,18 @@ if [ ! -f $state_dir/mpd_state.$srchost ] ; then
 	ls $state_dir/mpd_state.*|cut -d. -f2
 	exit 1
 fi
+
 out=$(mktemp -t mpdevXXXXXXXXXX)
-#
 # get current playlist from $srchost
-#
 get_mpd_state $srchost > $out.m3u
+
 if [ -s $out.m3u ] ; then
 	mv $out.m3u $playlist_dir
-	# clear current playlist on $dsthost
-	mpc --host="$dsthost" clear
 
+	# clear current playlist on $dsthost
+	if [ $cleardst -eq 1 ] ; then
+		mpc --host="$dsthost" clear
+	fi
 	# create current playlist from $outb
 	outb=$(basename $out)
 	mpc --host=$dsthost load $outb
@@ -173,8 +191,8 @@ if [ -s $out.m3u ] ; then
 		mpc --host=$dsthost play
 	fi
 
-	if [ $rm_play -eq 1 ] ; then
-		# clear current playlist on $srchost
+	# clear current playlist on $srchost
+	if [ $clearsrc -eq 1 ] ; then
 		mpc --host="$srchost" clear
 	fi
 	/bin/rm -f $out
