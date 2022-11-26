@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.24 2022-06-24 09:30:12+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.25 2022-11-26 20:40:05+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -138,7 +138,7 @@ add_service()
 	echo "    cp @mpdevlibexecdir@/\$i \$home/.mpdev/\$i"
 	echo "  fi"
 	echo "done"
-	echo "exec @prefix@/bin/setuidgid \$user @prefix@/bin/envdir \\"
+	echo "exec @prefix@/bin/setuidgid -s \$user @prefix@/bin/envdir \\"
 	echo "  variables @prefix@/bin/mpdev -v"
 	) > /service/$service_name/run
 	chmod +x /service/$service_name/run
@@ -236,6 +236,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.25  2022-11-26 20:40:05+05:30  Cprogrammer
+# added supplementary group when running mpdev
+#
 # Revision 1.24  2022-06-24 09:30:12+05:30  Cprogrammer
 # use relative path for variables directory
 #
