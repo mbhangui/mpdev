@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: mpdev_rename.in,v $
+# Revision 1.5  2022-11-29 09:48:53+05:30  Cprogrammer
+# prevent wrapping of lines after 60 characters
+#
 # Revision 1.4  2021-09-30 20:31:35+05:30  Cprogrammer
 # use -noheader option to prevent .sqlitrc settings messing with results
 #
@@ -14,7 +17,7 @@
 # Initial revision
 #
 #
-# $Id: mpdev_rename.in,v 1.4 2021-09-30 20:31:35+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdev_rename.in,v 1.5 2022-11-29 09:48:53+05:30 Cprogrammer Exp mbhangui $
 #
 
 usage()
@@ -94,8 +97,8 @@ if [ $query -eq 0 ] ; then
 	fi
 fi
 if [ $query -eq 1 ] ; then
-	echo executing sqlite3 -noheader --batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$patt'" 1>&2
-	sqlite3 -noheader -batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$patt'"
+	echo "executing sqlite3 -noheader --list --batch $dbpath \"SELECT uri FROM $table WHERE uri LIKE '$patt'\"" 1>&2
+	sqlite3 -noheader --list -batch $dbpath "SELECT uri FROM $table WHERE uri LIKE '$patt'"
 else
 	echo "UPDATE $table SET uri=REPLACE(uri, '$str', '$repl') WHERE uri LIKE '$patt'" 1>&2
 	sqlite3 -batch $dbpath \
