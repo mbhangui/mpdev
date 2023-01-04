@@ -1,5 +1,8 @@
 #!/bin/sh
 # $Log: transfer_play.in,v $
+# Revision 1.10  2023-01-04 23:41:33+05:30  Cprogrammer
+# fixed process_cmdline
+#
 # Revision 1.9  2022-11-25 21:17:02+05:30  Cprogrammer
 # added --clearsrc, --cleardst to clear current playlist on source, destination
 #
@@ -28,7 +31,7 @@
 # Initial revision
 #
 #
-# $Id: transfer_play.in,v 1.9 2022-11-25 21:17:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: transfer_play.in,v 1.10 2023-01-04 23:41:33+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -125,13 +128,13 @@ while test $# -gt 0; do
 	usage 0
 	;;
 	esac
-	if [ $# -ne 2 ] ; then
-		echo "transfer_play source destination" 1>&2
-		usage 1
+	if [ $# -eq 2 ] ; then
+		srchost=$1
+		dsthost=$2
+		break
+	elif [ $# -lt 2 ] ; then
+		usage 0
 	fi
-	srchost=$1
-	dsthost=$2
-	break
 done
 }
 
@@ -140,7 +143,6 @@ do_play=0
 clearsrc=0
 cleardst=0
 process_cmdline "$@"
-
 if [ -z "$srchost" -o -z "$dsthost" ] ; then
 	echo "Must specify source and destination hosts"
 	usage 1

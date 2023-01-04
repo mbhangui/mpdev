@@ -276,6 +276,8 @@ $ ls -l $HOME/stage/mpdev*
 
 ## Prebuilt Binaries
 
+[![mpdev](https://build.opensuse.org/projects/home:mbhangui:raspi/packages/mpdev/badge.svg?type=percent)](https://build.opensuse.org/package/show/home:mbhangui:raspi/mpdev)
+
 Prebuilt binaries using openSUSE Build Service are available for mpdev for
 
 * Debian (including ARM images for Debian 10 which work (and tested) for RaspberryPI (model 2,3 & 4) and Debian 9 for Allo Sparky)

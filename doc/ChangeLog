@@ -16,6 +16,8 @@ Release 1.1 Start 30/06/2022 End --/--/----
 07. create_services: run mpdev with supplementary groups of user
 - 29/10/2022
 08. mpdev_rename.in: prevent wrapping of text after 60 characters
+- 04/01/2023
+09. transfer_play.in: fixed process_cmdline
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
