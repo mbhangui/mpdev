@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.25 2022-11-26 20:40:05+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.26 2023-05-18 08:49:31+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -191,6 +191,24 @@ EOF
 exit $1
 }
 
+selinux_module()
+{
+	if [ -f /usr/sbin/selinuxenabled ] ; then
+		selinuxenabled
+		if [ $? -ne 0 ] ; then
+			return 1
+		fi
+	else
+		return 1
+	fi
+	if [ -f @sysconfdir@/mpdev/mpd_local.te ] ; then
+		outdir=$(mktemp -dt mpdevXXXXXXXXXX)
+		checkmodule -M -m -o $outdir/mpd_local.mod @sysconfdir@/mpdev/mpd_local.te
+		semodule_package -o $outdir/mpd_local.pp -m $outdir/mpd_local.mod 
+		semodule -i $outdir/mpd_local.pp 
+	fi
+}
+
 ################################# Main ##################################
 if test $# -eq 0; then
     usage 1
@@ -221,11 +239,15 @@ while test $# -gt 0; do
 		echo "UNIX user not specified" 1>&2
 	else
 		add_service "$user"
+		selinux_module
 	fi
     ;;
     --del-service)
 	del_service
     ;;
+	--selinux)
+	selinux_module
+	;;
     *)
     echo "invalid option [$1]"
     read key
@@ -236,6 +258,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.26  2023-05-18 08:49:31+05:30  Cprogrammer
+# added selinux module
+#
 # Revision 1.25  2022-11-26 20:40:05+05:30  Cprogrammer
 # added supplementary group when running mpdev
 #
