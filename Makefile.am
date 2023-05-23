@@ -25,7 +25,7 @@ noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1 \
 		 mpdev_rename.1 karma.1 songi.1 mpdhist.1
-mpdevsysconf_DATA=mpdev-release
+mpdevsysconf_DATA=mpdev-release mpd_local.te
 doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
