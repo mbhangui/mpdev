@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.28  2023-06-10 19:24:56+05:30  Cprogrammer
+ * replaced multiple out() with subprintf
+ *
  * Revision 1.27  2022-05-10 21:31:38+05:30  Cprogrammer
  * use tcpopen, pathexec from standard include path
  *
@@ -120,10 +123,11 @@
 #include <error.h>
 #include <wait.h>
 #include <tcpopen.h>
+#include <qprintf.h>
 #include <pathexec.h>
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.27 2022-05-10 21:31:38+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.28 2023-06-10 19:24:56+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -763,11 +767,7 @@ run_command(int status, char *arg, int *state)
 	player_cmd[1] = arg;
 	if (verbose == 3) {
 		print_time(&ssout);
-		out("mpdev: running command ");
-		out(player_cmd[0]);
-		out(" ");
-		out(arg);
-		out("\n");
+		subprintf(&ssout, "mpdev: running command %s %s\n", player_cmd[0], arg);
 		flush();
 	}
 	switch ((child = fork()))
@@ -798,14 +798,7 @@ run_command(int status, char *arg, int *state)
 	childrc = wait_exitcode(wstat);
 	if (verbose == 3) {
 		print_time(&ssout);
-		out("mpdev: command ");
-		out(player_cmd[0]);
-		out(" ");
-		out(arg);
-		out(" exit_status=[");
-		strnum[i = fmt_int(strnum, childrc)] = 0;
-		out(strnum);
-		out("]\n");
+		subprintf(&ssout, "mpdev: command %s %s exit_status=[%d]\n", player_cmd[0], arg, childrc);
 		flush();
 	}
 	return (childrc);
@@ -975,89 +968,62 @@ print_song_details(char *uri, char *last_modified, char *album, char *artist,
 	if (id > 0) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Id: ");
-		strnum[fmt_ulong(strnum, id)] = 0;
-		out(strnum);
-		out("\n");
+		subprintf(&ssout, "ID: %ld\n", id);
 	}
 	if (uri) {
 		if (!flag++)
 			print_time(&ssout);
-		out("file: ");
-		out(uri);
-		out("\n");
+		subprintf(&ssout, "file: %s\n", uri);
 	}
 	if (last_modified) {
 		if (!flag++)
 			print_time(&ssout);
-		out("last-Modified: ");
-		out(last_modified);
-		out("\n");
+		subprintf(&ssout, "last-Modified: %s\n", last_modified);
 	}
 	if (album) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Album: ");
-		out(album);
-		out("\n");
+		subprintf(&ssout, "Album: %s\n", album);
 	}
 	if (artist) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Artist: ");
-		out(artist);
-		out("\n");
+		subprintf(&ssout, "Artist: %s\n", artist);
 	}
 	if (date) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Date: ");
-		out(date);
-		out("\n");
+		subprintf(&ssout, "Date: %s\n", date);
 	}
 	if (genre) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Genre: ");
-		out(genre);
-		out("\n");
+		subprintf(&ssout, "Genre: %s\n", genre);
 	}
 	if (title) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Title: ");
-		out(title);
-		out("\n");
+		subprintf(&ssout, "Title: %s\n", title);
 	}
 	if (track) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Track: ");
-		out(track);
-		out("\n");
+		subprintf(&ssout, "Track: %s\n", track);
 	}
 	if (duration) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Duration: ");
-		out(duration);
-		out("\n");
+		subprintf(&ssout, "Duration: %s\n", duration);
 	}
 	if (duration_i > 0) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Length: ");
-		strnum[fmt_ulong(strnum, duration_i)] = 0;
-		out(strnum);
-		out("\n");
+		subprintf(&ssout, "Length: %ld\n", duration_i);
 	}
 	if (!pos || pos > 0) {
 		if (!flag++)
 			print_time(&ssout);
-		out("Pos: ");
-		strnum[fmt_ulong(strnum, pos)] = 0;
-		out(strnum);
-		out("\n");
+		subprintf(&ssout, "Pos: %d\n", pos);
 	}
 }
 
@@ -1184,20 +1150,12 @@ main(int argc, char **argv)
 	for (connection_num = 1;;connection_num++) {
 		if (verbose == 3) {
 			print_time(&ssout);
-			strnum[i = fmt_ulong(strnum, connection_num)] = 0;
-			out("connection ");
-			out(strnum);
-			out(": ");
-			out(mpd_socket ? "socket [" : "host [");
-			out(mpd_socket ? mpd_socket : mpd_host);
-			out("]");
-			if (!mpd_socket) {
-				out(" port [");
-				out(port);
-				out("]\n");
-			} else {
-				out("\n");
-			}
+			if (mpd_socket)
+				subprintf(&ssout, "connection %d: %s [%s]\n", connection_num, mpd_socket ? "socket" : "host",
+						mpd_socket ? mpd_socket : mpd_host);
+			else
+				subprintf(&ssout, "connection %d: %s [%s] port [%s]\n", connection_num, mpd_socket ? "socket" : "host",
+						mpd_socket ? mpd_socket : mpd_host, port);
 			flush();
 		}
 		if ((sock = tcpopen(mpd_socket ? mpd_socket : mpd_host, 0, port_num)) == -1) {
@@ -1213,20 +1171,14 @@ main(int argc, char **argv)
 		}
 		if (verbose) {
 			print_time(&ssout);
-			strnum[i = fmt_ulong(strnum, connection_num)] = 0;
-			out("connection ");
-			out(strnum);
-			out(": ");
-			out(mpd_socket ? "socket [" : "host [");
-			out(mpd_socket ? mpd_socket : mpd_host);
-			out("]");
-			if (!mpd_socket) {
-				out(" port [");
-				out(port);
-				out("] connected\n");
-			} else {
-				out(" connected\n");
-			}
+			if (mpd_socket)
+				subprintf(&ssout, "connection %d: %s [%s] connected\n",
+						connection_num, mpd_socket ? "socket" : "host",
+						mpd_socket ? mpd_socket : mpd_host);
+			else
+				subprintf(&ssout, "connection %d: %s [%s] port [%s] connected\n",
+						connection_num, mpd_socket ? "socket" : "host",
+						mpd_socket ? mpd_socket : mpd_host, port);
 			flush();
 		}
 		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
@@ -1357,13 +1309,7 @@ main(int argc, char **argv)
 					continue;
 				}
 				if (verbose > 1) {
-					strnum[fmt_uint(strnum, i)] = 0;
-					out("do_idle=");
-					out(strnum);
-					strnum[fmt_uint(strnum, p_state)] = 0;
-					out(", p_state=");
-					out(strnum);
-					out("\n");
+					subprintf(&ssout, "do_idle=%d, p_state=%d\n", i, p_state);
 					flush();
 				}
 				if (i == PLAYER_EVENT)
@@ -1379,7 +1325,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.27 2022-05-10 21:31:38+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.28 2023-06-10 19:24:56+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }
