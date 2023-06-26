@@ -25,6 +25,9 @@ Release 1.1 Start 30/06/2022 End --/--/----
 - 26/06/2023
 12. added lcd_display script to print song information to a remote lcd display
     running lcdDaemon
+13. create_service: added --lcdhost, --lcdport to add LCD_HOST, LCD_PORT env
+    variables
+14. player, lcd_display: display song rating on 4th row
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022

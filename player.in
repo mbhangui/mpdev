@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: player.in,v 1.48 2023-06-25 11:18:38+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.49 2023-06-26 23:18:17+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -961,11 +961,14 @@ if [ $VERBOSE -eq 2 ] ; then
 fi
 update_song "$1" "$SONG_URI"
 if [ -n "$LCD_HOST" -a -n "$LCD_PORT" -a -x $HOME/.mpdev/lcd_display ] ; then
-	$HOME/.mpdev/lcd_display "$1"
+	env RATING=$rating $HOME/.mpdev/lcd_display "$1"
 fi
 exit 0
 
 # $Log: player.in,v $
+# Revision 1.49  2023-06-26 23:18:17+05:30  Cprogrammer
+# set song rating as env variable for lcd_display
+#
 # Revision 1.48  2023-06-25 11:18:38+05:30  Cprogrammer
 # run lcd_display script
 #

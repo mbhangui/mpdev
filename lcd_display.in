@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: lcd_display.in,v 1.1 2023-06-26 15:57:50+05:30 Cprogrammer Exp mbhangui $
+# $Id: lcd_display.in,v 1.2 2023-06-26 23:18:02+05:30 Cprogrammer Exp mbhangui $
 #
 # You need the nc command for this script to write to a remote LCD. nc
 # comes from the netcat package
@@ -35,6 +35,11 @@ set_command()
 		cmd="/bin/cat > /run/lcd-daemon/lcdfifo"
 	fi
 }
+
+if [ -z "$MPDEV_TMPDIR" ] ; then
+	MPDEV_TMPDIR=/tmp/mpdev
+fi
+
 case $1 in
 	play)
 		set_command
@@ -54,8 +59,8 @@ case $1 in
 		echo "0 0 0:$SONG_TITLE"
 		echo "1 0 0:$SONG_ARTIST"
 		echo "2 0 0:$SONG_ALBUM"
-		echo "3 0 0:Play : Vol $(mpc vol|cut -d: -f2)"
-		) | sh -c "$cmd"
+		printf "3 0 0:Play  Vol %+3s Rt %02d\n" $(mpc vol|cut -d: -f2) $RATING
+		) | tee $MPDEV_TMPDIR/lcd.out | sh -c "$cmd"
 	;;
 	mixer)
 		set_command
@@ -73,6 +78,6 @@ case $1 in
 				t=$PLAYER_STATE
 			;;
 		esac
-		printf "3 0 0:%-5s: Vol %s\n" "$t" $(mpc vol|cut -d: -f2) | sh -c "$cmd"
+		printf "3 0 0:%-5s Vol %+3s\n" "$t" $(mpc vol|cut -d: -f2) | sh -c "$cmd"
 	;;
 esac

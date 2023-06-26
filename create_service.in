@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.27 2023-06-25 11:15:13+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.28 2023-06-26 23:17:24+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -275,6 +275,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.28  2023-06-26 23:17:24+05:30  Cprogrammer
+# added --lcdhost, --lcdport to add LCD_HOST, LCD_PORT env variables
+#
 # Revision 1.27  2023-06-25 11:15:13+05:30  Cprogrammer
 # added lcd_display script
 #
