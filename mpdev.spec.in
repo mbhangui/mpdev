@@ -110,6 +110,7 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/mpdev/%{name}-rpm.inf
 %attr(755,root,root)                    %{libexecdir}/mpdev/playpause
 %attr(755,root,root)                    %{libexecdir}/mpdev/output
 %attr(755,root,root)                    %{libexecdir}/mpdev/mixer
+%attr(755,root,root)                    %{libexecdir}/mpdev/lcd_display
 %attr(644,root,root)                    %{sysconfdir}/mpdev/mpd_local.te
 %attr(644,root,root)                    %{sysconfdir}/mpdev/%{name}-release
 %attr(644,root,root)                    %{sysconfdir}/mpdev/%{name}-rpm.info

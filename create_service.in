@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.26 2023-05-18 08:49:31+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.27 2023-06-25 11:15:13+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -14,7 +14,7 @@ check_update_if_diff()
 add_service()
 {
 	if [ $# -ne 1 ] ; then
-		echo "USAGE: create_service --servicedir=path --user=username --add-service" 1>&2
+		echo "USAGE: create_service --servicedir=path --user=username --lcdhost=host --lcdport=port --add-service" 1>&2
 		return 1
 	fi
 	userid=$1
@@ -51,10 +51,19 @@ add_service()
 	fi
 	mkdir -p $servicedir/$service_name/log
 	mkdir -p $servicedir/$service_name/variables
-	echo "$prog_args" > $servicedir/$service_name/variables/.options
+	echo "$prog_args"  > $servicedir/$service_name/variables/.options
+	if [ ! -f $servicedir/$service_name/variables/NO_DB_UPDATE ] ; then
+	                   > $servicedir/$service_name/variables/NO_DB_UPDATE
+	fi
 	check_update_if_diff $servicedir/$service_name/variables/AUTO_RATING  0
 	check_update_if_diff $servicedir/$service_name/variables/MPD_HOST     127.0.0.1
 	check_update_if_diff $servicedir/$service_name/variables/MPD_PORT     6600
+	if [ -n "$lcdhost" ] ; then
+	check_update_if_diff $servicedir/$service_name/variables/LCD_HOST     $lcdhost
+	fi
+	if [ -n "$lcdport" ] ; then
+	check_update_if_diff $servicedir/$service_name/variables/LCD_PORT     $lcdport
+	fi
 	check_update_if_diff $servicedir/$service_name/variables/MPDEV_TMPDIR "/tmp/mpdev"
 	sock=$(grep "^bind_to_address" @sysconfdir@/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
 	if [ -n "$sock" ] ; then
@@ -78,7 +87,7 @@ add_service()
 		fi
 	fi
 	mkdir -p $home/.mpdev
-	for i in player playpause output mixer
+	for i in player playpause output mixer lcd_display
 	do
 		if [ ! -f $home/.mpdev/$i ] ; then
 			cp @mpdevlibexecdir@/$i $home/.mpdev
@@ -216,6 +225,8 @@ fi
 service_name=mpdev
 logdir=/var/log/svc
 servicedir=/service
+lcdhost=""
+lcdport=""
 prog_args="$0 $*"
 SYSTEM=$(uname -s)
 while test $# -gt 0; do
@@ -233,6 +244,12 @@ while test $# -gt 0; do
     --user=*)
     user=$optarg
     ;;
+    --lcdhost=*)
+	lcdhost=$optarg
+	;;
+    --lcdport=*)
+	lcdport=$optarg
+	;;
 
     --add-service)
 	if [ -z "$user" ] ; then
@@ -258,6 +275,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.27  2023-06-25 11:15:13+05:30  Cprogrammer
+# added lcd_display script
+#
 # Revision 1.26  2023-05-18 08:49:31+05:30  Cprogrammer
 # added selinux module
 #

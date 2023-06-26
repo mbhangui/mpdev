@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# $Id: lcd_display.in,v 1.1 2023-06-26 15:57:50+05:30 Cprogrammer Exp mbhangui $
+#
+# You need the nc command for this script to write to a remote LCD. nc
+# comes from the netcat package
+# If you have installed mpdev this script will get called.
+#
+# 1. If lcd-daemon is running locally you need to do nothing
+# 2. if lcd-daemon is running on a remote host, you need to set
+#    LCD_HOST, LCD_PORT environment variable in /service/mpdev/variables
+#    like this
+#    echo w.x.y.z > /service/mpdev/variables/LCD_HOST
+#    echo port    > /service/mpdev/variables/LCD_PORT
+#
+
+set_command()
+{
+	if [ -n "$LCD_HOST" -a -n "$LCD_PORT" ] ; then
+		if [ ! -x /usr/bin/nc ] ; then
+			exit 0
+		fi
+		cmd="nc -u $LCD_HOST $LCD_PORT"
+	else
+		if [ -d /run ] ; then
+			lcdfifo="/run/lcd-daemon/lcdfifo"
+		elif [ -d /var/run ] ; then
+			lcdfifo="/var/run/lcd-daemon/lcdfifo"
+		else
+			lcdfifo="/tmp/lcd-daemon/lcdfifo"
+		fi
+		if [ ! -p $lcdfifo ] ; then
+			exit 0
+		fi
+		cmd="/bin/cat > /run/lcd-daemon/lcdfifo"
+	fi
+}
+case $1 in
+	play)
+		set_command
+		echo "3 0 0:Play : Vol $(mpc vol|cut -d: -f2)" | sh -c "$cmd"
+	;;
+	pause-song|pause)
+		set_command
+		echo "3 0 0:Pause: Vol $(mpc vol|cut -d: -f2)" | sh -c "$cmd"
+	;;
+	end-song)
+		set_command
+		echo "3 0 0:End  : Vol $(mpc vol|cut -d: -f2)" | sh -c "$cmd"
+	;;
+	now-playing)
+		set_command
+		(
+		echo "0 0 0:$SONG_TITLE"
+		echo "1 0 0:$SONG_ARTIST"
+		echo "2 0 0:$SONG_ALBUM"
+		echo "3 0 0:Play : Vol $(mpc vol|cut -d: -f2)"
+		) | sh -c "$cmd"
+	;;
+	mixer)
+		set_command
+		case "$PLAYER_STATE" in
+			play)
+				t=Play
+			;;
+			pause)
+				t=Pause
+			;;
+			stop)
+				t=End
+			;;
+			*)
+				t=$PLAYER_STATE
+			;;
+		esac
+		printf "3 0 0:%-5s: Vol %s\n" "$t" $(mpc vol|cut -d: -f2) | sh -c "$cmd"
+	;;
+esac

@@ -20,7 +20,8 @@ mpdevbin_PROGRAMS = mpdev
 mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
 				   transfer_play karma songi mpdhist
 mpdevlibexec_PROGRAMS = mpdev_cleanup mpdev_update
-mpdevlibexec_SCRIPTS = player playpause mpdev_rename output mixer create_service
+mpdevlibexec_SCRIPTS = player playpause mpdev_rename output mixer create_service \
+					   lcd_display
 noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
 		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1 \
@@ -29,9 +30,9 @@ mpdevsysconf_DATA=mpdev-release mpd_local.te
 doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
-				   lastfm-scrobbler mpdplaylist choose haveip6.h \
+				   lastfm-scrobbler mpdplaylist choose \
 				   create_service romprhist karma output mixer \
-				   songi mpdhist
+				   songi mpdhist lcd_display
 
 mpdev_SOURCES = mpdev.c
 mpdev_LDADD = $(LIB_QMAIL)
@@ -67,12 +68,6 @@ choose: choose.sh warn-auto.sh
 	/bin/rm -f choose
 	cat warn-auto.sh choose.sh > choose
 	chmod 555 choose
-
-haveip6.h: \
-choose tryip6.c haveip6.h1 haveip6.h2 conf-ip
-	$(COMPILE) -c `grep -h -v "^#" conf-ip` tryip6.c; \
-	$(COMPILE)  tryip6.o -o tryip6; \
-	./choose r tryip6 haveip6.h1 haveip6.h2 > haveip6.h
 
 librefm-scrobbler: moc-scrobbler.in
 	$(editlibrefm) moc-scrobbler.in > $@
@@ -131,6 +126,10 @@ output: output.in
 	chmod +x $@
 
 mixer: mixer.in
+	$(edit) $@.in > $@
+	chmod +x $@
+
+lcd_display: lcd_display.in
 	$(edit) $@.in > $@
 	chmod +x $@
 

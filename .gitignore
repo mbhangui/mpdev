@@ -98,3 +98,4 @@ mixer
 songi
 config.h.in
 mpdhist
+lcd_display

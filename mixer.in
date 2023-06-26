@@ -1,12 +1,18 @@
 #!/bin/sh
 #
 # $Log: mixer.in,v $
+# Revision 1.2  2023-06-26 15:56:54+05:30  Cprogrammer
+# added lcd_display
+#
 # Revision 1.1  2021-09-09 17:09:45+05:30  Cprogrammer
 # Initial revision
 #
 #
-# $Id: mixer.in,v 1.1 2021-09-09 17:09:45+05:30 Cprogrammer Exp mbhangui $
+# $Id: mixer.in,v 1.2 2023-06-26 15:56:54+05:30 Cprogrammer Exp mbhangui $
 #
 echo "$0: args=$*"
 echo volume=$VOLUME
+if [ -n "$LCD_HOST" -a -n "$LCD_PORT" -a -x $HOME/.mpdev/lcd_display ] ; then
+	$HOME/.mpdev/lcd_display "mixer"
+fi
 exit 0

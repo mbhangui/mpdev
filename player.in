@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: player.in,v 1.47 2022-06-26 23:15:35+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.48 2023-06-25 11:18:38+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -481,9 +481,9 @@ scrobble()
 
 update_song()
 {
-	uri="$1"
-	state="$2"
-	echo $uri|egrep "^http:|^https:" > /dev/null
+	state="$1"
+	uri="$2"
+	echo $uri|grep -E "^http:|^https:" > /dev/null
 	no_db_update=0
 	csum=`echo "$uri"|cksum|awk '{print $1}'`
 	if [ -n "$NO_DB_UPDATE" ] ; then
@@ -621,7 +621,7 @@ update_song()
 			inserted=0
 		fi
 	fi
-	prev_last_played=$(get_stat_last_played "$1")
+	prev_last_played=$(get_stat_last_played "$uri")
 	if [ $VERBOSE -gt 0 ] ; then
 		if [ ! -f $MPDEV_TMPDIR/rating.$csum -a " $state" = " now-playing" ] ; then
 			if [ $gnu_date -eq 1 ] ; then
@@ -925,7 +925,7 @@ case "$SYSTEM" in
 	;;
 esac
 # we don't handle stream uri currently
-echo $SONG_URI|egrep "^http:|^https:" > /dev/null
+echo $SONG_URI|grep -E "^http:|^https:" > /dev/null
 if [ $? -eq 0 ] ; then
 	echo "Streaming $SONG_URI"
 	exit 0
@@ -959,10 +959,16 @@ mkdir -p $MPDEV_TMPDIR
 if [ $VERBOSE -eq 2 ] ; then
 	env > $MPDEV_TMPDIR/.env.log
 fi
-update_song "$SONG_URI" "$1"
+update_song "$1" "$SONG_URI"
+if [ -n "$LCD_HOST" -a -n "$LCD_PORT" -a -x $HOME/.mpdev/lcd_display ] ; then
+	$HOME/.mpdev/lcd_display "$1"
+fi
 exit 0
 
 # $Log: player.in,v $
+# Revision 1.48  2023-06-25 11:18:38+05:30  Cprogrammer
+# run lcd_display script
+#
 # Revision 1.47  2022-06-26 23:15:35+05:30  Cprogrammer
 # use variables from ./configure
 #

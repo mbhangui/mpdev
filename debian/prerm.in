@@ -46,8 +46,8 @@ esac
 if [ " $1" = " upgrade" -o " $1" = " deconfigure" ] ; then
 	exit 0
 fi
-echo "removing mpdev logs"
-rm -fr /var/log/svc/mpdev
 echo "stopping and removing mpdev service"
 ${prefix}/libexec/mpdev/create_service --servicedir=/service --del-service
+echo "removing mpdev logs"
+rm -fr /var/log/svc/mpdev
 exit 0

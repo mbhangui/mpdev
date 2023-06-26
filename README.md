@@ -161,6 +161,19 @@ $ sudo svc -u /service/mpdev # this starts the mpdev daemon
 $ sudo svc -r /service/mpdev # this stops and restarts the mpdev daemon
 ```
 
+If you do a source install and want to have mpdev started by supervise you need to do the following
+
+```
+$ sudo apt-get install daemontools
+$ sudo ./create_service --servicedir=/service --servicedir=/service \
+    --user=1000 --add-service
+
+If you want mpdev to print song information to a LCD display on a remote
+host running lcdDaemon
+$ sudo ./create_service --servicedir=/service --servicedir=/service \
+    --user=1000 --lcdhost=IP --lcdport=1806 --add-service
+```
+
 If you want to do a source install and not have the supervise to run mpdev daemon, you could write a simple script and call it in a rc script during boot. If you don't use supervise, you need some knowledge of shell scripting. A very simple example of such a script is below. Another problem of not using supervise will be that you will have to enable your script to be called in some rc or systemd script whenever your machine is started.
 
 ```
@@ -251,9 +264,11 @@ $ ./configure --prefix=$prefix --libexecdir=$prefix/libexec/mpdev
 $ make
 $ sudo make install
 ```
-## Create RPM / DEB
+## Create RPM / Debian packages
 
 This is done by running the create\_rpm / create\_debian scripts. (Here `version` refers to the existing version of mpdev package)
+
+### Create debian package
 
 ```
 $ pwd
@@ -263,7 +278,7 @@ $ ls -l $HOME/rpmbuild/RPMS/x86_64/mpdev\*
 -rw-rw-r--. 1 mbhangui mbhangui  290567 Feb  8 09:05 mpdev-0.1-1.1.fc31.x86_64.rpm
 ```
 
-## Create debian package
+### Create debian package
 ```
 $ pwd
 /usr/local/src/mpdev
