@@ -1,6 +1,9 @@
 #!/bin/bash
 #
 # $Log: playpause.in,v $
+# Revision 1.14  2023-06-29 10:36:33+05:30  Cprogrammer
+# use $HOME/.mpdev/lcd_display or libexec/mpdev/lcd_display
+#
 # Revision 1.13  2023-06-25 11:20:17+05:30  Cprogrammer
 # run lcd_display program
 #
@@ -41,7 +44,7 @@
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.13 2023-06-25 11:20:17+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.14 2023-06-29 10:36:33+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -108,8 +111,12 @@ if [ " $PLAYER_STATE" = " stop" ] ; then
 		exec $HOME/.mpdev/player end-song
 	fi
 fi
-if [ -n "$LCD_HOST" -a -n "$LCD_PORT" -a -x $HOME/.mpdev/lcd_display ] ; then
+if [ -n "$LCD_HOST" -a -n "$LCD_PORT" ] ; then
 	if [ "$PLAYER_STATE" = "pause" -o "$PLAYER_STATE" = "resume" ] ; then
-		$HOME/.mpdev/lcd_display "$PLAYER_STATE"
+		if [ -x $HOME/.mpdev/lcd_dislay ] ; then
+			$HOME/.mpdev/lcd_display "$PLAYER_STATE"
+		elif [ -x @libexecdir@/mpdev/lcd_dislay ] ; then
+			@libexecdir@/mpdev/lcd_dislay "$PLAYER_STATE"
+		fi
 	fi
 fi

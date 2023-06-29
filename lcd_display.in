@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: lcd_display.in,v 1.2 2023-06-26 23:18:02+05:30 Cprogrammer Exp mbhangui $
+# $Id: lcd_display.in,v 1.4 2023-06-28 23:30:19+05:30 Cprogrammer Exp mbhangui $
 #
 # You need the nc command for this script to write to a remote LCD. nc
 # comes from the netcat package
@@ -20,7 +20,7 @@ set_command()
 		if [ ! -x /usr/bin/nc ] ; then
 			exit 0
 		fi
-		cmd="nc -u $LCD_HOST $LCD_PORT"
+		cmd="nc -w 1 -u $LCD_HOST $LCD_PORT"
 	else
 		if [ -d /run ] ; then
 			lcdfifo="/run/lcd-daemon/lcdfifo"
@@ -56,7 +56,7 @@ case $1 in
 	now-playing)
 		set_command
 		(
-		echo "0 0 0:$SONG_TITLE"
+		echo "0 0 2:$SONG_TITLE"
 		echo "1 0 0:$SONG_ARTIST"
 		echo "2 0 0:$SONG_ALBUM"
 		printf "3 0 0:Play  Vol %+3s Rt %02d\n" $(mpc vol|cut -d: -f2) $RATING

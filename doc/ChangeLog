@@ -28,6 +28,9 @@ Release 1.1 Start 30/06/2022 End --/--/----
 13. create_service: added --lcdhost, --lcdport to add LCD_HOST, LCD_PORT env
     variables
 14. player, lcd_display: display song rating on 4th row
+- 29/06/2023
+15. player, playpause: use $HOME/.mpdev/lcd_display or
+    libexec/mpdev/lcd_display
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
