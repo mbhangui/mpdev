@@ -1,6 +1,9 @@
 #!/bin/bash
 #
 # $Log: playpause.in,v $
+# Revision 1.16  2023-06-30 21:00:37+05:30  Cprogrammer
+# pass RATING, PLAYCOUNT env variable to lcd_display
+#
 # Revision 1.15  2023-06-30 10:18:10+05:30  Cprogrammer
 # added use of fifo for accessing LCD display
 #
@@ -47,7 +50,7 @@
 # Initial revision
 #
 #
-# $Id: playpause.in,v 1.15 2023-06-30 10:18:10+05:30 Cprogrammer Exp mbhangui $
+# $Id: playpause.in,v 1.16 2023-06-30 21:00:37+05:30 Cprogrammer Exp mbhangui $
 #
 
 if [ -z "$VERBOSE" ] ; then
@@ -116,10 +119,12 @@ if [ " $PLAYER_STATE" = " stop" ] ; then
 fi
 if ( test -n "$LCD_HOST" && test -n "$LCD_PORT" ) || ( test -n "$LCD_FIFO" ) ; then
 	if [ "$PLAYER_STATE" = "pause" -o "$PLAYER_STATE" = "resume" ] ; then
+		RATING=$(cat $MPDEV_TMPDIR/rating.$csum)
+		PLAYCOUNT=$(cat $MPDEV_TMPDIR/pcount.$csum)
 		if [ -x $HOME/.mpdev/lcd_dislay ] ; then
-			$HOME/.mpdev/lcd_display "$PLAYER_STATE"
+			env RATING="$RATING" PLAYCOUNT="$PLAYCOUNT" $HOME/.mpdev/lcd_display "$PLAYER_STATE"
 		elif [ -x @libexecdir@/mpdev/lcd_dislay ] ; then
-			@libexecdir@/mpdev/lcd_dislay "$PLAYER_STATE"
+			env RATING="$RATING" PLAYCOUNT="$PLAYCOUNT" @libexecdir@/mpdev/lcd_dislay "$PLAYER_STATE"
 		fi
 	fi
 fi
