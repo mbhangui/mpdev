@@ -1,6 +1,9 @@
 module mpd_local 1.0;
 
 require {
+	type var_run_t;
+	type automount_t;
+	type unconfined_service_t;
 	type alsa_home_t;
 	type alsa_var_lib_t;
 	type config_home_t;
@@ -9,6 +12,8 @@ require {
 	type mpd_port_t;
 	type nfs_t;
 	type user_home_dir_t;
+	class sock_file write;
+	class unix_stream_socket connectto;
 	class file { getattr open read };
 	class dir { search };
 	class tcp_socket { listen name_bind name_connect accept create node_bind setopt bind getattr };
@@ -16,6 +21,11 @@ require {
 #============= mpd_t ==============
 allow mpd_t alsa_home_t:file { getattr open read };
 allow mpd_t alsa_var_lib_t:dir search;
+allow mpd_t unconfined_service_t:unix_stream_socket connectto;
+allow mpd_t var_run_t:sock_file write;
+
+#============= automount_t ==============
+allow automount_t var_run_t:sock_file write;
 
 #!!!! This avc is allowed in the current policy
 allow mpd_t config_home_t:dir search;

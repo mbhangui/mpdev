@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: create_service.in,v 1.28 2023-06-26 23:17:24+05:30 Cprogrammer Exp mbhangui $
+# $Id: create_service.in,v 1.29 2023-06-30 10:16:44+05:30 Cprogrammer Exp mbhangui $
 #
 
 check_update_if_diff()
@@ -14,7 +14,9 @@ check_update_if_diff()
 add_service()
 {
 	if [ $# -ne 1 ] ; then
-		echo "USAGE: create_service --servicedir=path --user=username --lcdhost=host --lcdport=port --add-service" 1>&2
+		echo "USAGE: create_service --servicedir=path --user=username \\"
+		echo "  --lcdhost=host --lcdport=port || --lcdfifo=fifo \\"
+		echo "  --add-service" 1>&2
 		return 1
 	fi
 	userid=$1
@@ -58,11 +60,18 @@ add_service()
 	check_update_if_diff $servicedir/$service_name/variables/AUTO_RATING  0
 	check_update_if_diff $servicedir/$service_name/variables/MPD_HOST     127.0.0.1
 	check_update_if_diff $servicedir/$service_name/variables/MPD_PORT     6600
-	if [ -n "$lcdhost" ] ; then
-	check_update_if_diff $servicedir/$service_name/variables/LCD_HOST     $lcdhost
-	fi
-	if [ -n "$lcdport" ] ; then
-	check_update_if_diff $servicedir/$service_name/variables/LCD_PORT     $lcdport
+	if [ -n "$lcdfifo" ] ; then
+		> $servicedir/$service_name/variables/LCD_HOST
+		> $servicedir/$service_name/variables/LCD_PORT
+		check_update_if_diff $servicedir/$service_name/variables/LCD_FIFO     $lcdfifo
+	elif [ -n "$lcdhost" -a -n "$lcdport" ] ; then
+		> $servicedir/$service_name/variables/LCD_FIFO
+		check_update_if_diff $servicedir/$service_name/variables/LCD_HOST     $lcdhost
+		check_update_if_diff $servicedir/$service_name/variables/LCD_PORT     $lcdport
+	else
+		> $servicedir/$service_name/variables/LCD_FIFO
+		> $servicedir/$service_name/variables/LCD_HOST
+		> $servicedir/$service_name/variables/LCD_PORT
 	fi
 	check_update_if_diff $servicedir/$service_name/variables/MPDEV_TMPDIR "/tmp/mpdev"
 	sock=$(grep "^bind_to_address" @sysconfdir@/mpd.conf | grep sock|awk '{print $2}'|sed 's{"{{g')
@@ -227,6 +236,7 @@ logdir=/var/log/svc
 servicedir=/service
 lcdhost=""
 lcdport=""
+lcdfifo=""
 prog_args="$0 $*"
 SYSTEM=$(uname -s)
 while test $# -gt 0; do
@@ -249,6 +259,9 @@ while test $# -gt 0; do
 	;;
     --lcdport=*)
 	lcdport=$optarg
+	;;
+    --lcdfifo=*)
+	lcdfifo=$optarg
 	;;
 
     --add-service)
@@ -275,6 +288,9 @@ while test $# -gt 0; do
 done
 #
 # $Log: create_service.in,v $
+# Revision 1.29  2023-06-30 10:16:44+05:30  Cprogrammer
+# added --lcdfifo argument to create LCD_FIFO env variable
+#
 # Revision 1.28  2023-06-26 23:17:24+05:30  Cprogrammer
 # added --lcdhost, --lcdport to add LCD_HOST, LCD_PORT env variables
 #

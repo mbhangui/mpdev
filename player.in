@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: player.in,v 1.50 2023-06-29 10:36:28+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.51 2023-06-30 10:17:29+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -960,16 +960,19 @@ if [ $VERBOSE -eq 2 ] ; then
 	env > $MPDEV_TMPDIR/.env.log
 fi
 update_song "$1" "$SONG_URI"
-if [ -n "$LCD_HOST" -a -n "$LCD_PORT" ] ; then
-	if [ -x $HOME/.mpdev/lcd_dislay ] ; then
+if ( test -n "$LCD_HOST" && test -n "$LCD_PORT" ) || ( test -n "$LCD_FIFO" ) ; then
+	if [ -x $HOME/.mpdev/lcd_display ] ; then
 		env RATING=$rating $HOME/.mpdev/lcd_display "$1"
-	elif [ -x @libexecdir@/mpdev/lcd_dislay ] ; then
+	elif [ -x @libexecdir@/mpdev/lcd_display ] ; then
 		env RATING=$rating @libexecdir@/mpdev/lcd_display "$1"
 	fi
 fi
 exit 0
 
 # $Log: player.in,v $
+# Revision 1.51  2023-06-30 10:17:29+05:30  Cprogrammer
+# added use of fifo for accessing LCD display
+#
 # Revision 1.50  2023-06-29 10:36:28+05:30  Cprogrammer
 # use $HOME/.mpdev/lcd_display or libexec/mpdev/lcd_display
 #

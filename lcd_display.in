@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: lcd_display.in,v 1.4 2023-06-28 23:30:19+05:30 Cprogrammer Exp mbhangui $
+# $Id: lcd_display.in,v 1.5 2023-06-30 10:17:08+05:30 Cprogrammer Exp mbhangui $
 #
 # You need the nc command for this script to write to a remote LCD. nc
 # comes from the netcat package
@@ -16,24 +16,41 @@
 
 set_command()
 {
-	if [ -n "$LCD_HOST" -a -n "$LCD_PORT" ] ; then
-		if [ ! -x /usr/bin/nc ] ; then
-			exit 0
+	if [ -n "$LCD_FIFO" ] ; then
+		cmd="/bin/cat > $LCD_FIFO"
+		return 0
+	elif [ -n "$LCD_HOST" ] ; then
+		if [ -z "$LCD_PORT" ] ; then
+			LCD_PORT=1806
 		fi
 		cmd="nc -w 1 -u $LCD_HOST $LCD_PORT"
-	else
-		if [ -d /run ] ; then
-			lcdfifo="/run/lcd-daemon/lcdfifo"
-		elif [ -d /var/run ] ; then
-			lcdfifo="/var/run/lcd-daemon/lcdfifo"
-		else
-			lcdfifo="/tmp/lcd-daemon/lcdfifo"
-		fi
-		if [ ! -p $lcdfifo ] ; then
-			exit 0
-		fi
-		cmd="/bin/cat > /run/lcd-daemon/lcdfifo"
+		return 0
 	fi
+	if [ -d /run ] ; then
+		lcdfifo="/run/lcd-daemon/lcdfifo"
+	elif [ -d /var/run ] ; then
+		lcdfifo="/var/run/lcd-daemon/lcdfifo"
+	else
+		lcdfifo="/tmp/lcd-daemon/lcdfifo"
+	fi
+	if [ -p $lcdfifo ] ; then
+		cmd="/bin/cat > /run/lcd-daemon/lcdfifo"
+		return 0
+	elif [  -x /usr/bin/nc ] ; then
+		if [ -n "$LCD_HOST" ] ; then
+			lcdhost=$LCD_HOST
+		else
+			lcdhost=$(grep lcdhost /etc/hosts|awk '{print $1}')
+		fi
+		if [ -z "$LCD_PORT" ] ; then
+			LCD_PORT=1806
+		fi
+		if [ -n "$lcdhost" ] ; then
+			cmd="nc -w 1 -u $lcdhost $LCD_PORT"
+			return 0
+		fi
+	fi
+	exit 1
 }
 
 if [ -z "$MPDEV_TMPDIR" ] ; then
