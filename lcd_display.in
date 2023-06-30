@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: lcd_display.in,v 1.5 2023-06-30 10:17:08+05:30 Cprogrammer Exp mbhangui $
+# $Id: lcd_display.in,v 1.6 2023-06-30 20:28:25+05:30 Cprogrammer Exp mbhangui $
 #
 # You need the nc command for this script to write to a remote LCD. nc
 # comes from the netcat package
@@ -60,15 +60,15 @@ fi
 case $1 in
 	play)
 		set_command
-		echo "3 0 0:Play : Vol $(mpc vol|cut -d: -f2)" | sh -c "$cmd"
+		echo "3 0 0:PL Vo $(mpc vol|cut -d: -f2|cut -d% -f1)" | sh -c "$cmd"
 	;;
 	pause-song|pause)
 		set_command
-		echo "3 0 0:Pause: Vol $(mpc vol|cut -d: -f2)" | sh -c "$cmd"
+		echo "3 0 0:PS Vo $(mpc vol|cut -d: -f2|cut -d% -f1)" | sh -c "$cmd"
 	;;
 	end-song)
 		set_command
-		echo "3 0 0:End  : Vol $(mpc vol|cut -d: -f2)" | sh -c "$cmd"
+		echo "3 0 0:ST Vo $(mpc vol|cut -d: -f2|cut -d% -f1)" | sh -c "$cmd"
 	;;
 	now-playing)
 		set_command
@@ -76,25 +76,25 @@ case $1 in
 		echo "0 0 2:$SONG_TITLE"
 		echo "1 0 0:$SONG_ARTIST"
 		echo "2 0 0:$SONG_ALBUM"
-		printf "3 0 0:Play  Vol %+3s Rt %02d\n" $(mpc vol|cut -d: -f2) $RATING
+		printf "3 0 0:PL Vo %+3s R %2d P %d\n" $(mpc vol|cut -d: -f2|cut -d% -f1) $RATING $PLAYCOUNT
 		) | tee $MPDEV_TMPDIR/lcd.out | sh -c "$cmd"
 	;;
 	mixer)
 		set_command
 		case "$PLAYER_STATE" in
 			play)
-				t=Play
+				t=PL
 			;;
 			pause)
-				t=Pause
+				t=PS
 			;;
 			stop)
-				t=End
+				t=ST
 			;;
 			*)
 				t=$PLAYER_STATE
 			;;
 		esac
-		printf "3 0 0:%-5s Vol %+3s\n" "$t" $(mpc vol|cut -d: -f2) | sh -c "$cmd"
+		printf "3 0 0:%s Vo %+3s\n" "$t" $(mpc vol|cut -d: -f2|cut -d% -f1) | sh -c "$cmd"
 	;;
 esac
