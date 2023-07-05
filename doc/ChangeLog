@@ -37,6 +37,8 @@ Release 1.1 Start 30/06/2022 End --/--/----
 18. lcd_display: refactored code
 19. player, lcd_display: added display of play counts
 20. playpause: pass RATING, PLAYCOUNT env variable to lcd_display
+- 04/07/2023
+21. karma: added --love option to mark scrobble as loved
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
