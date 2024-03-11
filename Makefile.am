@@ -17,21 +17,21 @@ mpdevlibexecdir=@libexecdir@/mpdev
 mpdevsysconfdir=@sysconfdir@/mpdev
 
 mpdevbin_PROGRAMS = mpdev
-mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist romprhist \
+mpdevbin_SCRIPTS = librefm-scrobbler lastfm-scrobbler mpdplaylist \
 				   transfer_play karma songi mpdhist
 mpdevlibexec_PROGRAMS = mpdev_cleanup mpdev_update
 mpdevlibexec_SCRIPTS = player playpause mpdev_rename output mixer create_service \
 					   lcd_display
 noinst_DATA = mpdev.spec PKGBUILD
 man_MANS = mpdplaylist.1 mpdev.1 lastfm-scrobbler.1 librefm-scrobbler.1 \
-		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 romprhist.1 \
+		 mpdev_update.1 mpdev_cleanup.1 transfer_play.1 \
 		 mpdev_rename.1 karma.1 songi.1 mpdhist.1
 mpdevsysconf_DATA=mpdev-release mpd_local.te
 doc_DATA=LICENSE moc-scrobbler-license mpdev.changes README.md
 
 MOSTLYCLEANFILES = mpdev player playpause librefm-scrobbler \
 				   lastfm-scrobbler mpdplaylist choose \
-				   create_service romprhist karma output mixer \
+				   create_service karma output mixer \
 				   songi mpdhist lcd_display
 
 mpdev_SOURCES = mpdev.c
@@ -86,10 +86,6 @@ karma: karma.in
 	chmod +x $@
 
 songi: songi.in
-	$(edit) $@.in > $@
-	chmod +x $@
-
-romprhist: romprhist.in
 	$(edit) $@.in > $@
 	chmod +x $@
 

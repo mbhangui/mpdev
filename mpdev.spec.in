@@ -63,7 +63,7 @@ using mpd's idle command and execs user defined script on event changes.
      + tracks play count of songs, artist, albums and genres.
      + helps chose songs based on listening habits using mpdplaylist
        playlist generator
-     + synchronizes rompr, stats and mpd's sticker db
+     + synchronizes stats and mpd's sticker db
 
 %prep
 %autosetup
@@ -98,7 +98,6 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/mpdev/%{name}-rpm.inf
 %attr(755,root,root)                    %{_prefix}/bin/karma
 %attr(755,root,root)                    %{_prefix}/bin/songi
 %attr(755,root,root)                    %{_prefix}/bin/mpdhist
-%attr(755,root,root)                    %{_prefix}/bin/romprhist
 %attr(755,root,root)                    %{_prefix}/bin/transfer_play
 %attr(755,root,root)                    %{_prefix}/bin/lastfm-scrobbler
 %attr(755,root,root)                    %{_prefix}/bin/librefm-scrobbler
@@ -124,7 +123,6 @@ install -m 0644 %{name}-rpm.info %{buildroot}%{sysconfdir}/mpdev/%{name}-rpm.inf
 %attr(644,root,root)                    %{_prefix}/share/man/man1/karma.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/mpdhist.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/transfer_play.1.gz
-%attr(644,root,root)                    %{_prefix}/share/man/man1/romprhist.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/lastfm-scrobbler.1.gz
 %attr(644,root,root)                    %{_prefix}/share/man/man1/librefm-scrobbler.1.gz
 
