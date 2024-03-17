@@ -7,11 +7,11 @@
 
 mpdev helps in bulding a database of your played tracks. Along with a script `mpdplaylist`, it can generate a playlist for mpd as per your taste and mood.
 
-You can create scripts in $HOME/.mpdev directory. The default installation installs two scripts player and playpause in $HOME/.mpdev directory for uid 1000. The scripts are adequate for most use cases. The player script can additionally be configured to update [RompЯ](https://fatg3erman.github.io/RompR/) database. The player script does the following
+You can create scripts in $HOME/.mpdev directory. The default installation installs two scripts player and playpause in $HOME/.mpdev directory for uid 1000. The scripts are adequate for most use cases. The player script does the following
 
 1. scrobbles titles to last.fm and libre.fm. You have to create API keys by running lastfm-scrobbler and librefm-scrobbler one time. You can disable scrobbling by setting DISABLE\_SCROBBLE environment variable.
-2. updates play counts in the sqlite stats.db. You could write your own script and update any external database. The player script can also update the Playcounttable for [RompЯ](https://fatg3erman.github.io/RompR/) if few environment variables MYSQL\_HOST, MYSQL\_USER, MYSQL\_PASS and MYSQL\_DATABASE are configured.
-3. Synchronizes the ratings in the sticker (sqlite). You could write your own script and update any external database. The player script can also update the Ratingtable for [RompЯ](https://fatg3erman.github.io/RompR/) if few environment variables MYSQL\_HOST, MYSQL\_USER, MYSQL\_PASS and MYSQL\_DATABASE are configured. You can also do automatic rating to some default value by setting an environment variable AUTO\_RATING by creating a file $HOME/.mpdev/AUTO\_RATING. If you are using supervise from deamontools (more on that below), creating an environment variable is very easy. e.g. To have an environment variable AUTO\_RATING with value 6, you just need to have a file name AUTO\_RATING in /service/mpdev/variables. The file should just have 6 as the content.
+2. updates play counts in the sqlite stats.db. You could write your own script and update any external database.
+3. Synchronizes the ratings in the sticker (sqlite). You could write your own script and update any external database. You can also automatically rate songs to some default value by setting an environment variable AUTO\_RATING by creating a file $HOME/.mpdev/AUTO\_RATING. If you are using supervise from deamontools (more on that below), creating an environment variable is very easy. e.g. To have an environment variable AUTO\_RATING with value 6, you just need to have a file name AUTO\_RATING in /service/mpdev/variables. The file should just have 6 as the content.
 4. Update the song's karma. Karma is a number ranging from 0 to 100. If a song is skipped, it's karma is downgraded by 1. Karma can be downgraded only for songs rated less than 6 and played 5 times or less and whose karma is 50 or less. If a song is played twice within a day, it's karma is upgraded by 4. If a song is played twice within a week, it's karma is upgraded by 3. If a song is played twice within 14 days, its karma is upgraded by 2. If a song is played twice within a month, it's karma is upgraded by 1. All songs start with a default karma of 50. A song earns a permanent karma if any of the below happen
 
 	  * it's karma becomes 60 or more.
@@ -114,7 +114,7 @@ OUTPUT_2_NAME=Scarlett 2i2 USB
 OUTPUT_2_STATE=disabled
 ```
 
-If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX. mpdev can also update [RompЯ](https://fatg3erman.github.io/RompR/) ratings and play counts and synchronize the ratings between [RompЯ](https://fatg3erman.github.io/RompR/) MySQL and sticker sqlite databases. Since mpdev runs in the background, it can keep updating [RompЯ](https://fatg3erman.github.io/RompR/), stats db play counts and history without you having to keep [RompЯ Web Frontend](https://fatg3erman.github.io/RompR/) running.
+If you create the `stats` database, mpdev will update the last\_played field, play\_count fields in stats db. It will also update the song rating that you choose for the song. The ability to rate songs in mpd can be enabled by having the `sticker_file` keyword uncommented in `/etc/mpd.conf`. You will also need a mpd client that uses the mpd sticker command. One such player is `cantata`, which is available for all linux distros and Mac OSX.
 
 The sticker database can be enabled by having the followinng entry in `/etc/mpd.conf`
 
@@ -127,33 +127,7 @@ sticker_file                    "/var/lib/mpd/sticker.db"
 #
 ```
 
-If you want to use mpdev to update the [RompЯ](https://fatg3erman.github.io/RompR/) db, you need to set the following variables
-
-```
-ROMPR          - set this to any non-empty string (e.g. rompr)
-MYSQL_HOST     - set this to the host on which rompr's MySQL database is running
-MYSQL_PORT     - Port on which MySQL is running (usually 3306)
-MYSQL_USER     - User for connecting to MySQL (e.g. rompr)
-MYSQL_PASS     - Password for MYSQL_USER (e.g. romprdbpass)
-MYSQL_DATABASE - Database name for rompr db (e.g. romprdb)
-```
-
-One can use [supervise](https://en.wikipedia.org/wiki/Daemontools) from the indimail-mta package to run this. The default rpm/debian installation of mpdev will do that for you. But it will not enable RompЯ. In case you are using RompЯ, you need to run the following commands to create the above environment variables
-
-```
-$ sudo /bin/bash
-# echo rompr         > /service/mpdev/variables/ROMPR
-# echo 192.168.1.100 > /service/mpdev/variables/MYSQL_HOST # assuming you have MySQL database installed on 191.168.1.100
-# echo 3306          > /service/mpdev/variables/MYSQL_PORT
-# echo rompr         > /service/mpdev/variables/MYSQL_USER
-# echo romprdbpas    > /service/mpdev/variables/MYSQL_PASS
-# echo romprdb       > /service/mpdev/variables/MYSQL_DATABASE
-# echo /home/pi      > /service/mpdev/variables/HOME
-# echo /bin:/usr/bin > /service/mpdev/variables/PATH
-# echo 6             > /service/mpdev/variables/AUTO_RATING
-```
-
-You need to restart mpdev for the new environment variables to be available to mpdev. To restart the mpdev daemon, you then just need to run the following command. `svc -d` stops the daemon, `svc -u` starts the daemon.
+You need to restart mpdev for the new environment variables to be available to mpdev. To restart the mpdev daemon, you then just need to run the following command `svc -r /service/mpdev`. Below are few operations to stop, start and restart mpdev.
 
 ```
 $ sudo svc -d /service/mpdev # this stops  the mpdev daemon
@@ -180,13 +154,7 @@ If you want to do a source install and not have the supervise to run mpdev daemo
 #!/bin/sh
 while true
 do
-    env ROMPR=rompr \
-        MYSQL_HOST=192.168.1.100
-        MYSQL_PORT=3306
-        MYSQL_USER=rompr
-        MYSQL_PASS=romprdbpass
-        MYSQL_DATABASE=romprdb \
-        HOME=/home/pi \
+    env HOME=/home/pi \
         MPDEV_TMPDIR=/tmp/mpdev \
         XDG_RUNTIME_DIR=/home/pi \
         PATH=\$PATH:/usr/bin:/bin \

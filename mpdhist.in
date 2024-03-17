@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: mpdhist.in,v 1.4 2022-09-26 21:15:59+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdhist.in,v 1.5 2024-03-11 16:47:12+05:30 Cprogrammer Exp mbhangui $
 #
 
 usage()
@@ -83,10 +83,6 @@ if [ $? -ne 0 ] ; then
 fi
 stats_dir=$(dirname $sticker_file)
 stats_file=$stats_dir/stats.db
-if [ ! -f $HOME/.mpdev/rompr.conf ] ; then
-  echo "$HOME/.mpdev/rompr.conf missing" 1>&2
-  exit 1
-fi
 stmt=""
 stmt="$stmt select id, title, artist, album, play_count, rating, "
 stmt="$stmt strftime('%d-%m-%Y %H:%M:%S', datetime(last_played, 'unixepoch', 'localtime'))  "
@@ -104,6 +100,9 @@ sqlite3 -header -batch -column $stats_file "$stmt" | \
 
 #
 # $Log: mpdhist.in,v $
+# Revision 1.5  2024-03-11 16:47:12+05:30  Cprogrammer
+# removed rompr
+#
 # Revision 1.4  2022-09-26 21:15:59+05:30  Cprogrammer
 # removed debug statement
 #

@@ -59,18 +59,13 @@ running lastfm-scrobbler and librefm-scrobbler one time. You can disable
 scrobbling by setting DISABLE_SCROBBLE environment variable
 .sp -1
 .IP \[bu]
-updates play counts in the sqlite stats.db and
-[RompR](https://fatg3erman.github.io/RompR/) db. RompR db update gets
-enabled only when you set the \fBROMPR\fR environment variable. All db
-updates get disabled if you set \fBNO_DB_UPDATE\fR environment variable.
+updates play counts in the sqlite stats.db. All db updates get disabled if
+you set \fBNO_DB_UPDATE\fR environment variable.
 .sp -1
 .IP \[bu]
-Synchronizes the ratings in the sticker (sqlite),
-[RompR](https://fatg3erman.github.io/RompR/) (MySQL) and the stats (sqlite)
-databases. It also initializes the rating to 3 when you play an unrated
-song. RompR db update gets enabled only when you set the \fBROMPR\fR
-environment variable. All db updates get disabled if you set
-\fBNO_DB_UPDATE\fR environment variable.
+Synchronizes the ratings in the sticker (sqlite). It also initializes the
+rating to 3 when you play an unrated song. All db updates get disabled if
+you set \fBNO_DB_UPDATE\fR environment variable.
 .PP
 
 You can put your own script named `player` in this directory. In fact
@@ -219,7 +214,6 @@ OUTPUT_2_STATE=disabled
 \f[B]mpdev_rename\f[](1),
 \f[B]mpdev_update\f[](1),
 \f[B]mpdplaylist\f[](1),
-\f[B]romprhist\f[](1),
 \f[B]transfer_play\f[](1)
 .IP \[bu] 2
 https://github.com/mbhangui/mpdev/
