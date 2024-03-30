@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: songi.in,v $
+# Revision 1.6  2024-03-26 19:24:12+05:30  Cprogrammer
+# display last played in days, hours, mins, secs ago
+#
 # Revision 1.5  2022-06-20 01:07:30+05:30  Cprogrammer
 # use directories set in ./configure
 #
@@ -17,7 +20,7 @@
 # Initial revision
 #
 #
-# $Id: songi.in,v 1.5 2022-06-20 01:07:30+05:30 Cprogrammer Exp mbhangui $
+# $Id: songi.in,v 1.6 2024-03-26 19:24:12+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -45,10 +48,10 @@ locate_file()
 display_info()
 {
 	turi=`echo $1|sed -e "s{'{''{g"`
-	Q="SELECT play_count,"
-	Q="$Q datetime(last_played, 'unixepoch', 'localtime'),"
+	out=$(mktemp -t mpdevXXXXXXXXXX)
+	Q="SELECT title,play_count,last_played,"
 	Q="$Q rating, karma, duration,"
-	Q="$Q artist, album, title, track, genre,"
+	Q="$Q artist, album, track, genre,"
 	Q="$Q date, composer, performer, disc,"
 	Q="$Q datetime(date_added, 'unixepoch', 'localtime'),"
 	Q="$Q datetime(last_modified, 'unixepoch', 'localtime')"
@@ -56,8 +59,28 @@ display_info()
 	sqlite3 -noheader -line -batch $stats_file "$Q" | sed \
 		-e 's{.*datetime(date_added.*){  Date Added{g' \
 		-e 's{.*datetime(last_modified.*){Last Updated{g' \
-		-e 's{.*datetime(last_played.*){ Last Played{g' \
-		-e 's{                                     {{g'
+		-e 's{                                     {{g' > $out
+	t1=$(sed -n 3p < $out | awk '{print $3}')
+	t2=$(date +%s)
+	diff=$(echo $t1 $t2 | awk '{printf("%d\n", $2-$1)}')
+	days=$(echo $diff   | awk '{printf("%d\n", $1/86400)}')
+	hours=$(echo $diff  | awk '{printf("%d\n", ($1%86400)/3600)}')
+	mins=$(echo $diff   | awk '{printf("%d\n", ($1%3600)/60)}')
+	secs=$(echo $diff   | awk '{printf("%d\n", $1%60)}')
+	last_played="$(date --date=@"$t1")\n Last Played = $days days $hours hr $mins min $secs sec ago"
+	t1=$(sed -n 6p < $out | awk '{print $3}')
+	hours=$(echo $t1 | awk '{printf("%d\n", ($1%86400)/3600)}')
+	mins=$(echo $t1  | awk '{printf("%d\n", ($1%3600)/60)}')
+	secs=$(echo $t1  | awk '{printf("%d\n", $1%60)}')
+	if [ "$hours" = "0" ] ; then
+		duration="$mins min $secs sec ($t1)"
+	else
+		duration="$hours hr $mins min $secs sec ($t1)"
+	fi
+	sed \
+		-e "s{last_played.*{Last Played = $last_played{g" \
+		-e "s{duration.*{Duration = $duration{g" < $out
+	/bin/rm -f $out
 }
 
 if [ $# -eq 0 ] ; then

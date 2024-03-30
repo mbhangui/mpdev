@@ -51,7 +51,8 @@ mpdev is a daemon, written in C, that watches a Music Player Daemon events,
 using mpd's idle command and execs user defined script on event changes.
 
  * Uses mpd's idle mode.
- * Calls user scripts in $HOME/.mpdev (player, playpause, output)
+ * Calls user scripts in $HOME/.mpdev (player, playpause, output, mixer,
+   lcd_display)
  * Sets special environment variables to pass data to the hooks.
  * Optional support for scrobbling to last.fm, libre.fm through external scripts
  * Included scripts:
@@ -64,6 +65,11 @@ using mpd's idle command and execs user defined script on event changes.
      + helps chose songs based on listening habits using mpdplaylist
        playlist generator
      + synchronizes stats and mpd's sticker db
+   - mixer
+     + prints volume control value
+   - lcd_display
+     + prints song information to a host running lcdDaemon for
+       display on a display with Hitachi HD44780 controller
 
 %prep
 %autosetup

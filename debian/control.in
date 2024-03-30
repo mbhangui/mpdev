@@ -15,7 +15,8 @@ Description: MPD Event Watcher
  using mpd's idle command and execs user defined script on event changes.
  .
   * Uses mpd's idle mode.
-  * Calls user $HOME/bin/player
+  * Calls user scripts in $HOME/.mpdev (player, playpause, output, mixer,
+    lcd_display)
   * Sets special environment variables to pass data to the hooks.
   * Optional support for scrobbling to last.fm, libre.fm through external scripts
   * Included scripts:
@@ -25,6 +26,11 @@ Description: MPD Event Watcher
     - player
       + saves song data to a sqlite database
       + tracks play count of songs, artist, albums and genres.
-      + helps chose songs based on listening habits using mpdplaylist
+      + helps choose songs based on listening habits using mpdplaylist
         playlist generator
       + synchronizes rompr, stats and mpd's sticker db
+    - mixer
+      + prints volume control value
+    - lcd_display
+      + prints song information to a host running lcdDaemon for
+        display on a display with Hitachi HD44780 controller
