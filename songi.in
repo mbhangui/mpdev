@@ -1,26 +1,6 @@
 #!/bin/sh
 #
-# $Log: songi.in,v $
-# Revision 1.6  2024-03-26 19:24:12+05:30  Cprogrammer
-# display last played in days, hours, mins, secs ago
-#
-# Revision 1.5  2022-06-20 01:07:30+05:30  Cprogrammer
-# use directories set in ./configure
-#
-# Revision 1.4  2021-10-15 18:41:52+05:30  Cprogrammer
-# formatted for better display
-#
-# Revision 1.3  2021-10-14 22:39:24+05:30  Cprogrammer
-# bugfix for period in filenames
-#
-# Revision 1.2  2021-10-01 12:05:56+05:30  Cprogrammer
-# removed name column from song table in stats db
-#
-# Revision 1.1  2021-09-30 20:31:57+05:30  Cprogrammer
-# Initial revision
-#
-#
-# $Id: songi.in,v 1.6 2024-03-26 19:24:12+05:30 Cprogrammer Exp mbhangui $
+# $Id: songi.in,v 1.7 2024-04-04 20:51:29+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -61,13 +41,26 @@ display_info()
 		-e 's{.*datetime(last_modified.*){Last Updated{g' \
 		-e 's{                                     {{g' > $out
 	t1=$(sed -n 3p < $out | awk '{print $3}')
-	t2=$(date +%s)
-	diff=$(echo $t1 $t2 | awk '{printf("%d\n", $2-$1)}')
-	days=$(echo $diff   | awk '{printf("%d\n", $1/86400)}')
-	hours=$(echo $diff  | awk '{printf("%d\n", ($1%86400)/3600)}')
-	mins=$(echo $diff   | awk '{printf("%d\n", ($1%3600)/60)}')
-	secs=$(echo $diff   | awk '{printf("%d\n", $1%60)}')
-	last_played="$(date --date=@"$t1")\n Last Played = $days days $hours hr $mins min $secs sec ago"
+	if [ -z "$t1" ] ; then
+		t1=0
+	fi
+	# play_count
+	t2=$(sed -n 2p < $out | awk '{print $3}')
+	if [ -z "$t2" ] ; then
+		t2=0
+	fi
+	if [ $t1 -eq 0 -o $t2 -eq 0 ] ; then
+		last_played="never"
+	else
+		t2=$(date +%s)
+		diff=$(echo $t1 $t2 | awk '{printf("%d\n", $2-$1)}')
+		days=$(echo $diff   | awk '{printf("%d\n", $1/86400)}')
+		hours=$(echo $diff  | awk '{printf("%d\n", ($1%86400)/3600)}')
+		mins=$(echo $diff   | awk '{printf("%d\n", ($1%3600)/60)}')
+		secs=$(echo $diff   | awk '{printf("%d\n", $1%60)}')
+		last_played="$(date --date=@"$t1")\n Last Played = $days days $hours hr $mins min $secs sec ago"
+	fi
+	# duration
 	t1=$(sed -n 6p < $out | awk '{print $3}')
 	hours=$(echo $t1 | awk '{printf("%d\n", ($1%86400)/3600)}')
 	mins=$(echo $t1  | awk '{printf("%d\n", ($1%3600)/60)}')
@@ -136,3 +129,26 @@ do
 		esac
 	fi
 done
+#
+# $Log: songi.in,v $
+# Revision 1.7  2024-04-04 20:51:29+05:30  Cprogrammer
+# fixed last_played when song has never been played
+#
+# Revision 1.6  2024-03-26 19:24:12+05:30  Cprogrammer
+# display last played in days, hours, mins, secs ago
+#
+# Revision 1.5  2022-06-20 01:07:30+05:30  Cprogrammer
+# use directories set in ./configure
+#
+# Revision 1.4  2021-10-15 18:41:52+05:30  Cprogrammer
+# formatted for better display
+#
+# Revision 1.3  2021-10-14 22:39:24+05:30  Cprogrammer
+# bugfix for period in filenames
+#
+# Revision 1.2  2021-10-01 12:05:56+05:30  Cprogrammer
+# removed name column from song table in stats db
+#
+# Revision 1.1  2021-09-30 20:31:57+05:30  Cprogrammer
+# Initial revision
+#
