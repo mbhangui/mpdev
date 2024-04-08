@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: moc-scrobbler.in,v 1.6 2022-06-27 14:44:06+05:30 Cprogrammer Exp mbhangui $
+# $Id: moc-scrobbler.in,v 1.7 2024-04-08 22:50:05+05:30 Cprogrammer Exp mbhangui $
 #
 
 ################################################################
@@ -242,7 +242,7 @@ scrobble() {
 	fi
 	# Collect track data
 	# Check for minimum arguments to scrobble
-	if [ "$LOVE" = true ] ; then
+	if [ "$LOVE" = true -o "$UNLOVE" = true ] ; then
 		if [ -z "$artist" ] || [ -z "$track" ] ; then
 			echo "--artist and --track options are required" 1>&2
 			ERR=true
@@ -263,7 +263,7 @@ scrobble() {
 		echo "Deleting state.current"
 		rm -f $CONF_DIR/track.current
 		return 0
-	elif [ "$LOVE" != true ] ; then
+	elif [ "$LOVE" != true -a "$UNLOVE" != true ] ; then
 		if [ -f $CONF_DIR/track.current ] ; then
 			mv $CONF_DIR/track.current $CONF_DIR/track.last
 		fi
@@ -294,6 +294,8 @@ scrobble() {
 	TOSIGN="${TOSIGN}api_key${API_KEY}artist${artist}"
 	if [ "$LOVE" = true ] ; then
 		TOSIGN="${TOSIGN}methodtrack.lovesk${SESSION_KEY}timestamp${TS}track${track}"
+	elif [ "$UNLOVE" = true ] ; then
+		TOSIGN="${TOSIGN}methodtrack.unlovesk${SESSION_KEY}timestamp${TS}track${track}"
 	else
 		if [ -n "$duration" ] ; then
 			TOSIGN="${TOSIGN}duration${duration}"
@@ -327,6 +329,17 @@ scrobble() {
 			--data "sk=$SESSION_KEY" \
 			--data "timestamp=$TS" \
 			--data-urlencode "track=$track" | tr '\n' ' ')
+	elif [ "$UNLOVE" = true ] ; then
+		echo "UnLoving ... $track $album $artist"
+		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
+			--data-urlencode "album=$album" \
+			--data "api_key=$API_KEY" \
+			--data "api_sig=$API_SIG"  \
+			--data-urlencode "artist=$artist" \
+			--data "method=track.unlove" \
+			--data "sk=$SESSION_KEY" \
+			--data "timestamp=$TS" \
+			--data-urlencode "track=$track" | tr '\n' ' ')
 	else
 		echo "Scrobbling $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
@@ -354,7 +367,7 @@ scrobble() {
 		log_scrobble "Error scrobbling $artist - $track - $RESPONSE_XML"
 		return 1
 	fi
-	if [ "$LOVE" = true -o "$UPDATE" != true ] ; then
+	if [ "$LOVE" = true -o "$UNLOVE" = true -o "$UPDATE" != true ] ; then
 		return 0
 	fi
 	# DO NOW LISTENING POST
@@ -471,6 +484,7 @@ API_KEY=false
 API_SEC=false
 UPDATE=false
 LOVE=false
+UNLOVE=false
 STOP=false
 DEBUG=false
 
@@ -492,6 +506,11 @@ while test $# -gt 0; do
 		;;
 		--love)
 		LOVE=true
+		UNLOVE=false
+		;;
+		--unlove)
+		UNLOVE=true
+		LOVE=false
 		;;
 		--stop)
 		STOP=true
@@ -546,7 +565,7 @@ while test $# -gt 0; do
 		exit 0
 		;;
 		--version)
-		echo "$Id: moc-scrobbler.in,v 1.6 2022-06-27 14:44:06+05:30 Cprogrammer Exp mbhangui $"
+		echo "$Id: moc-scrobbler.in,v 1.7 2024-04-08 22:50:05+05:30 Cprogrammer Exp mbhangui $"
 		echo $AUTHOR
 		exit 0
 		;;
@@ -573,6 +592,9 @@ exit $?
 
 #
 # $Log: moc-scrobbler.in,v $
+# Revision 1.7  2024-04-08 22:50:05+05:30  Cprogrammer
+# added unlove function
+#
 # Revision 1.6  2022-06-27 14:44:06+05:30  Cprogrammer
 # replaced echo -n with printf for consistent behaviour under /bin/sh
 #

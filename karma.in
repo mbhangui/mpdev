@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
+# Revision 1.12  2024-04-08 22:49:51+05:30  Cprogrammer
+# added unlove function
+#
 # Revision 1.11  2023-07-05 22:00:13+05:30  Cprogrammer
 # added --love option to mark scrobble as loved
 #
@@ -35,7 +38,7 @@
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.11 2023-07-05 22:00:13+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.12 2024-04-08 22:49:51+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -115,7 +118,7 @@ exit $1
 
 process_cmdline()
 {
-OPTS=`getopt -o v:u:i:k:a:p:r:h --long value:,uri:,id:,karma:,artist:,artistany,playcount:,rating:,query,love,help -- "$@"`
+OPTS=`getopt -o v:u:i:k:a:p:r:h --long value:,uri:,id:,karma:,artist:,artistany,playcount:,rating:,query,love,unlove,help -- "$@"`
 if [ $? -ne 0 ] ; then
 	usage 1
 fi
@@ -155,6 +158,8 @@ while true; do
 			do_update=0; shift 1;;
 		--love)
 			scrobble_love=1; shift 1;;
+		--unlove)
+			scrobble_unlove=1; shift 1;;
 		-h|--help)
 			usage 0 ;;
 		--) shift; break;;
@@ -171,6 +176,7 @@ rating=""
 play_counts=""
 do_update=1
 scrobble_love=0
+scrobble_unlove=0
 process_cmdline "$@"
 
 if [ $# -eq 0 ] ; then
@@ -207,7 +213,7 @@ sql_query_select="SELECT karma, id, uri FROM song "
 sql_query_update="UPDATE song set karma=$karma_val "
 first_condition=""
 
-if [ $scrobble_love -eq 1 ] ; then
+if [ $scrobble_love -eq 1 -o $scrobble_unlove -eq 1 ] ; then
 	song_uri=$(mpc current -f %file% | sed -e "s{'{''{g")
 	if [ -z "$song_uri" ] ; then
 		echo "No song playing and no options given" 1>&2
@@ -216,10 +222,17 @@ if [ $scrobble_love -eq 1 ] ; then
 	sql_query_s="SELECT title, artist, album FROM song WHERE uri='${song_uri}'"
 	sqlite3 -noheader -batch $stats_file "$sql_query_s" | while IFS='|' read track artist album
 	do
-		echo "marking scrobble as loved on lastfm"
-		lastfm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
-		echo "marking scrobble as loved on librefm"
-		librefm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+		if [ $scrobble_love -eq 1 ] ; then
+			echo "marking scrobble as loved on lastfm"
+			lastfm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+			echo "marking scrobble as loved on librefm"
+			librefm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+		else
+			echo "marking scrobble as unloved on lastfm"
+			lastfm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album" > /dev/null
+			echo "marking scrobble as unloved on librefm"
+			librefm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album" > /dev/null
+		fi
 	done
 	exit 0
 fi
