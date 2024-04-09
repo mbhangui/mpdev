@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 # $Log: karma.in,v $
+# Revision 1.13  2024-04-09 23:24:45+05:30  Cprogrammer
+# display scrobble command if running with a tty
+#
 # Revision 1.12  2024-04-08 22:49:51+05:30  Cprogrammer
 # added unlove function
 #
@@ -38,7 +41,7 @@
 # Initial revision
 #
 #
-# $Id: karma.in,v 1.12 2024-04-08 22:49:51+05:30 Cprogrammer Exp mbhangui $
+# $Id: karma.in,v 1.13 2024-04-09 23:24:45+05:30 Cprogrammer Exp mbhangui $
 
 get_mpd_conf_value()
 {
@@ -222,16 +225,34 @@ if [ $scrobble_love -eq 1 -o $scrobble_unlove -eq 1 ] ; then
 	sql_query_s="SELECT title, artist, album FROM song WHERE uri='${song_uri}'"
 	sqlite3 -noheader -batch $stats_file "$sql_query_s" | while IFS='|' read track artist album
 	do
+		tty -s
+		ret=$?
 		if [ $scrobble_love -eq 1 ] ; then
 			echo "marking scrobble as loved on lastfm"
-			lastfm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+			if [ $ret -eq 0 ] ; then
+				lastfm-scrobbler --love --artist="$artist" --track="$track" --album="$album"
+			else
+				lastfm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+			fi
 			echo "marking scrobble as loved on librefm"
-			librefm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+			if [ $ret -eq 0 ] ; then
+				librefm-scrobbler --love --artist="$artist" --track="$track" --album="$album"
+			else
+				librefm-scrobbler --love --artist="$artist" --track="$track" --album="$album" > /dev/null
+			fi
 		else
 			echo "marking scrobble as unloved on lastfm"
-			lastfm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album" > /dev/null
+			if [ $ret -eq 0 ] ; then
+				lastfm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album"
+			else
+				lastfm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album" > /dev/null
+			fi
 			echo "marking scrobble as unloved on librefm"
-			librefm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album" > /dev/null
+			if [ $ret -eq 0 ] ; then
+				librefm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album"
+			else
+				librefm-scrobbler --unlove --artist="$artist" --track="$track" --album="$album" > /dev/null
+			fi
 		fi
 	done
 	exit 0

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: moc-scrobbler.in,v 1.7 2024-04-08 22:50:05+05:30 Cprogrammer Exp mbhangui $
+# $Id: moc-scrobbler.in,v 1.8 2024-04-09 23:25:09+05:30 Cprogrammer Exp mbhangui $
 #
 
 ################################################################
@@ -60,8 +60,12 @@ usage_all() {
 	echo "	--artist --track --album --duration"
 	echo "Update Current Song (\"Now scrobbling\"):"
 	echo "	--update --artist --track --album  --duration"
+	echo "info:"
+	echo "  --info --track --artist"
 	echo "Love:"
 	echo "	--love --artist --track --album"
+	echo "UnLove:"
+	echo "	--unlove --artist --track --album"
 	echo "Stop:"
 	echo "	--stop"
 	echo "Debug:"
@@ -80,8 +84,14 @@ usage_scrobble() {
 	echo "Scrobble: Will directly scrobble the current song."
 	echo "	--artist=\"etc\" --title=\"etc\" --album=\"etc\" --duration=\"123\""
 	echo ""
+	echo "Info: will get track information"
+	echo "	--info --artist=\"etc\" --title=\"etc\""
+	echo ""
 	echo "Love: Will mark the track as loved"
 	echo "	--love --artist=\"etc\" --title=\"etc\" --album=\"etc\""
+	echo ""
+	echo "UnLove: Will mark the track as unloved"
+	echo "	--unlove --artist=\"etc\" --title=\"etc\" --album=\"etc\""
 	echo ""
 	echo "Stop: Will delete the current and last songs saved for scrobbling."
 	echo "	--stop"
@@ -242,7 +252,7 @@ scrobble() {
 	fi
 	# Collect track data
 	# Check for minimum arguments to scrobble
-	if [ "$LOVE" = true -o "$UNLOVE" = true ] ; then
+	if [ "$LOVE" = true -o "$UNLOVE" = true -o "$GETINFO" = true ] ; then
 		if [ -z "$artist" ] || [ -z "$track" ] ; then
 			echo "--artist and --track options are required" 1>&2
 			ERR=true
@@ -340,6 +350,17 @@ scrobble() {
 			--data "sk=$SESSION_KEY" \
 			--data "timestamp=$TS" \
 			--data-urlencode "track=$track" | tr '\n' ' ')
+	elif [ "$GETINFO" = true ] ; then
+		echo "Getting info for track=[$track], artist=[$artist] ..."
+		curl -s "$SCHEMA://$API_URL/" \
+			--data "method=track.getinfo" \
+			--data "api_key=$API_KEY" \
+			--data "sk=$SESSION_KEY" \
+			--data-urlencode "track=$track" \
+			--data-urlencode "artist=$artist" \
+			--data "autocorrect=1" \
+			--data "format=xml" > $CONF_DIR/track.xml
+		RESPONSE_XML=$(cat $CONF_DIR/track.xml | tr '\n' ' ')
 	else
 		echo "Scrobbling $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
@@ -361,13 +382,17 @@ scrobble() {
 		if [ $DEBUG = true ] ; then
 			echo "Success!"
 		fi
-		log_scrobble "Scrobbled $track - $artist"
+		if [ "$LOVE" != true -a "$UNLOVE" != true -a "$GETINFO" != true ] ; then
+			log_scrobble "Scrobbled $track - $artist"
+		fi
 	else
-		echo "Error scrobbling $artist - $track: $RESPONSE_XML"
-		log_scrobble "Error scrobbling $artist - $track - $RESPONSE_XML"
+		if [ "$LOVE" != true -a "$UNLOVE" != true -a "$GETINFO" != true ] ; then
+			echo "Error scrobbling $artist - $track: $RESPONSE_XML"
+			log_scrobble "Error scrobbling $artist - $track - $RESPONSE_XML"
+		fi
 		return 1
 	fi
-	if [ "$LOVE" = true -o "$UNLOVE" = true -o "$UPDATE" != true ] ; then
+	if [ "$LOVE" = true -o "$UNLOVE" = true -o "$GETINFO" = true -o "$UPDATE" != true ] ; then
 		return 0
 	fi
 	# DO NOW LISTENING POST
@@ -485,6 +510,7 @@ API_SEC=false
 UPDATE=false
 LOVE=false
 UNLOVE=false
+GETINFO=false
 STOP=false
 DEBUG=false
 
@@ -511,6 +537,9 @@ while test $# -gt 0; do
 		--unlove)
 		UNLOVE=true
 		LOVE=false
+		;;
+		--info)
+		GETINFO=true
 		;;
 		--stop)
 		STOP=true
@@ -565,7 +594,7 @@ while test $# -gt 0; do
 		exit 0
 		;;
 		--version)
-		echo "$Id: moc-scrobbler.in,v 1.7 2024-04-08 22:50:05+05:30 Cprogrammer Exp mbhangui $"
+		echo "$Id: moc-scrobbler.in,v 1.8 2024-04-09 23:25:09+05:30 Cprogrammer Exp mbhangui $"
 		echo $AUTHOR
 		exit 0
 		;;
@@ -592,6 +621,9 @@ exit $?
 
 #
 # $Log: moc-scrobbler.in,v $
+# Revision 1.8  2024-04-09 23:25:09+05:30  Cprogrammer
+# added --info option to get track info
+#
 # Revision 1.7  2024-04-08 22:50:05+05:30  Cprogrammer
 # added unlove function
 #
