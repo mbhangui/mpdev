@@ -39,11 +39,17 @@ Known values for OPTION are:
 --toyear=To Year
   Year in YYYY format
 
---incgenre=Genre List to be included
+--includegenre=Genre List to be included
   comma separated list of genre.
 
---exlgenre=Genre List to be excluded
+--excludegenre=Genre List to be excluded
   comma separated list of genre
+
+--includeartist=Artist List to be included
+  comma separated list of artist.
+
+--excludeartist=Artist List to be excluded
+  comma separated list of artist
 
 --minrating=Minimum Rating (value from 0 to 10, or -1 for unrated songs)
 
@@ -137,13 +143,13 @@ greater (on a scale of 10), from the year 1970 to the year 2000. Sort the
 result on the \fIlast_played\fR field in ascendning order and in descending
 order of the \fIrating\fR field.
 
-\fBmpdplaylist\fR --fromyear=1970 --toyear=2000 --incgenre="Hindi" \
+\fBmpdplaylist\fR --fromyear=1970 --toyear=2000 --includegenre="Hindi" \
 --minrating=6 --oldfirst --popular
 
 List all songs in the genre 'Heavy Metal' and 'Hard Rock', added in the
 last 30 days
 
-\fBmpdplaylist\fR --incgenre="Heavy Metal, Hard Rock" --new=30
+\fBmpdplaylist\fR --includegenre="Heavy Metal, Hard Rock" --new=30
 
 List all songs heard in the last 10 days
 
@@ -168,7 +174,7 @@ last played at top
 
 Save the output in the mpd playlist new
 
-\fBmpdplaylist\fR --incgenre="Heavy Metal, Hard Rock" --new=30 --playlist=new
+\fBmpdplaylist\fR --includegenre="Heavy Metal, Hard Rock" --new=30 --playlist=new
 .EE
 
 .SH RETURN VALUE

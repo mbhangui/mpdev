@@ -1,11 +1,14 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.22  2024-04-10 21:29:19+05:30  Cprogrammer
+# fixed command line arguments with space
+#
 # Revision 1.21  2022-06-20 01:04:54+05:30  Cprogrammer
 # use directories set in ./configure
 #
 # Revision 1.20  2022-05-10 21:33:16+05:30  Cprogrammer
-# added --incartist, --exlartist to include, exclude artists in query
+# added --includeartist, --excludeartist to include, exclude artists in query
 #
 # Revision 1.19  2021-09-30 20:31:46+05:30  Cprogrammer
 # use -noheader option to prevent .sqlitrc settings messing with results
@@ -65,7 +68,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.21 2022-06-20 01:04:54+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.22 2024-04-10 21:29:19+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -97,16 +100,16 @@ Known values for OPTION are:
 --toyear=To Year
   Year in YYYY format
 
---incgenre=Genre List to be included
+--includegenre=Genre List to be included
   comma separated list of genre.
 
---exlgenre=Genre List to be excluded
+--excludegenre=Genre List to be excluded
   comma separated list of genre
 
---incartist=Arist List to be included
+--includeartist=Artist List to be included
   comma separated list of artist.
 
---exlartist=Arist List to be excluded
+--excludeartist=Artist List to be excluded
   comma separated list of artist
 
 --minrating=Minimum Rating (value from 0 to 10, or -1 for unrated songs)
@@ -224,33 +227,33 @@ while test $# -gt 0; do
 	--toyear=*)
 	toyear=$optarg
 	;;
-	--incgenre=*)
-	if [ -n "$exlgenre" ] ; then
-		echo "you cannot give both incgenre and exlgenre together" 1>&2
+	--includegenre=*)
+	if [ -n "$excludegenre" ] ; then
+		echo "you cannot give both includegenre and excludegenre together" 1>&2
 		usage 1
 	fi
-	incgenre=`echo $optarg| sed "s/ /_/g"`
+	includegenre=`echo $optarg| sed "s/ /_/g"`
 	;;
-	--exlgenre=*)
-	if [ -n "$incgenre" ] ; then
-		echo "you cannot give both incgenre and exlgenre together" 1>&2
+	--excludegenre=*)
+	if [ -n "$includegenre" ] ; then
+		echo "you cannot give both includegenre and excludegenre together" 1>&2
 		usage 1
 	fi
-	exlgenre=`echo $optarg| sed "s/ /_/g"`
+	excludegenre=`echo $optarg| sed "s/ /_/g"`
 	;;
-	--incartist=*)
-	if [ -n "$exlartist" ] ; then
-		echo "you cannot give both incartist and exlartist together" 1>&2
+	--includeartist=*)
+	if [ -n "$excludeartist" ] ; then
+		echo "you cannot give both includeartist and excludeartist together" 1>&2
 		usage 1
 	fi
-	incartist=`echo $optarg| sed "s/ /_/g"`
+	includeartist=`echo $optarg| sed "s/ /_/g"`
 	;;
-	--exlartist=*)
-	if [ -n "$incartist" ] ; then
-		echo "you cannot give both incartist and exlartist together" 1>&2
+	--excludeartist=*)
+	if [ -n "$includeartist" ] ; then
+		echo "you cannot give both includeartist and excludeartist together" 1>&2
 		usage 1
 	fi
-	exlartist=`echo $optarg| sed "s/ /_/g"`
+	excludeartist=`echo $optarg| sed "s/ /_/g"`
 	;;
 	--minrating=*)
 	minrate=$optarg
@@ -334,10 +337,10 @@ done
 verbose=""
 fromyear=""
 toyear=""
-incgenre=""
-exlgenre=""
-incarist=""
-exlarist=""
+includegenre=""
+excludegenre=""
+includeartist=""
+excludeartist=""
 artist=""
 minrate=""
 oldfirst=0
@@ -363,9 +366,8 @@ if [ $# -eq 0 -a -f $HOME/.mpdplaylist.options ] ; then
 fi
 process_cmdline "$@"
 if [ -n "$options_file" ] ; then
-	options=$(grep -v '^#' -h $options_file)
-	set -- $options
-	process_cmdline "$@"
+	options="$(grep -v '^#' -h $options_file)"
+	eval process_cmdline $options
 fi
 
 music_dir=`get_mpd_conf_value music_directory`
@@ -415,14 +417,14 @@ if [ -n "$toyear" ] ; then
 	sql_query="$sql_query date <= $toyear"
 fi
 count=0
-if [ -n "$exlgenre" ] ; then
+if [ -n "$excludegenre" ] ; then
 	if [ -z "$first_condition" ] ; then
 		sql_query="$sql_query WHERE"
 		first_condition=1
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	for i in $(echo $exlgenre | sed "s/,/ /g")
+	for i in $(echo $excludegenre | sed "s/,/ /g")
 	do
 		f=`echo $i|sed "s/_/ /g"`
 		if [ $count -eq 0 ] ; then
@@ -435,14 +437,14 @@ if [ -n "$exlgenre" ] ; then
 	sql_query="$sql_query)"
 fi
 count=0
-if [ -n "$incgenre" ] ; then
+if [ -n "$includegenre" ] ; then
 	if [ -z "$first_condition" ] ; then
 		sql_query="$sql_query WHERE"
 		first_condition=1
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	for i in $(echo $incgenre | sed "s/,/ /g")
+	for i in $(echo $includegenre | sed "s/,/ /g")
 	do
 		f=`echo $i|sed "s/_/ /g"`
 		if [ $count -eq 0 ] ; then
@@ -455,14 +457,14 @@ if [ -n "$incgenre" ] ; then
 	sql_query="$sql_query)"
 fi
 count=0
-if [ -n "$exlartist" ] ; then
+if [ -n "$excludeartist" ] ; then
 	if [ -z "$first_condition" ] ; then
 		sql_query="$sql_query WHERE"
 		first_condition=1
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	for i in $(echo $exlartist | sed "s/,/ /g")
+	for i in $(echo $excludeartist | sed "s/,/ /g")
 	do
 		f=`echo $i|sed "s/_/ /g"`
 		if [ $count -eq 0 ] ; then
@@ -475,14 +477,14 @@ if [ -n "$exlartist" ] ; then
 	sql_query="$sql_query)"
 fi
 count=0
-if [ -n "$incartist" ] ; then
+if [ -n "$includeartist" ] ; then
 	if [ -z "$first_condition" ] ; then
 		sql_query="$sql_query WHERE"
 		first_condition=1
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	for i in $(echo $incartist | sed "s/,/ /g")
+	for i in $(echo $includeartist | sed "s/,/ /g")
 	do
 		f=`echo $i|sed "s/_/ /g"`
 		if [ $count -eq 0 ] ; then
@@ -604,8 +606,8 @@ fi
 if [ $limit -gt 0 ] ; then
 		sql_query="$sql_query limit $limit"
 fi
-if [ -z "$fromyear" -a -z "$toyear" -a -z "$incgenre" -a -z "$exlgenre" \
-	-a -z "$incartist" -a -z "$exlartist" -a -z "$minrate" \
+if [ -z "$fromyear" -a -z "$toyear" -a -z "$includegenre" -a -z "$excludegenre" \
+	-a -z "$includeartist" -a -z "$excludeartist" -a -z "$minrate" \
 	-a -z "$artist" -a -z "$daysadded" -a -z "$daysheard" -a -z "$daysnotheard" \
 	-a -z "$play_counts" -a -z "$karma" ] ; then
 	echo "No options given and no default usage configuration found" 1>&2
