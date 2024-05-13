@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: moc-scrobbler.in,v 1.8 2024-04-09 23:25:09+05:30 Cprogrammer Exp mbhangui $
+# $Id: moc-scrobbler.in,v 1.9 2024-05-14 00:36:01+05:30 Cprogrammer Exp mbhangui $
 #
 
 ################################################################
@@ -223,29 +223,29 @@ scrobble() {
 	API_SIG=false
 	# Check for config file.
 	if [ ! -f "$CONF" ] ; then
-		echo "You must first run and connect to a scrobbling service, try:" 1>&2
+		echo "$BASE_SCRIPT: You must first run and connect to a scrobbling service, try:" 1>&2
 		echo "$BASE_SCRIPT --connect"  1>&2
 		return 1
 	fi
 	# Collect configuration data
 	. $CONF
 	if [ -z "$SESSION_KEY" ] ; then
-		echo "Session key is not set." 1>&2
+		echo "$BASE_SCRIPT: Session key is not set." 1>&2
 		ERR=true
 	fi
 	if [ -z "$API_KEY" -o -z "$API_SEC" ] ; then
-		echo "API key, API secret is not set. You need to generate API key at https://www.last.fm/api/account/create" 1>&2
+		echo "$BASE_SCRIPT: API key, API secret is not set. You need to generate API key at https://www.last.fm/api/account/create" 1>&2
 		ERR=true
 	fi
 	if [ -z "$HOST" ] ; then
-		echo "Host is not set." 1>&2
+		echo "$BASE_SCRIPT: Host is not set." 1>&2
 		ERR=true
 	fi
 	if [ "$ERR" = true ] ; then
 		(
-		echo "Your configuration in $CONF is not valid"
-		echo "It should have SESSION_KEY, API_KEY, API_SEC variables"
-		echo "try running:"
+		echo "$BASE_SCRIPT: Your configuration in $CONF is not valid"
+		echo "$BASE_SCRIPT: It should have SESSION_KEY, API_KEY, API_SEC variables"
+		echo "$BASE_SCRIPT: try running:"
 		) 1>&2
 		echo "$BASE_SCRIPT --connect" 1>&2
 		return 1
@@ -254,12 +254,12 @@ scrobble() {
 	# Check for minimum arguments to scrobble
 	if [ "$LOVE" = true -o "$UNLOVE" = true -o "$GETINFO" = true ] ; then
 		if [ -z "$artist" ] || [ -z "$track" ] ; then
-			echo "--artist and --track options are required" 1>&2
+			echo "$BASE_SCRIPT: --artist and --track options are required" 1>&2
 			ERR=true
 		fi
 	elif [ "$STOP" != true ] ; then
 		if [ -z "$artist" ] || [ -z "$track" ]  || [ -z "$duration" ] ; then
-			echo "--artist and --track and --duration options are required" 1>&2
+			echo "$BASE_SCRIPT: --artist and --track and --duration options are required" 1>&2
 			ERR=true
 		fi
 	fi
@@ -270,7 +270,7 @@ scrobble() {
 
 	if [ "$STOP" = true ] ; then
 		# Stop
-		echo "Deleting state.current"
+		echo "$BASE_SCRIPT: Deleting state.current"
 		rm -f $CONF_DIR/track.current
 		return 0
 	elif [ "$LOVE" != true -a "$UNLOVE" != true ] ; then
@@ -322,14 +322,14 @@ scrobble() {
 	API_SIG=$(printf "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
 	echo $API_SIG | $grep -E "^[0-9A-Fa-f]{32}" >/dev/null
 	if [ $? -ne 0 ] ; then
-		echo "Bad signature [API_SIG=$API_SIG]" 1>&2
+		echo "$BASE_SCRIPT: Bad signature [API_SIG=$API_SIG]" 1>&2
 		return 1
 	fi
 	if [ $DEBUG = true ] ; then
-		echo "Signature API_SIG=$API_SIG"
+		echo "$BASE_SCRIPT: Signature API_SIG=$API_SIG"
 	fi
 	if [ "$LOVE" = true ] ; then
-		echo "Loving ... $track $album $artist"
+		echo "$BASE_SCRIPT: Loving ... $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 			--data-urlencode "album=$album" \
 			--data "api_key=$API_KEY" \
@@ -340,7 +340,7 @@ scrobble() {
 			--data "timestamp=$TS" \
 			--data-urlencode "track=$track" | tr '\n' ' ')
 	elif [ "$UNLOVE" = true ] ; then
-		echo "UnLoving ... $track $album $artist"
+		echo "$BASE_SCRIPT: UnLoving ... $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 			--data-urlencode "album=$album" \
 			--data "api_key=$API_KEY" \
@@ -351,7 +351,7 @@ scrobble() {
 			--data "timestamp=$TS" \
 			--data-urlencode "track=$track" | tr '\n' ' ')
 	elif [ "$GETINFO" = true ] ; then
-		echo "Getting info for track=[$track], artist=[$artist] ..."
+		echo "$BASE_SCRIPT: Getting info for track=[$track], artist=[$artist] ..."
 		curl -s "$SCHEMA://$API_URL/" \
 			--data "method=track.getinfo" \
 			--data "api_key=$API_KEY" \
@@ -362,7 +362,7 @@ scrobble() {
 			--data "format=xml" > $CONF_DIR/track.xml
 		RESPONSE_XML=$(cat $CONF_DIR/track.xml | tr '\n' ' ')
 	else
-		echo "Scrobbling $track $album $artist"
+		echo "$BASE_SCRIPT: Scrobbling $track $album $artist"
 		RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 			--data-urlencode "album=$album" \
 			--data "api_key=$API_KEY" \
@@ -375,19 +375,19 @@ scrobble() {
 			--data-urlencode "track=$track" | tr '\n' ' ')
 	fi
 	if [ $DEBUG = true ] ; then
-		echo "$RESPONSE_XML"
+		echo "$BASE_SCRIPT: $RESPONSE_XML"
 	fi
 	STATUS=$(echo "$RESPONSE_XML" | $grep -oPm1 "(?<=<lfm status=\")[^\"]+")
 	if [ "$STATUS" = 'ok' ] ; then
 		if [ $DEBUG = true ] ; then
-			echo "Success!"
+			echo "$BASE_SCRIPT: Success!"
 		fi
 		if [ "$LOVE" != true -a "$UNLOVE" != true -a "$GETINFO" != true ] ; then
 			log_scrobble "Scrobbled $track - $artist"
 		fi
 	else
 		if [ "$LOVE" != true -a "$UNLOVE" != true -a "$GETINFO" != true ] ; then
-			echo "Error scrobbling $artist - $track: $RESPONSE_XML"
+			echo "$BASE_SCRIPT: Error scrobbling $artist - $track: $RESPONSE_XML"
 			log_scrobble "Error scrobbling $artist - $track - $RESPONSE_XML"
 		fi
 		return 1
@@ -409,19 +409,19 @@ scrobble() {
 	fi
 	TOSIGN="${TOSIGN}methodtrack.updateNowPlayingsk${SESSION_KEY}timestamp${TS}track${track}"
 	if [ $DEBUG = true ] ; then
-		echo "Using provided API credentials."
+		echo "$BASE_SCRIPT: Using provided API credentials."
 	fi
 	API_SIG=$(printf "${TOSIGN}${API_SEC}" | iconv -t utf8 | $md5sum | cut -c1-32)
 	if [ $DEBUG = true ] ; then
-		echo "Got $API_SIG "
+		echo "$BASE_SCRIPT: Got $API_SIG "
 	fi
 	# DO UPDATE POST
 	echo $API_SIG | $grep -E "^[0-9A-Fa-f]{32}" >/dev/null
 	if [ $? -ne 0 ] ; then
-		echo "Error, bad API signature." 1>&2
+		echo "$BASE_SCRIPT: Error, bad API signature." 1>&2
 		return 1
 	fi
-	echo "Scrobbling now $track $album $artist"
+	echo "$BASE_SCRIPT: Scrobbling now $track $album $artist"
 	RESPONSE_XML=$(curl -sX POST "$SCHEMA://$API_URL/" \
 		--data-urlencode "album=$album" \
 		--data "api_key=$API_KEY" \
@@ -443,7 +443,7 @@ scrobble() {
 		log_scrobble "Now listening to $track by $artist "
 		return 0
 	else
-		echo "Error scrobbling update $artist - $track"
+		echo "$BASE_SCRIPT: Error scrobbling update $artist - $track" 1>&2
 		log_scrobble "Now listening failed for $artist - $track - $RESPONSE_XML"
 		return 1
 	fi
@@ -594,7 +594,7 @@ while test $# -gt 0; do
 		exit 0
 		;;
 		--version)
-		echo "$Id: moc-scrobbler.in,v 1.8 2024-04-09 23:25:09+05:30 Cprogrammer Exp mbhangui $"
+		echo "$Id: moc-scrobbler.in,v 1.9 2024-05-14 00:36:01+05:30 Cprogrammer Exp mbhangui $"
 		echo $AUTHOR
 		exit 0
 		;;
@@ -621,6 +621,9 @@ exit $?
 
 #
 # $Log: moc-scrobbler.in,v $
+# Revision 1.9  2024-05-14 00:36:01+05:30  Cprogrammer
+# display script name in error messages
+#
 # Revision 1.8  2024-04-09 23:25:09+05:30  Cprogrammer
 # added --info option to get track info
 #
