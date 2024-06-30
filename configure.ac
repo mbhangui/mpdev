@@ -73,7 +73,7 @@ fi
 
 # Checks for header files.
 AC_CHECK_HEADERS([string.h unistd.h errno.h fcntl.h time.h sys/time.h stdlib.h sys/types.h sys/stat.h])
-AC_CHECK_HEADERS([limits.h stdint.h stdbool.h sys/param.h dlfcn.h link.h])
+AC_CHECK_HEADERS([limits.h stdarg.h stdint.h stdbool.h sys/param.h dlfcn.h link.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SSIZE_T
