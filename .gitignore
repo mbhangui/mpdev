@@ -48,6 +48,7 @@ m4/lt~obsolete.m4
 Makefile
 .deps
 conf-release
+config.h.in
 config.h.in.BAK
 config.h.in~
 haveip6.h
@@ -99,3 +100,7 @@ songi
 config.h.in
 mpdhist
 lcd_display
+config.guess.BAK
+config.sub.BAK
+configure.BAK
+install-sh.BAK
