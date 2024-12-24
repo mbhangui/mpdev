@@ -25,7 +25,7 @@ jobs:
 
     - name: install_qmail
       run: |
-        sudo apt-get update; sudo apt-get install libssl-dev libmysqlclient-dev
+        sudo apt-get update; sudo apt-get install libssl-dev libmysqlclient-dev libsqlite3-dev
         cd libqmail; ./default.configure; make; sudo make install-strip
     - name: prepare obs
       run: /bin/rm -rf libqmail;./prepare_obs mpdev

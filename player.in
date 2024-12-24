@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: player.in,v 1.53 2024-03-11 16:47:18+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.54 2024-12-23 19:08:35+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -247,7 +247,7 @@ update_song()
 			no_db_update=1
 		fi
 	fi
-	if [ " $state" = " now-playing" ] ; then
+	if [ "$state" = "now-playing" ] ; then
 		if [ -f $MPDEV_TMPDIR/start_time.$csum ] ; then
 			START_TIME=`cat $MPDEV_TMPDIR/start_time.$csum`
 		fi
@@ -359,7 +359,7 @@ update_song()
 	fi
 	prev_last_played=$(get_stats_last_played "$uri")
 	if [ $VERBOSE -gt 0 ] ; then
-		if [ ! -f $MPDEV_TMPDIR/rating.$csum -a " $state" = " now-playing" ] ; then
+		if [ ! -f $MPDEV_TMPDIR/rating.$csum -a "$state" = "now-playing" ] ; then
 			if [ $gnu_date -eq 1 ] ; then
 				echo -n "NewSong [$csum] Start=$START_TIME [`date +"%Y-%m-%d %H:%M:%S" --date=@"$START_TIME"`] "
 			else
@@ -426,7 +426,7 @@ update_song()
 		fi
 		if [ -n "$SCROBBLE_LIBREFM" -o -n "$SCROBBLE_LASTFM" ] ; then
 			if [ ! -f $MPDEV_TMPDIR/scrobble.$csum ] ; then
-				if [ ! " $PLAYER_STATE" = " pause" -a ! " $PLAYER_STATE" = " stop" ] ; then
+				if [ ! "$PLAYER_STATE" = "pause" -a ! "$PLAYER_STATE" = "stop" ] ; then
 					scrobble
 					touch $MPDEV_TMPDIR/scrobble.$csum
 				fi
@@ -434,7 +434,7 @@ update_song()
 		fi
 		;;
 		"end-song"|"pause-song")
-		if [ " $state" = " end-song" ] ; then
+		if [ "$state" = "end-song" ] ; then
 			if [ -z "$END_TIME" ] ; then
 				exit 0
 			fi
@@ -454,7 +454,7 @@ update_song()
 		fi
 		if [ -n "$SONG_PLAYED_DURATION" ] ; then
 			percent=$(awk "BEGIN { pc=100*${SONG_PLAYED_DURATION}/${SONG_DURATION}; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-			if [ " $percent" = " 0.0" ] ; then
+			if [ "$percent" = "0.0" ] ; then
 				percent=0
 			fi
 			var=$(awk 'BEGIN {print ('$percent\>=$MIN_PLAY_PERCENT')}')
@@ -471,9 +471,9 @@ update_song()
 			else
 				if [ -n "$SONG_PLAYED_DURATION" ] ; then
 					if [ $var -eq 0 ] ; then
-						downgrade_karma "$uri"
-					fi
-					if [ $var -eq 0 ] ; then
+						if [ "$state" = "end-song" ] ; then
+							downgrade_karma "$uri"
+						fi
 						echo "SONG [$csum] "$percent"% played duration=$SONG_PLAYED_DURATION secs (partial)"
 					else
 						echo "SONG [$csum] "$percent"% played duration=$SONG_PLAYED_DURATION secs (full)"
@@ -502,7 +502,7 @@ update_song()
 				fi
 			fi
 		fi
-		if [ " $state" = " end-song" ] ; then
+		if [ "$state" = "end-song" ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
 				if [ -n "$END_TIME" ] ; then
 					if [ $gnu_date -eq 1 ] ; then
@@ -520,7 +520,7 @@ update_song()
 				$MPDEV_TMPDIR/start_time.$csum $MPDEV_TMPDIR/rating.$csum \
 				$MPDEV_TMPDIR/stats_playcount.$csum \
 				$MPDEV_TMPDIR/percent_played $MPDEV_TMPDIR/pcount.$csum $MPDEV_TMPDIR/end.$csum
-		elif [ " $state" = " pause-song" ] ; then
+		elif [ "$state" = "pause-song" ] ; then
 			if [ $VERBOSE -gt 0 ] ; then
 				if [ -n "$END_TIME" ] ; then
 					if [ $gnu_date -eq 1 ] ; then
@@ -598,6 +598,9 @@ fi
 exit 0
 
 # $Log: player.in,v $
+# Revision 1.54  2024-12-23 19:08:35+05:30  Cprogrammer
+# do now downgrade karma on pause-song
+#
 # Revision 1.53  2024-03-11 16:47:18+05:30  Cprogrammer
 # removed rompr
 #

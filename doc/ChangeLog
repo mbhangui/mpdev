@@ -52,6 +52,8 @@ Release 1.1 Start 30/06/2022 End --/--/----
 27. mpdplaylist.in: fixed command line arguments having space
 - 01/08/2024
 28. karma.in: fixes for MacOS
+- 23/12/2024
+29. player.in: do not downgrade karma on pause song
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
