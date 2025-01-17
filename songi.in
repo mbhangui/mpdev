@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: songi.in,v 1.7 2024-04-04 20:51:29+05:30 Cprogrammer Exp mbhangui $
+# $Id: songi.in,v 1.8 2025-01-17 12:13:54+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -53,12 +53,23 @@ display_info()
 		last_played="never"
 	else
 		t2=$(date +%s)
+		extra_days=0
+		extra_days_func $t1
 		diff=$(echo $t1 $t2 | awk '{printf("%d\n", $2-$1)}')
 		days=$(echo $diff   | awk '{printf("%d\n", $1/86400)}')
+		years=$(expr $days / 365)
+		days=$(expr $days % 365)
+		if [ $extra_days -gt 0 ] ; then
+			days=$(expr $days - 1)
+		fi
 		hours=$(echo $diff  | awk '{printf("%d\n", ($1%86400)/3600)}')
 		mins=$(echo $diff   | awk '{printf("%d\n", ($1%3600)/60)}')
 		secs=$(echo $diff   | awk '{printf("%d\n", $1%60)}')
-		last_played="$(date --date=@"$t1")\n Last Played = $days days $hours hr $mins min $secs sec ago"
+		if [ $years -eq 0 ] ; then
+			last_played="$(date --date=@"$t1")\n Last Played = $days days $hours hr $mins min $secs sec"
+		else
+			last_played="$(date --date=@"$t1")\n Last Played = $years years $days days $hours hr $mins min $secs sec"
+		fi
 	fi
 	# duration
 	t1=$(sed -n 6p < $out | awk '{print $3}')
@@ -74,6 +85,63 @@ display_info()
 		-e "s{last_played.*{Last Played = $last_played{g" \
 		-e "s{duration.*{Duration = $duration{g" < $out
 	/bin/rm -f $out
+}
+
+extra_days_func()
+{
+	t1=$1
+	t2=$(date +%s)
+	y1=$(date --date="@$t1" +%Y)
+	m1=$(date --date="@$t1" +%m)
+	y2=$(date --date="@$t2" +%Y)
+	m2=$(date --date="@$t2" +%m)
+	year=$y1
+	first_flag=1
+	extra_days=0
+	while true
+	do
+		leap_year=0
+		is_century=$(expr $year % 100)
+		if [ $is_century -eq 0 ] ; then
+			is_400=$(expr $year % 400)
+			if [ $is_400 -eq 0 ] ; then
+				leap_year=1
+			fi
+		else
+			is_4=$(expr $year % 4)
+			if [ $is_4 -eq 0 ] ; then
+				leap_year=1
+			fi
+		fi
+		if [ $leap_year -eq 1 ] ; then
+			if [ $first_flag -eq 1 ] ; then
+				d1=$(date --date="@$t1" +%d)
+				if [ $m1 -eq 2 -a $d1 -lt 29 ] ; then
+					extra_days=$(expr $extra_days + 1)
+				elif [ $m1 -eq 1 ] ; then
+					extra_days=$(expr $extra_days + 1)
+				fi
+				first_flag=0
+			else
+				extra_days=$(expr $extra_days + 1)
+			fi
+		fi
+		if [ $year -eq $y2 ] ; then
+			if [ $leap_year -eq 1 ] ; then
+				d2=$(date --date="@$t2" +%d)
+				if [ $m2 -eq 2 -a $d2 -gt 28 ] ; then
+					extra_days=$(expr $extra_days + 1)
+				elif [ $m2 -gt 2 ] ; then
+					extra_days=$(expr $extra_days + 1)
+				fi
+			fi
+			break
+		fi
+		year=$(expr $year + 1)
+		if [ $year -gt $y2 ] ; then
+			break
+		fi
+	done
 }
 
 if [ $# -eq 0 ] ; then
@@ -131,6 +199,9 @@ do
 done
 #
 # $Log: songi.in,v $
+# Revision 1.8  2025-01-17 12:13:54+05:30  Cprogrammer
+# display last played in years, days, hours, minutes, seconds
+#
 # Revision 1.7  2024-04-04 20:51:29+05:30  Cprogrammer
 # fixed last_played when song has never been played
 #
