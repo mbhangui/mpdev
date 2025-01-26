@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev.c,v $
+ * Revision 1.29  2025-01-26 16:45:53+05:30  Cprogrammer
+ * fix gcc14 errors
+ *
  * Revision 1.28  2023-06-10 19:24:56+05:30  Cprogrammer
  * replaced multiple out() with subprintf
  *
@@ -127,7 +130,7 @@
 #include <pathexec.h>
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev.c,v 1.28 2023-06-10 19:24:56+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev.c,v 1.29 2025-01-26 16:45:53+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 #define PAUSE_STATE   1
@@ -135,7 +138,7 @@ static char     sccsid[] = "$Id: mpdev.c,v 1.28 2023-06-10 19:24:56+05:30 Cprogr
 #define PLAY_STATE    3
 
 extern char    *strptime(const char *, const char *, struct tm *);
-ssize_t         safewrite(int, char *, int);
+ssize_t         safewrite(int, char *, size_t);
 unsigned int    scan_double(const char *, double *);
 
 substdio        mpdin, mpdout, ssout, sserr;
@@ -268,7 +271,7 @@ die_nomem()
 }
 
 ssize_t
-safewrite(int fd, char *buf, int len)
+safewrite(int fd, char *buf, size_t len)
 {
 	int             r;
 
@@ -1102,8 +1105,8 @@ main(int argc, char **argv)
 	double          elapsed;
 	time_t          duration_i, t;
 
-	substdio_fdbuf(&ssout, write, 1, ssoutbuf, sizeof(sserrbuf));
-	substdio_fdbuf(&sserr, write, 2, sserrbuf, sizeof(sserrbuf));
+	substdio_fdbuf(&ssout, (ssize_t (*)(int,  char *, size_t)) write, 1, ssoutbuf, sizeof(sserrbuf));
+	substdio_fdbuf(&sserr, (ssize_t (*)(int,  char *, size_t)) write, 2, sserrbuf, sizeof(sserrbuf));
 	if (!(mpd_host = env_get("MPD_HOST")))
 		mpd_host = "127.0.0.1";
 	mpd_socket = env_get("MPD_SOCKET");
@@ -1181,7 +1184,7 @@ main(int argc, char **argv)
 						mpd_socket ? mpd_socket : mpd_host, port);
 			flush();
 		}
-		substdio_fdbuf(&mpdin, read, sock, mpdinbuf, sizeof mpdinbuf);
+		substdio_fdbuf(&mpdin, (ssize_t (*)(int,  char *, size_t)) read, sock, mpdinbuf, sizeof mpdinbuf);
 		substdio_fdbuf(&mpdout, safewrite, sock, mpdoutbuf, sizeof mpdoutbuf);
 		get_outputs();
 		run_command(OUTPUT_EVENT, "output-initialize", 0);
@@ -1325,7 +1328,7 @@ main(int argc, char **argv)
 void
 getversion_mpdev_C()
 {
-	static char    *x = "$Id: mpdev.c,v 1.28 2023-06-10 19:24:56+05:30 Cprogrammer Exp mbhangui $";
+	static char    *x = "$Id: mpdev.c,v 1.29 2025-01-26 16:45:53+05:30 Cprogrammer Exp mbhangui $";
 
 	x++;
 }

@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_cleanup.c,v $
+ * Revision 1.5  2025-01-26 16:45:47+05:30  Cprogrammer
+ * fix gcc14 errors
+ *
  * Revision 1.4  2022-05-10 21:31:23+05:30  Cprogrammer
  * use tcpopen from standard include path
  *
@@ -41,11 +44,11 @@
 #include "replacestr.h"
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.4 2022-05-10 21:31:23+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_cleanup.c,v 1.5 2025-01-26 16:45:47+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
-ssize_t         safewrite(int, char *, int);
-ssize_t         saferead(int, char *, int);
+ssize_t         safewrite(int, char *, size_t);
+ssize_t         saferead(int, char *, size_t);
 
 substdio        mpdin, mpdout, ssout, sserr;
 static stralloc line = {0}, tmp = {0};
@@ -143,7 +146,7 @@ die_nomem()
 }
 
 ssize_t
-saferead(int fd, char *buf, int len)
+saferead(int fd, char *buf, size_t len)
 {
 	int             r;
 
@@ -157,7 +160,7 @@ saferead(int fd, char *buf, int len)
 }
 
 ssize_t
-safewrite(int fd, char *buf, int len)
+safewrite(int fd, char *buf, size_t len)
 {
 	int             r;
 
@@ -329,8 +332,8 @@ main(int argc, char **argv)
 				   *mpd_socket, *mpd_host, *ptr;
 	sqlite3_stmt   *r_res;
 
-	substdio_fdbuf(&ssout, write, 1, ssoutbuf, sizeof(sserrbuf));
-	substdio_fdbuf(&sserr, write, 2, sserrbuf, sizeof(sserrbuf));
+	substdio_fdbuf(&ssout, (ssize_t (*)(int,  char *, size_t)) write, 1, ssoutbuf, sizeof(sserrbuf));
+	substdio_fdbuf(&sserr, (ssize_t (*)(int,  char *, size_t)) write, 2, sserrbuf, sizeof(sserrbuf));
 	if (!(mpd_host = env_get("MPD_HOST")))
 		mpd_host = "127.0.0.1";
 	mpd_socket = env_get("MPD_SOCKET");

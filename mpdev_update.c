@@ -1,5 +1,8 @@
 /*
  * $Log: mpdev_update.c,v $
+ * Revision 1.10  2025-01-26 16:45:59+05:30  Cprogrammer
+ * fix gcc14 errors
+ *
  * Revision 1.9  2022-06-20 01:04:16+05:30  Cprogrammer
  * remove extra arguments passed to print_song
  *
@@ -66,12 +69,12 @@
 #include <tcpopen.h>
 
 #ifndef	lint
-static char     sccsid[] = "$Id: mpdev_update.c,v 1.9 2022-06-20 01:04:16+05:30 Cprogrammer Exp mbhangui $";
+static char     sccsid[] = "$Id: mpdev_update.c,v 1.10 2025-01-26 16:45:59+05:30 Cprogrammer Exp mbhangui $";
 #endif
 
 extern char    *strptime(const char *, const char *, struct tm *);
-ssize_t         safewrite(int, char *, int);
-ssize_t         saferead(int, char *, int);
+ssize_t         safewrite(int, char *, size_t);
+ssize_t         saferead(int, char *, size_t);
 
 substdio        mpdin, mpdout, ssout, sserr;
 static stralloc uri = {0}, last_modified = {0}, album = {0}, artist = {0},
@@ -173,7 +176,7 @@ die_nomem()
 }
 
 ssize_t
-saferead(int fd, char *buf, int len)
+saferead(int fd, char *buf, size_t len)
 {
 	int             r;
 
@@ -187,7 +190,7 @@ saferead(int fd, char *buf, int len)
 }
 
 ssize_t
-safewrite(int fd, char *buf, int len)
+safewrite(int fd, char *buf, size_t len)
 {
 	int             r;
 
@@ -548,8 +551,8 @@ main(int argc, char **argv)
 	char           *mpd_socket, *mpd_host, *ptr, *database;
 	sqlite3_stmt   *res;
 
-	substdio_fdbuf(&ssout, write, 1, ssoutbuf, sizeof(sserrbuf));
-	substdio_fdbuf(&sserr, write, 2, sserrbuf, sizeof(sserrbuf));
+	substdio_fdbuf(&ssout, (ssize_t (*)(int,  char *, size_t)) write, 1, ssoutbuf, sizeof(sserrbuf));
+	substdio_fdbuf(&sserr, (ssize_t (*)(int,  char *, size_t)) write, 2, sserrbuf, sizeof(sserrbuf));
 	if (!(mpd_host = env_get("MPD_HOST")))
 		mpd_host = "127.0.0.1";
 	mpd_socket = env_get("MPD_SOCKET");
