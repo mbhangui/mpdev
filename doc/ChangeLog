@@ -57,6 +57,8 @@ Release 1.1 Start 30/06/2022 End --/--/----
 - 17/01/2025
 30. create_services: create XDG_RUNTIME_DIR as /run/user/$uid
 31. songi: fixed last_played when song has never been played
+- 11/02/2025
+32. player.in: return db operation 5 times on failure
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
