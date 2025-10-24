@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-# $Id: player.in,v 1.55 2025-02-11 23:11:43+05:30 Cprogrammer Exp mbhangui $
+# $Id: player.in,v 1.56 2025-10-24 23:23:11+05:30 Cprogrammer Exp mbhangui $
 #
 get_mpd_conf_value()
 {
@@ -102,7 +102,7 @@ sticker_db_update()
 		ret=1
 		sleep 0.5
 	done
-	if [ $ret-ne 0 ] ; then
+	if [ $ret -ne 0 ] ; then
 		echo "ERROR: UPDATE sticker SET value=$tmprate WHERE type='song' AND uri='$turi';" 1>&2
 		return 1
 	fi
@@ -432,7 +432,7 @@ update_song()
 			fi
 			if [ $rating -gt 0 ] ; then
 				inserted=2
-				if [ -z "$sticker_rating" -o $sticker_rating -eq 0 ] ; then
+				if [ -z "$sticker_rating" -o "$sticker_rating" -eq 0 ] ; then
 					if [ $sticker_enabled -eq 1 ] ; then
 						sticker_db_update "$uri" "$rating"
 						if [ ! -f $MPDEV_TMPDIR/sticker.$csum ] ; then
@@ -440,7 +440,7 @@ update_song()
 						fi
 					fi
 				fi
-				if [ -z "$stats_rating" -o $stats_rating -eq 0 ] ; then
+				if [ -z "$stats_rating" -o "$stats_rating" -eq 0 ] ; then
 					if  [ $stats_enabled -eq 1 ] ; then
 						stats_db_update "$uri" "$rating" "$START_TIME" 0
 						if [ ! -f $MPDEV_TMPDIR/stats.$csum ] ; then
@@ -699,6 +699,9 @@ fi
 exit 0
 
 # $Log: player.in,v $
+# Revision 1.56  2025-10-24 23:23:11+05:30  Cprogrammer
+# fix syntax errors
+#
 # Revision 1.55  2025-02-11 23:11:43+05:30  Cprogrammer
 # return db operation 5 times on failure
 #
