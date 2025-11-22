@@ -1,6 +1,10 @@
 #!/bin/sh
 # 
 # $Log: mpdplaylist.in,v $
+# Revision 1.23  2025-11-22 18:56:44+05:30  Cprogrammer
+# fixed --karma for <= and >= options
+# allow <, >, <= and >= options for --new option
+#
 # Revision 1.22  2024-04-10 21:29:19+05:30  Cprogrammer
 # fixed command line arguments with space
 #
@@ -68,7 +72,7 @@
 # Initial revision
 #
 #
-# $Id: mpdplaylist.in,v 1.22 2024-04-10 21:29:19+05:30 Cprogrammer Exp mbhangui $
+# $Id: mpdplaylist.in,v 1.23 2025-11-22 18:56:44+05:30 Cprogrammer Exp mbhangui $
 #
 
 get_mpd_conf_value()
@@ -190,26 +194,72 @@ EOF
 exit $1
 }
 
+process_daysadded()
+{
+	case "$1" in
+	-*\>=*)
+	optarg=$(echo "$1" | cut -d'>' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*>=//')
+	optval=">=$optval"
+	;;
+	-*\<=*)
+	optarg=$(echo "$1" | cut -d'<' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*<=//')
+	optval="<=$optval"
+	;;
+	-*=*)
+	optarg=$(echo "$1" | cut -d'=' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*=//')
+	;;
+	-*\>*)
+	optarg=$(echo "$1" | cut -d'>' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*>//')
+	optval=">$optval"
+	;;
+	-*\<*)
+	optarg=$(echo "$1" | cut -d'<' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*<//')
+	optval="<$optval"
+	;;
+	*)
+	optarg=""
+	optval=""
+	;;
+	esac
+}
+
 process_cmdline()
 {
 while test $# -gt 0; do
 	case "$1" in
+	-*\>=*)
+	optarg=$(echo "$1" | cut -d'>' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*>=//')
+	optval=">=$optval"
+	prog_args="$prog_args $optarg=\"$optval\""
+	;;
+	-*\<=*)
+	optarg=$(echo "$1" | cut -d'<' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*<=//')
+	optval="<=$optval"
+	prog_args="$prog_args $optarg=\"$optval\""
+	;;
 	-*=*)
-	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'`
-	optval=`echo "$1" | cut -d'=' -f1`
-	prog_args="$prog_args $optval=\"$optarg\""
+	optarg=$(echo "$1" | cut -d'=' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*=//')
+	prog_args="$prog_args $optarg=\"$optval\""
 	;;
 	-*\>*)
-	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*>//'`
-	optarg=">$optarg"
-	optval=`echo "$1" | cut -d'>' -f1`
-	prog_args="$prog_args $optval\"$optarg\""
+	optarg=$(echo "$1" | cut -d'>' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*>//')
+	optval=">$optval"
+	prog_args="$prog_args $optarg\"$optval\""
 	;;
 	-*\<*)
-	optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*<//'`
-	optarg="<$optarg"
-	optval=`echo "$1" | cut -d'<' -f1`
-	prog_args="$prog_args $optval\"$optarg\""
+	optarg=$(echo "$1" | cut -d'<' -f1)
+	optval=$(echo "$1" | sed 's/[-_a-zA-Z0-9]*<//')
+	optval="<$optval"
+	prog_args="$prog_args $optarg\"$optval\""
 	;;
 	*)
 	optarg=
@@ -219,80 +269,85 @@ while test $# -gt 0; do
 
 	case "$1" in
 	--options-file=*)
-	options_file=$optarg
+	options_file=$optval
 	;;
 	--fromyear=*)
-	fromyear=$optarg
+	fromyear=$optval
 	;;
 	--toyear=*)
-	toyear=$optarg
+	toyear=$optval
 	;;
 	--includegenre=*)
 	if [ -n "$excludegenre" ] ; then
 		echo "you cannot give both includegenre and excludegenre together" 1>&2
 		usage 1
 	fi
-	includegenre=`echo $optarg| sed "s/ /_/g"`
+	includegenre=$(echo $optval| sed "s/ /_/g")
 	;;
 	--excludegenre=*)
 	if [ -n "$includegenre" ] ; then
 		echo "you cannot give both includegenre and excludegenre together" 1>&2
 		usage 1
 	fi
-	excludegenre=`echo $optarg| sed "s/ /_/g"`
+	excludegenre=$(echo $optval| sed "s/ /_/g")
 	;;
 	--includeartist=*)
 	if [ -n "$excludeartist" ] ; then
 		echo "you cannot give both includeartist and excludeartist together" 1>&2
 		usage 1
 	fi
-	includeartist=`echo $optarg| sed "s/ /_/g"`
+	includeartist=$(echo $optval| sed "s/ /_/g")
 	;;
 	--excludeartist=*)
 	if [ -n "$includeartist" ] ; then
 		echo "you cannot give both includeartist and excludeartist together" 1>&2
 		usage 1
 	fi
-	excludeartist=`echo $optarg| sed "s/ /_/g"`
+	excludeartist=$(echo $optval| sed "s/ /_/g")
 	;;
 	--minrating=*)
-	minrate=$optarg
+	minrate=$optval
 	;;
 	--artist=*)
 	exact=1
-	artist=`echo "$optarg"| sed "s/ /_/g"`
+	artist=$(echo "$optval"| sed "s/ /_/g")
 	;;
 	--artistany=*)
 	exact=0
-	artist=`echo $optarg| sed "s/ /_/g"`
+	artist=$(echo $optval| sed "s/ /_/g")
 	;;
-	--karma=*|--karma\>*|--karma\<*)
-	first_char=$(echo $optarg | cut -c1)
+	--karma=*|--karma\>*|--karma\<*|--karma\>=*|--karma\<=*)
+	first_char=$(echo $optval | cut -c1)
 	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
-		karma="karma=$optarg"
+		karma="karma=$optval"
 	else
-		karma="karma$optarg"
+		karma="karma$optval"
 	fi
 	;;
 	--playcount=*|--playcount\>*|--playcount\<*)
-	first_char=$(echo $optarg | cut -c1)
+	first_char=$(echo $optval | cut -c1)
 	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
-		play_counts="play_count=$optarg"
+		play_counts="play_count=$optval"
 	else
-		play_counts="play_count$optarg"
+		play_counts="play_count$optval"
 	fi
 	;;
-	--new=*)
-	daysadded=$optarg
+	--new=*|--new\>*|--new\<*|--new\>=*|--new\<=*)
+	first_char=$(echo $optval | cut -c1)
+	if [ ! "$first_char" = ">" -a ! "$first_char" = "<" ] ; then
+		daysadded="--daysadded=$optval"
+	else
+		daysadded="--daysadded$optval"
+	fi
 	;;
 	--daysheard=*)
-	daysheard=$optarg
+	daysheard=$optval
 	;;
 	--daysnotheard=*)
-	daysnotheard=$optarg
+	daysnotheard=$optval
 	;;
 	--playlist=*)
-	playlist=$optarg
+	playlist=$optval
 	;;
 	--oldfirst)
 	oldfirst=1
@@ -310,7 +365,7 @@ while test $# -gt 0; do
 	do_clear=1
 	;;
 	--limit=*)
-	limit=$optarg
+	limit=$optval
 	;;
 	--play)
 	do_play=1
@@ -319,10 +374,10 @@ while test $# -gt 0; do
 	verbose="-v"
 	;;
 	--host=*)
-	mpd_host=$optarg
+	mpd_host=$optval
 	;;
 	--help)
-	playlist_dir=`get_mpd_conf_value playlist_dir`
+	playlist_dir=$(get_mpd_conf_value playlist_dir)
 	usage 0
 	;;
 	*)
@@ -370,17 +425,17 @@ if [ -n "$options_file" ] ; then
 	eval process_cmdline $options
 fi
 
-music_dir=`get_mpd_conf_value music_directory`
+music_dir=$(get_mpd_conf_value music_directory)
 if [ $? -ne 0 ] ; then
   echo "could not get music directory from mpd.conf" 1>&2
   exit 1
 fi
-sticker_file=`get_mpd_conf_value sticker_file`
+sticker_file=$(get_mpd_conf_value sticker_file)
 if [ $? -ne 0 ] ; then
   echo "could not get sticker database from mpd.conf" 1>&2
   exit 1
 fi
-playlist_dir=`get_mpd_conf_value playlist_dir`
+playlist_dir=$(get_mpd_conf_value playlist_dir)
 if [ $? -ne 0 ] ; then
   echo "could not get playlist directory from mpd.conf" 1>&2
   exit 1
@@ -426,13 +481,13 @@ if [ -n "$excludegenre" ] ; then
 	fi
 	for i in $(echo $excludegenre | sed "s/,/ /g")
 	do
-		f=`echo $i|sed "s/_/ /g"`
+		f=$(echo $i|sed "s/_/ /g")
 		if [ $count -eq 0 ] ; then
 			sql_query="$sql_query genre NOT IN ('$f'"
 		else
 			sql_query="$sql_query, '$f'"
 		fi
-		count=`expr $count + 1`
+		count=$(expr $count + 1)
 	done
 	sql_query="$sql_query)"
 fi
@@ -446,13 +501,13 @@ if [ -n "$includegenre" ] ; then
 	fi
 	for i in $(echo $includegenre | sed "s/,/ /g")
 	do
-		f=`echo $i|sed "s/_/ /g"`
+		f=$(echo $i|sed "s/_/ /g")
 		if [ $count -eq 0 ] ; then
 			sql_query="$sql_query genre IN ('$f'"
 		else
 			sql_query="$sql_query, '$f'"
 		fi
-		count=`expr $count + 1`
+		count=$(expr $count + 1)
 	done
 	sql_query="$sql_query)"
 fi
@@ -466,13 +521,13 @@ if [ -n "$excludeartist" ] ; then
 	fi
 	for i in $(echo $excludeartist | sed "s/,/ /g")
 	do
-		f=`echo $i|sed "s/_/ /g"`
+		f=$(echo $i|sed "s/_/ /g")
 		if [ $count -eq 0 ] ; then
 			sql_query="$sql_query artist NOT IN ('$f'"
 		else
 			sql_query="$sql_query, '$f'"
 		fi
-		count=`expr $count + 1`
+		count=$(expr $count + 1)
 	done
 	sql_query="$sql_query)"
 fi
@@ -486,13 +541,13 @@ if [ -n "$includeartist" ] ; then
 	fi
 	for i in $(echo $includeartist | sed "s/,/ /g")
 	do
-		f=`echo $i|sed "s/_/ /g"`
+		f=$(echo $i|sed "s/_/ /g")
 		if [ $count -eq 0 ] ; then
 			sql_query="$sql_query artist IN ('$f'"
 		else
 			sql_query="$sql_query, '$f'"
 		fi
-		count=`expr $count + 1`
+		count=$(expr $count + 1)
 	done
 	sql_query="$sql_query)"
 fi
@@ -516,7 +571,7 @@ if [ -n "$artist" ] ; then
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	f=`echo $artist|sed "s/_/ /g"`
+	f=$(echo $artist|sed "s/_/ /g")
 	if [ $exact -eq 1 ] ; then
 		sql_query="$sql_query artist = '$f'"
 	else
@@ -530,9 +585,30 @@ if [ -n "$daysadded" ] ; then
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	tmval=`date +'%s'`
-	tmval=`expr $tmval - $daysadded \* 86400`
-	sql_query="$sql_query date_added >= $tmval"
+	process_daysadded $daysadded
+	tmval=$(date +'%s')
+	char1=$(echo $optval | cut -c1)
+	char2=$(echo $optval | cut -c2)
+	if [ "$char2" = "=" ] ; then
+		if [ "$char1" = ">" ] ; then
+			first_char="<="
+		elif [ "$char1" = "<" ] ; then
+			first_char=">="
+		else
+			first_char="="
+		fi
+		optval=$(echo $optval | cut -d'=' -f2-)
+	else
+		if [ "$char1" = ">" ] ; then
+			first_char="<"
+			optval=$(echo $optval | cut -d'>' -f2-)
+		elif [ "$char1" = "<" ] ; then
+			first_char=">"
+			optval=$(echo $optval | cut -d'<' -f2-)
+		fi
+	fi
+	tmval=$(expr $tmval - $optval \* 86400)
+	sql_query="$sql_query date_added $first_char $tmval"
 fi
 if [ -n "$karma" ] ; then
 	if [ -z "$first_condition" ] ; then
@@ -559,8 +635,8 @@ if [ -n "$daysheard" ] ; then
 	elif [ -n "$first_condition" ] ; then
 		sql_query="$sql_query AND"
 	fi
-	tmval=`date +'%s'`
-	tmval=`expr $tmval - $daysheard \* 86400`
+	tmval=$(date +'%s')
+	tmval=$(expr $tmval - $daysheard \* 86400)
 	sql_query="$sql_query last_played >= $tmval"
 fi
 if [ -n "$daysnotheard" ] ; then
@@ -571,8 +647,8 @@ if [ -n "$daysnotheard" ] ; then
 		sql_query="$sql_query AND"
 	fi
 	if [ ! "$daysnotheard" = "0" ] ; then
-		tmval=`date +'%s'`
-		tmval=`expr $tmval - $daysnotheard \* 86400`
+		tmval=$(date +'%s')
+		tmval=$(expr $tmval - $daysnotheard \* 86400)
 		sql_query="$sql_query (last_played < $tmval OR last_played IS NULL)"
 	else
 		sql_query="$sql_query last_played IS NULL"

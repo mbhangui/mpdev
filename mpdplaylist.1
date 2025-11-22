@@ -59,8 +59,13 @@ Known values for OPTION are:
 --artistany=keyword
   Find songs with Artist having 'keyword' anywhere in the Artist field
 
---new=d
-  Find songs added in the last 'd' days
+--new=exp
+  Find songs added as per expression
+  --new<50  means songs added less than 50 days back
+  --new<=50 means songs added less than or 50 days back
+  --new=50  means songs added 50 days back
+  --new>50  means songs added more than 50 days back
+  --new>=50 means songs added more than 50 or days back
 
 --daysheard=d
   Find songs heard in the last 'd' days
@@ -76,7 +81,7 @@ Known values for OPTION are:
   Order playlist in decreasing order of Rating field
   (Songs with high rating come at top)
 
---karma
+--karma=exp
   Find songs with karma as per expression. e.g.
   --karma<50  means songs with karma less than 50
   --karma<=50 means songs with karma less than or equal to 50
@@ -135,8 +140,17 @@ Load a playlist as defined in ~/.mpdplaylist.options
 Load a playlist as defined in ~/.mpdplaylist.new
 \fBmpdplaylist\fR --options-file=~/.mpdplaylist.new
 
-List all songs added in the last 3 days
+List all songs added 3 days back
 \fBmpdplaylist\fR --new=3
+
+List all songs added in the last 3 days. (See the use of escaping '<' to
+prevent the shell from using input redirection)
+\fBmpdplaylist\fR --new\<=3
+
+List all songs added more than 30 days back (use with caution as this could
+be a huge list. See the use of escaping '>' to prevent the shell from using
+output redirection)
+\fBmpdplaylist\fR --new\>=30
 
 List all songs belonging to \fIHindi\fR genre, having a rting of 6 &
 greater (on a scale of 10), from the year 1970 to the year 2000. Sort the

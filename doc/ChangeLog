@@ -61,6 +61,8 @@ Release 1.1 Start 30/06/2022 End --/--/----
 32. player.in: return db operation 5 times on failure
 - 17/11/2025
 33. player.in: exit if SONG_URI not set
+- 22/11/2025
+35. Fix --karma args and added options for --new option
 
 * Thu Jun 30 2022 18:32:58 IST Manvendra Bhangui <mpdev@indimail.org> 1.0-1.1%{?dist}
 Release 1.0 Start 02/03/2020 End 30/06/2022
